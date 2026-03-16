@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minecraft Auto Bedrock Command Center</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hero">
+        <h1>Command Center</h1>
+        <p>Java/Bedrock ハイブリッドBot監視</p>
+        <div id="modeBadge" class="mode">MODE: -</div>
+      </section>
+
+      <section class="panel">
+        <h2>状態</h2>
+        <pre id="statusView">loading...</pre>
+      </section>
+
+      <section class="panel">
+        <h2>インベントリ</h2>
+        <ul id="inventoryList"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>記憶チェスト</h2>
+        <pre id="memoryView"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>資材検索</h2>
+        <div class="row">
+          <input id="searchText" placeholder="diamond など" />
+          <button id="searchButton">検索</button>
+        </div>
+        <ul id="searchResult"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>コマンド</h2>
+        <div class="row">
+          <input id="baseName" placeholder="拠点名" />
+          <button id="setBaseButton">ここを拠点登録</button>
+        </div>
+        <div class="row">
+          <input id="collectBlock" placeholder="oak_log など" />
+          <button id="collectButton">採取開始</button>
+        </div>
+        <div class="row">
+          <input id="schemPath" placeholder="schematics/house.schem" />
+          <button id="buildButton">建築実行</button>
+        </div>
+        <pre id="commandResult"></pre>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
