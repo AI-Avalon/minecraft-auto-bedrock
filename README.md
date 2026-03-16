@@ -23,6 +23,19 @@ npm install
 npm run setup
 ```
 
+### 接続モードの自動設定
+- Java ローカルサーバー向け:
+
+```bash
+npm run configure:java
+```
+
+- Bedrock (avalox.f5.si:19132) 向け:
+
+```bash
+npm run configure:bedrock
+```
+
 ## 起動
 ```bash
 npm run bootstrap
@@ -57,6 +70,11 @@ node scripts/deploy.js
 npm test
 ```
 
+### GUI統合テスト
+```bash
+npm run test:gui
+```
+
 ### E2E 実接続テスト (Java/Bedrock)
 実サーバーがある環境のみで実行します。
 
@@ -64,11 +82,32 @@ npm test
 RUN_E2E=1 \
 E2E_JAVA_HOST=127.0.0.1 \
 E2E_JAVA_PORT=25565 \
+E2E_BEDROCK_HOST=avalox.f5.si \
+E2E_BEDROCK_PORT=19132 \
 E2E_BEDROCK_PROXY_HOST=127.0.0.1 \
 E2E_BEDROCK_PROXY_PORT=25566 \
 npm run test:e2e
 ```
 
+### 全自動検証 (設定チェック + 単体 + GUI + E2E)
+```bash
+npm run verify:all
+```
+
 ## 補足
 - Discord通知は拡張ポイントのみで、本実装には含めていません。
 - ViaProxy 固定版を使う場合は config.json の bedrock.proxy.fixedVersion を設定してください。
+
+## 初心者向け: Clone後に一生放置で動かす最初のコマンド
+
+Bedrock(avalox)で常時運用する場合:
+
+```bash
+npm install && npm run setup && npm run configure:bedrock && npm run pm2:start && npm run pm2:save
+```
+
+次にOS再起動時の自動復帰設定を表示:
+
+```bash
+node scripts/pm2-startup-guide.js
+```

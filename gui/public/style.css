@@ -39,11 +39,37 @@ body {
 .mode {
   display: inline-block;
   margin-top: 8px;
+  margin-right: 8px;
   padding: 6px 10px;
   border-radius: 999px;
   background: var(--accent);
   color: white;
   font-weight: 700;
+}
+
+.socket-state {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+}
+
+.socket-state.connected {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.socket-state.connecting {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.socket-state.disconnected {
+  background: #fee2e2;
+  color: #7f1d1d;
 }
 
 .panel {
@@ -81,10 +107,17 @@ button {
   background: #1f2937;
   color: #fff;
   cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease, box-shadow 140ms ease;
 }
 
 button:hover {
-  opacity: 0.9;
+  opacity: 0.96;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.18);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 .security {

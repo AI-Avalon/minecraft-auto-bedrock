@@ -27,7 +27,7 @@ async function fetchRelease(repo, fixedVersion) {
 
 function chooseJarAsset(releaseJson) {
   const assets = releaseJson.assets || [];
-  const jarAsset = assets.find((asset) => /\\.jar$/i.test(asset.name));
+  const jarAsset = assets.find((asset) => /\.jar$/i.test(asset.name));
 
   if (!jarAsset) {
     throw new Error('ViaProxy の jar アセットが見つかりません。');
@@ -58,13 +58,8 @@ async function ensureViaProxy(config) {
     throw new Error(`ViaProxy ダウンロード失敗: ${response.status}`);
   }
 
-  const fileStream = fs.createWriteStream(jarPath);
-  await new Promise((resolve, reject) => {
-    response.body.pipe(fileStream);
-    response.body.on('error', reject);
-    fileStream.on('finish', resolve);
-    fileStream.on('error', reject);
-  });
+  const bytes = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync(jarPath, bytes);
 
   logger.info(`ViaProxy の保存が完了しました: ${jarPath}`);
   return jarPath;

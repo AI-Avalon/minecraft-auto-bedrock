@@ -3,7 +3,6 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const viewer = require('prismarine-viewer');
 const { logger } = require('./logger');
 
 function createAuditWriter(config) {
@@ -215,6 +214,8 @@ function attachViewer(botController, port) {
 
   bot.once('spawn', () => {
     try {
+      // テスト環境では canvas 依存が未導入の場合があるため遅延ロードする
+      const viewer = require('prismarine-viewer');
       viewer.mineflayer(bot, {
         port,
         firstPerson: true,

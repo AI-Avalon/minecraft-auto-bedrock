@@ -1,5 +1,5 @@
 {
-  "edition": "java",
+  "edition": "bedrock",
   "bot": {
     "username": "AutoBedrockBot",
     "password": "",
@@ -13,7 +13,7 @@
     "version": false
   },
   "bedrock": {
-    "host": "127.0.0.1",
+    "host": "avalox.f5.si",
     "port": 19132,
     "waitForTicks": 4,
     "proxy": {

@@ -36,3 +36,18 @@ test('GUI セキュリティ設定が存在すること', () => {
   assert.ok(config.gui.security.allowedCommands.includes('start-auto-mine'));
   assert.ok(config.gui.security.allowedCommands.includes('start-auto-collect'));
 });
+
+test('Bedrock proxy 設定に必要なキーが存在すること', () => {
+  const config = loadConfig();
+  assert.equal(typeof config.bedrock, 'object');
+  assert.equal(typeof config.bedrock.proxy, 'object');
+  assert.equal(typeof config.bedrock.proxy.listenHost, 'string');
+  assert.equal(typeof config.bedrock.proxy.listenPort, 'number');
+  assert.equal(typeof config.bedrock.proxy.targetVersion, 'string');
+  assert.equal(typeof config.bedrock.proxy.authMethod, 'string');
+});
+
+test('設定プロファイルスクリプトが存在すること', () => {
+  const root = process.cwd();
+  assert.ok(fs.existsSync(path.join(root, 'scripts/configure-profile.js')));
+});
