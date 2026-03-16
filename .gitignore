@@ -1,0 +1,7 @@
+node_modules/
+logs/
+*.log
+pm2.log
+bin/
+.env
+.DS_Store

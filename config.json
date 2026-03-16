@@ -1,0 +1,51 @@
+{
+  "edition": "java",
+  "bot": {
+    "username": "AutoBedrockBot",
+    "password": "",
+    "auth": "offline",
+    "reconnectDelayMs": 5000,
+    "chatty": true
+  },
+  "java": {
+    "host": "127.0.0.1",
+    "port": 25565,
+    "version": false
+  },
+  "bedrock": {
+    "host": "127.0.0.1",
+    "port": 19132,
+    "waitForTicks": 4,
+    "proxy": {
+      "enabled": true,
+      "enableAutoDownload": true,
+      "enableAutoStart": true,
+      "listenHost": "127.0.0.1",
+      "listenPort": 25566,
+      "targetHost": "127.0.0.1",
+      "targetPort": 25565,
+      "jarPath": "bin/ViaProxy.jar",
+      "githubRepo": "ViaVersion/ViaProxy",
+      "fixedVersion": "",
+      "args": []
+    }
+  },
+  "memory": {
+    "file": "memory.json",
+    "maxRecords": 5000,
+    "maxHistoryPerChest": 30
+  },
+  "gui": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 3000
+  },
+  "automation": {
+    "autoGitPush": false,
+    "commitIntervalMinutes": 30,
+    "commitMessagePrefix": "自動更新"
+  },
+  "extensions": {
+    "discordWebhookUrl": ""
+  }
+}
