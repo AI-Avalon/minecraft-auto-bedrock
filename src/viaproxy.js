@@ -81,11 +81,26 @@ class ViaProxyManager {
     const proxy = this.config.bedrock.proxy;
     const userArgs = proxy.args || [];
 
+    // カスタム引数があればそのまま使う
     if (userArgs.length > 0) {
       return ['-jar', jarPath, ...userArgs];
     }
 
-    return ['-jar', jarPath];
+    // config から ViaProxy CLI ヘッドレス引数を自動生成
+    // Bedrock は UDP(RakNet) なので ViaProxy がプロトコル変換を担う
+    // mineflayer → TCP:listenPort → ViaProxy → UDP:targetHost:targetPort
+    const listenAddr = `${proxy.listenHost || '127.0.0.1'}:${proxy.listenPort || 25566}`;
+    const targetAddr = `${this.config.bedrock.host}:${this.config.bedrock.port}`;
+    const targetVersion = proxy.targetVersion || 'bedrocklatest';
+    const authMethod = proxy.authMethod || 'none';
+
+    return [
+      '-jar', jarPath,
+      '--bind-address', listenAddr,
+      '--target-address', targetAddr,
+      '--version', targetVersion,
+      '--auth-method', authMethod
+    ];
   }
 
   async start() {
