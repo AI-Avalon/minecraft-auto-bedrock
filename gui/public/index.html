@@ -12,6 +12,11 @@
         <h1>Command Center</h1>
         <p>Java/Bedrock ハイブリッドBot監視</p>
         <div id="modeBadge" class="mode">MODE: -</div>
+        <div class="row compact">
+          <input id="guiToken" placeholder="GUIトークン(必要時のみ)" />
+          <button id="reconnectButton">再接続</button>
+          <button id="toggleRefreshButton">自動更新: ON</button>
+        </div>
       </section>
 
       <section class="panel">
@@ -34,6 +39,7 @@
         <div class="row">
           <input id="searchText" placeholder="diamond など" />
           <button id="searchButton">検索</button>
+          <button id="quickDiamondButton">ダイヤ検索</button>
         </div>
         <ul id="searchResult"></ul>
       </section>
@@ -47,11 +53,22 @@
         <div class="row">
           <input id="collectBlock" placeholder="oak_log など" />
           <button id="collectButton">採取開始</button>
+          <button id="collectWoodButton">木材採取</button>
         </div>
         <div class="row">
           <input id="schemPath" placeholder="schematics/house.schem" />
           <button id="buildButton">建築実行</button>
         </div>
+        <div class="row">
+          <input id="fetchItemName" placeholder="補充したい資材名" />
+          <input id="fetchAmount" type="number" min="1" value="64" />
+          <button id="fetchItemButton">資材補充</button>
+        </div>
+        <div class="row">
+          <button id="retreatButton">拠点へ退避</button>
+          <button id="setBaseQuickButton">現在地を拠点化</button>
+        </div>
+        <div id="securityHint" class="security"></div>
         <pre id="commandResult"></pre>
       </section>
     </main>

@@ -27,3 +27,10 @@ test('run スクリプトが両OS向けに存在すること', () => {
   assert.ok(fs.existsSync(path.join(root, 'run.sh')));
   assert.ok(fs.existsSync(path.join(root, 'run.bat')));
 });
+
+test('GUI セキュリティ設定が存在すること', () => {
+  const config = loadConfig();
+  assert.equal(typeof config.gui.security, 'object');
+  assert.ok(Array.isArray(config.gui.security.allowedCommands));
+  assert.ok(config.gui.security.allowedCommands.includes('fetch-item'));
+});

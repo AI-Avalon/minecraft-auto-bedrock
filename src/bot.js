@@ -408,6 +408,11 @@ class AutonomousBot {
     }
   }
 
+  async retreatNow() {
+    await this.retreatToNearestBase();
+    return true;
+  }
+
   async buildSchem(schemPath) {
     if (!this.bot?.schem?.build) {
       logger.warn('mineflayer-schem が有効化されていないため建築を実行できません。');

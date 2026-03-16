@@ -38,7 +38,22 @@
   "gui": {
     "enabled": true,
     "host": "0.0.0.0",
-    "port": 3000
+    "port": 3000,
+    "security": {
+      "requireToken": false,
+      "token": "",
+      "readOnly": false,
+      "allowedCommands": [
+        "set-base",
+        "collect",
+        "build",
+        "fetch-item",
+        "retreat-base"
+      ],
+      "commandCooldownMs": 800,
+      "maxCommandsPerMinute": 20,
+      "auditLogFile": "logs/gui-audit.log"
+    }
   },
   "automation": {
     "autoGitPush": false,

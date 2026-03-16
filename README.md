@@ -31,6 +31,12 @@ npm run bootstrap
 - GUI: http://localhost:3000
 - 3D Viewer: http://localhost:3001
 
+### GUI権限制御と監査ログ
+- [config.json](config.json) の gui.security で制御できます。
+- requireToken=true のときは WebUI 上部のトークン欄を入力して再接続してください。
+- readOnly=true で破壊的操作を無効化できます。
+- 操作監査ログは logs/gui-audit.log に JSON Lines 形式で追記されます。
+
 ## PM2 自動復旧
 ```bash
 npm run pm2:start
@@ -46,6 +52,18 @@ node scripts/deploy.js
 ## テスト
 ```bash
 npm test
+```
+
+### E2E 実接続テスト (Java/Bedrock)
+実サーバーがある環境のみで実行します。
+
+```bash
+RUN_E2E=1 \
+E2E_JAVA_HOST=127.0.0.1 \
+E2E_JAVA_PORT=25565 \
+E2E_BEDROCK_PROXY_HOST=127.0.0.1 \
+E2E_BEDROCK_PROXY_PORT=25566 \
+npm run test:e2e
 ```
 
 ## 補足
