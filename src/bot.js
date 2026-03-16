@@ -30,6 +30,8 @@ class AutonomousBot {
     this.isStopping = false;
     this.afkTimer = null;
     this.chatTimer = null;
+    this.autoCollectTask = null;
+    this.autoMineTask = null;
   }
 
   get isBedrockMode() {
@@ -184,6 +186,16 @@ class AutonomousBot {
     if (this.chatTimer) {
       clearInterval(this.chatTimer);
       this.chatTimer = null;
+    }
+
+    if (this.autoCollectTask) {
+      this.autoCollectTask.running = false;
+      this.autoCollectTask = null;
+    }
+
+    if (this.autoMineTask) {
+      this.autoMineTask.running = false;
+      this.autoMineTask = null;
     }
   }
 
@@ -389,6 +401,13 @@ class AutonomousBot {
     return point;
   }
 
+  countInventoryItems(namePart) {
+    const normalized = String(namePart || '').toLowerCase();
+    return this.bot?.inventory?.items()?.reduce((sum, item) => {
+      return item.name.toLowerCase().includes(normalized) ? sum + item.count : sum;
+    }, 0) || 0;
+  }
+
   async collectNearestBlock(blockName) {
     const target = this.bot.findBlock({
       matching: (block) => block?.name === blockName,
@@ -400,12 +419,121 @@ class AutonomousBot {
     }
 
     try {
+      if (this.bot.tool?.equipForBlock) {
+        await this.bot.tool.equipForBlock(target);
+      }
       await this.bot.collectBlock.collect(target);
       return true;
     } catch (error) {
       logger.warn(`採取に失敗しました: ${blockName}`, error);
       return false;
     }
+  }
+
+  async startAutoCollect(blockName, targetCount = 64) {
+    if (this.autoCollectTask?.running) {
+      return { ok: false, reason: 'already-running' };
+    }
+
+    const task = {
+      running: true,
+      blockName,
+      targetCount: Number(targetCount || 64),
+      collected: 0,
+      attempts: 0
+    };
+    this.autoCollectTask = task;
+
+    while (task.running && this.countInventoryItems(blockName) < task.targetCount) {
+      task.attempts += 1;
+      const ok = await this.collectNearestBlock(blockName);
+      if (!ok) {
+        await sleep(1200);
+      }
+      task.collected = this.countInventoryItems(blockName);
+
+      if (task.attempts > 120) {
+        break;
+      }
+    }
+
+    const finalCount = this.countInventoryItems(blockName);
+    const completed = finalCount >= task.targetCount;
+    this.autoCollectTask = null;
+
+    return {
+      ok: completed,
+      blockName,
+      targetCount: task.targetCount,
+      finalCount,
+      attempts: task.attempts
+    };
+  }
+
+  stopAutoCollect() {
+    if (!this.autoCollectTask) {
+      return { ok: true, stopped: false };
+    }
+
+    this.autoCollectTask.running = false;
+    this.autoCollectTask = null;
+    return { ok: true, stopped: true };
+  }
+
+  async startAutoMine() {
+    if (this.autoMineTask?.running) {
+      return { ok: false, reason: 'already-running' };
+    }
+
+    const task = {
+      running: true,
+      plan: [
+        { block: 'coal_ore', count: 32 },
+        { block: 'iron_ore', count: 32 },
+        { block: 'cobblestone', count: 128 }
+      ],
+      completed: []
+    };
+
+    this.autoMineTask = task;
+
+    for (const step of task.plan) {
+      if (!task.running) {
+        break;
+      }
+      const result = await this.startAutoCollect(step.block, step.count);
+      task.completed.push(result);
+      await sleep(300);
+    }
+
+    const summary = { ok: true, completed: task.completed };
+    this.autoMineTask = null;
+    return summary;
+  }
+
+  stopAutoMine() {
+    if (!this.autoMineTask) {
+      return { ok: true, stopped: false };
+    }
+
+    this.autoMineTask.running = false;
+    return { ok: true, stopped: true };
+  }
+
+  async autoBuildWithRefill(schemPath, requiredItems = []) {
+    const first = await this.buildSchem(schemPath);
+    if (first) {
+      return { ok: true, attempt: 1 };
+    }
+
+    // 建築失敗時は記憶チェストから必要資材を補充して1回だけリトライする。
+    for (const req of requiredItems) {
+      await this.fetchItemFromMemory(req.itemName, req.amount || 64);
+      await sleep(150);
+    }
+
+    const second = await this.buildSchem(schemPath);
+    return { ok: second, attempt: 2 };
   }
 
   async retreatNow() {
@@ -439,6 +567,18 @@ class AutonomousBot {
         : null,
       health: this.bot?.health || 0,
       food: this.bot?.food || 0,
+      automation: {
+        autoCollect: this.autoCollectTask ? {
+          blockName: this.autoCollectTask.blockName,
+          targetCount: this.autoCollectTask.targetCount,
+          collected: this.autoCollectTask.collected,
+          attempts: this.autoCollectTask.attempts
+        } : null,
+        autoMine: this.autoMineTask ? {
+          running: this.autoMineTask.running,
+          plan: this.autoMineTask.plan
+        } : null
+      },
       inventory: this.bot?.inventory?.items()?.map((item) => ({
         name: item.name,
         count: item.count,

@@ -52,12 +52,20 @@
         </div>
         <div class="row">
           <input id="collectBlock" placeholder="oak_log など" />
+          <input id="collectTargetCount" type="number" min="1" value="64" />
           <button id="collectButton">採取開始</button>
           <button id="collectWoodButton">木材採取</button>
         </div>
         <div class="row">
+          <button id="startAutoCollectButton">自動取得ON</button>
+          <button id="stopAutoCollectButton">自動取得OFF</button>
+          <button id="startAutoMineButton">自動採掘ON</button>
+          <button id="stopAutoMineButton">自動採掘OFF</button>
+        </div>
+        <div class="row">
           <input id="schemPath" placeholder="schematics/house.schem" />
           <button id="buildButton">建築実行</button>
+          <button id="buildWithRefillButton">建築+自動補充</button>
         </div>
         <div class="row">
           <input id="fetchItemName" placeholder="補充したい資材名" />

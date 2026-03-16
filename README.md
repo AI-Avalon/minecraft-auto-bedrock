@@ -8,6 +8,8 @@ Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。Via
 - チェスト/拠点/死亡地点の永続記憶と資材検索
 - Bedrock 用 waitForTicks を含む安全なアイテム移動
 - AFK対策 Jitter と簡易チャット行動
+- 自動採掘(鉱石プラン)と自動取得(目標数指定)
+- 建築失敗時の記憶チェスト自動補充 + リトライ
 - prismarine-viewer + Web GUI によるリアルタイム監視
 - simple-git + PM2 連携による運用自動化
 
@@ -36,6 +38,7 @@ npm run bootstrap
 - requireToken=true のときは WebUI 上部のトークン欄を入力して再接続してください。
 - readOnly=true で破壊的操作を無効化できます。
 - 操作監査ログは logs/gui-audit.log に JSON Lines 形式で追記されます。
+- WebUI から 自動取得ON/OFF, 自動採掘ON/OFF, 建築+自動補充 を直接実行できます。
 
 ## PM2 自動復旧
 ```bash

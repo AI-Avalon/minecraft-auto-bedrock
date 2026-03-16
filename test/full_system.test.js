@@ -33,4 +33,6 @@ test('GUI セキュリティ設定が存在すること', () => {
   assert.equal(typeof config.gui.security, 'object');
   assert.ok(Array.isArray(config.gui.security.allowedCommands));
   assert.ok(config.gui.security.allowedCommands.includes('fetch-item'));
+  assert.ok(config.gui.security.allowedCommands.includes('start-auto-mine'));
+  assert.ok(config.gui.security.allowedCommands.includes('start-auto-collect'));
 });

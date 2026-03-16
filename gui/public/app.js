@@ -13,6 +13,12 @@ const reconnectButton = document.getElementById('reconnectButton');
 const toggleRefreshButton = document.getElementById('toggleRefreshButton');
 const quickDiamondButton = document.getElementById('quickDiamondButton');
 const collectWoodButton = document.getElementById('collectWoodButton');
+const collectTargetCount = document.getElementById('collectTargetCount');
+const startAutoCollectButton = document.getElementById('startAutoCollectButton');
+const stopAutoCollectButton = document.getElementById('stopAutoCollectButton');
+const startAutoMineButton = document.getElementById('startAutoMineButton');
+const stopAutoMineButton = document.getElementById('stopAutoMineButton');
+const buildWithRefillButton = document.getElementById('buildWithRefillButton');
 const fetchItemName = document.getElementById('fetchItemName');
 const fetchAmount = document.getElementById('fetchAmount');
 const fetchItemButton = document.getElementById('fetchItemButton');
@@ -126,9 +132,43 @@ buildButton.addEventListener('click', () => {
   socket.emit('command:build', schemPath.value);
 });
 
+buildWithRefillButton.addEventListener('click', () => {
+  const requiredItems = [];
+  if (fetchItemName.value.trim()) {
+    requiredItems.push({
+      itemName: fetchItemName.value.trim(),
+      amount: Number(fetchAmount.value || 64)
+    });
+  }
+
+  socket.emit('command:build-with-refill', {
+    schemPath: schemPath.value,
+    requiredItems
+  });
+});
+
 collectWoodButton.addEventListener('click', () => {
   collectBlock.value = 'oak_log';
   socket.emit('command:collect', 'oak_log');
+});
+
+startAutoCollectButton.addEventListener('click', () => {
+  socket.emit('command:start-auto-collect', {
+    blockName: collectBlock.value,
+    targetCount: Number(collectTargetCount.value || 64)
+  });
+});
+
+stopAutoCollectButton.addEventListener('click', () => {
+  socket.emit('command:stop-auto-collect');
+});
+
+startAutoMineButton.addEventListener('click', () => {
+  socket.emit('command:start-auto-mine');
+});
+
+stopAutoMineButton.addEventListener('click', () => {
+  socket.emit('command:stop-auto-mine');
 });
 
 fetchItemButton.addEventListener('click', () => {

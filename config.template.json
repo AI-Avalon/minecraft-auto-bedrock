@@ -47,8 +47,13 @@
         "set-base",
         "collect",
         "build",
+        "build-with-refill",
         "fetch-item",
-        "retreat-base"
+        "retreat-base",
+        "start-auto-collect",
+        "stop-auto-collect",
+        "start-auto-mine",
+        "stop-auto-mine"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,

@@ -156,6 +156,36 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:build-with-refill', async ({ schemPath, requiredItems }) => {
+      await runCommand(socket, 'build-with-refill', { schemPath, requiredItems }, async () => {
+        return botController.autoBuildWithRefill(schemPath, requiredItems || []);
+      });
+    });
+
+    socket.on('command:start-auto-collect', async ({ blockName, targetCount }) => {
+      await runCommand(socket, 'start-auto-collect', { blockName, targetCount }, async () => {
+        return botController.startAutoCollect(blockName, Number(targetCount || 64));
+      });
+    });
+
+    socket.on('command:stop-auto-collect', async () => {
+      await runCommand(socket, 'stop-auto-collect', {}, async () => {
+        return botController.stopAutoCollect();
+      });
+    });
+
+    socket.on('command:start-auto-mine', async () => {
+      await runCommand(socket, 'start-auto-mine', {}, async () => {
+        return botController.startAutoMine();
+      });
+    });
+
+    socket.on('command:stop-auto-mine', async () => {
+      await runCommand(socket, 'stop-auto-mine', {}, async () => {
+        return botController.stopAutoMine();
+      });
+    });
+
     socket.on('command:fetch-item', async ({ itemName, amount }) => {
       await runCommand(socket, 'fetch-item', { itemName, amount }, async () => {
         const ok = await botController.fetchItemFromMemory(itemName, Number(amount || 1));
