@@ -67,6 +67,37 @@ function systemDoctor() {
   };
 }
 
+function detectJavaVersion() {
+  const res = run('java', ['-version']);
+  if (!res.ok) {
+    return {
+      exists: false,
+      version: null,
+      error: 'Java is not installed'
+    };
+  }
+
+  // Parse Java version from output (stdout or stderr)
+  const output = res.stdout + res.stderr;
+  const versionMatch = output.match(/version\s+"([^"]+)"/);
+  if (versionMatch) {
+    const version = versionMatch[1];
+    const majorVersion = parseInt(version.split('.')[0]);
+    return {
+      exists: true,
+      version: version,
+      majorVersion: majorVersion,
+      isSuitable: majorVersion >= 8
+    };
+  }
+
+  return {
+    exists: true,
+    version: 'unknown',
+    error: 'Could not parse Java version'
+  };
+}
+
 function buildStepRows({ syncBedrockSamples = true, includePrerequisites = 'auto', includeOllama = false } = {}) {
   const steps = [];
 
@@ -173,6 +204,7 @@ function checkStartupUpdates() {
 
 module.exports = {
   systemDoctor,
+  detectJavaVersion,
   oneClickBootstrap,
   checkStartupUpdates
 };

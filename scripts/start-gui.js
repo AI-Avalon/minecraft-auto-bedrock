@@ -112,13 +112,36 @@ async function startGUI() {
   
   console.log(`[GUI] Starting on http://localhost:${availableGuiPort}`);
   
+  // Java バージョンチェック
+  console.log('[Java] Checking Java installation...');
+  try {
+    const javaOutput = execSync('java -version 2>&1', { encoding: 'utf-8' });
+    const versionMatch = javaOutput.match(/version\s+"([^"]+)"/);
+    if (versionMatch) {
+      const version = versionMatch[1];
+      const majorVersion = parseInt(version.split('.')[0]);
+      console.log(`[Java] Version: ${version}`);
+      
+      if (majorVersion < 8) {
+        console.warn('[Java] WARNING: Java 8+ required, but lower version detected');
+      } else if (majorVersion < 16) {
+        console.warn(`[Java] NOTE: Java ${majorVersion} detected, Java 16+ recommended for Paper/Spigot`);
+      } else {
+        console.log(`[Java] ✓ Java ${majorVersion} is suitable`);
+      }
+    }
+  } catch (err) {
+    console.warn('[Java] WARNING: Java not found or version check failed');
+    console.warn('[Java] Please install Java 16+ for Paper server, or Java 8+ for Mineflayer');
+  }
+  
   // PM2 が稼働していない場合の初期化
   try {
-    execSync('pm2 status', { stdio: 'ignore' });
+    execSync('npx pm2 status', { stdio: 'ignore' });
   } catch {
     console.log('[PM2] Initializing...');
     try {
-      execSync('pm2 start ecosystem.config.cjs', { stdio: 'pipe' });
+      execSync('npx pm2 start ecosystem.config.cjs', { stdio: 'pipe' });
     } catch (err) {
       console.error('[PM2] Error starting ecosystem:', err.message);
     }

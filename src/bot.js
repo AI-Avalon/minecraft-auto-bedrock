@@ -2,7 +2,6 @@ const mineflayer = require('mineflayer');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const collectBlockPlugin = require('mineflayer-collectblock').plugin;
 const toolPlugin = require('mineflayer-tool').plugin;
-const autoEat = require('mineflayer-auto-eat').plugin;
 const { logger } = require('./logger');
 const { sleep } = require('./utils');
 const { JapaneseLLMResponder } = require('./llmChat');
@@ -15,9 +14,20 @@ const { ResourceGatheringModule } = require('./resourceGatheringModule');
 const { ArmorAnalyzer }           = require('./armorAnalyzer');
 const { RecipeAnalyzer }          = require('./recipeAnalyzer');
 
+let autoEat = null;
 let movementPlugin;
 let schemPlugin;
 let pvpPlugin;
+
+// autoEatをES Moduleから動的にロード
+(async () => {
+  try {
+    const autoEatModule = await import('mineflayer-auto-eat');
+    autoEat = autoEatModule.loader;
+  } catch (err) {
+    logger.warn('mineflayer-auto-eat の読み込みに失敗しました:', err.message);
+  }
+})();
 
 try {
   movementPlugin = require('mineflayer-movement').plugin;
@@ -142,7 +152,15 @@ class AutonomousBot {
     this.bot.loadPlugin(pathfinder);
     this.bot.loadPlugin(collectBlockPlugin);
     this.bot.loadPlugin(toolPlugin);
-    this.bot.loadPlugin(autoEat);
+    
+    // autoEatはES Moduleなため非同期で読み込まれる可能性がある
+    if (autoEat) {
+      this.bot.loadPlugin(autoEat);
+    } else {
+      logger.warn('[Bot] autoEat プラグインが初期化されていません。後で読み込みを試みます。');
+      // autoEat を遅延ロード
+      this.ensureAutoEatLoaded();
+    }
 
     if (movementPlugin) {
       this.bot.loadPlugin(movementPlugin);
@@ -156,12 +174,30 @@ class AutonomousBot {
       this.bot.loadPlugin(pvpPlugin);
     }
 
-    this.bot.autoEat.options = {
-      priority: 'foodPoints',
-      minHunger: 16,
-      offhand: true,
-      bannedFood: []
-    };
+    if (this.bot.autoEat) {
+      this.bot.autoEat.options = {
+        priority: 'foodPoints',
+        minHunger: 16,
+        offhand: true,
+        bannedFood: []
+      };
+    }
+  }
+
+  async ensureAutoEatLoaded() {
+    // autoEatをES Moduleから動的にロード（遅延ロード）
+    if (!autoEat) {
+      try {
+        const autoEatModule = await import('mineflayer-auto-eat');
+        autoEat = autoEatModule.loader;
+        if (this.bot && autoEat) {
+          this.bot.loadPlugin(autoEat);
+          logger.info('[Bot] autoEat プラグインを遅延ロードしました');
+        }
+      } catch (err) {
+        logger.error('[Bot] autoEat の遅延ロードに失敗しました:', err.message);
+      }
+    }
   }
 
   attachEvents() {

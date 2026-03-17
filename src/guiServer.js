@@ -4,7 +4,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { logger } = require('./logger');
-const { systemDoctor, oneClickBootstrap } = require('./systemManager');
+const { systemDoctor, detectJavaVersion, oneClickBootstrap } = require('./systemManager');
 
 function createAuditWriter(config) {
   const security = config.gui.security || {};
@@ -379,6 +379,12 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:detect-java', async (payload) => {
+      await runCommand(socket, 'detect-java', payload || {}, async () => {
+        return detectJavaVersion();
+      });
+    });
+
     socket.on('command:oneclick-setup', async (payload) => {
       await runCommand(socket, 'oneclick-setup', payload || {}, async () => {
         return oneClickBootstrap({ syncBedrockSamples: Boolean(payload?.syncBedrockSamples ?? true) });
@@ -558,6 +564,113 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       socket.on('stream:logs-stop', cleanupStream);
     });
 
+    // ── Fleet/Bot 一括管理 ──────────────────────────────────────────────
+    socket.on('command:fleet-list-bots', async () => {
+      try {
+        const status = botController.status();
+        const botList = (status?.fleet || []).map(bot => ({
+          id: bot.id,
+          username: bot.username,
+          role: bot.role,
+          status: bot.status || {},
+          mode: bot.status?.mode || bot.behavior?.mode || 'unknown'
+        }));
+        socket.emit('fleet-bots-list', botList);
+        audit({ type: 'fleet-list', count: botList.length, socketId: socket.id });
+      } catch (error) {
+        logger.error('Fleet list error:', error);
+        socket.emit('fleet-bots-list', []);
+      }
+    });
+
+    // ── 一括操作 ──────────────────────────────────────────────────────────
+    socket.on('command:bulk-action', async (payload) => {
+      await runCommand(socket, 'bulk-action', payload || {}, async () => {
+        const { actionType, param } = payload || {};
+        const status = botController.status();
+        const botIds = (status?.fleet || []).map(b => b.id).filter(id => id);
+        
+        if (!botIds.length) {
+          return { ok: false, message: '利用可能なBotがありません' };
+        }
+
+        const results = {};
+        
+        switch (actionType) {
+          case 'set-role':
+            // すべてのBotの役割を変更
+            for (const botId of botIds) {
+              try {
+                await botController.updateRole(botId, param);
+                results[botId] = { ok: true, message: `役割を「${param}」に変更しました` };
+              } catch (e) {
+                results[botId] = { ok: false, message: String(e) };
+              }
+            }
+            break;
+
+          case 'set-mode':
+            // すべてのBotのモードを変更
+            for (const botId of botIds) {
+              try {
+                await botController.runOnTarget(botId, 'setMode', param);
+                results[botId] = { ok: true, message: `モードを「${param}」に変更しました` };
+              } catch (e) {
+                results[botId] = { ok: false, message: String(e) };
+              }
+            }
+            break;
+
+          case 'stop-all':
+            // すべてのBotを停止
+            for (const botId of botIds) {
+              try {
+                await botController.runOnTarget(botId, 'stop');
+                results[botId] = { ok: true, message: '停止コマンド送信済み' };
+              } catch (e) {
+                results[botId] = { ok: false, message: String(e) };
+              }
+            }
+            break;
+
+          case 'gather-to-base':
+            // すべてのBotを拠点に集合
+            for (const botId of botIds) {
+              try {
+                await botController.retreatNow(botId);
+                results[botId] = { ok: true, message: '帰還コマンド送信済み' };
+              } catch (e) {
+                results[botId] = { ok: false, message: String(e) };
+              }
+            }
+            break;
+
+          case 'start-task':
+            // すべてのBotにタスク割当（パラメータで指定）
+            for (const botId of botIds) {
+              try {
+                const taskType = param?.taskType || 'auto';
+                await botController.assignTask({ botId, type: taskType });
+                results[botId] = { ok: true, message: `タスク「${taskType}」を割当しました` };
+              } catch (e) {
+                results[botId] = { ok: false, message: String(e) };
+              }
+            }
+            break;
+
+          default:
+            return { ok: false, message: `未知の一括操作: ${actionType}` };
+        }
+
+        const okCount = Object.values(results).filter(r => r.ok).length;
+        return {
+          ok: okCount > 0,
+          message: `${okCount}/${botIds.length} のBotに対して操作を実行しました`,
+          results
+        };
+      });
+    });
+
     socket.on('stream:logs-stop', () => {
       // ストリーム停止はクライアント側で emit される
     });
@@ -615,11 +728,34 @@ function startGuiServer(botController, memoryStore, config) {
 
   registerSocketHandlers(io, botController, memoryStore, config);
 
-  server.listen(config.gui.port, config.gui.host, () => {
-    logger.info(`GUI を起動しました: http://${config.gui.host}:${config.gui.port}`);
+  // ポート衝突時の自動フォールバック
+  const originalPort = config.gui.port;
+  let listeningPort = originalPort;
+  
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      logger.warn(`ポート ${listeningPort} は既に使用されています。別のポートを試します...`);
+      listeningPort += 1;
+      if (listeningPort - originalPort < 20) {
+        // 20ポート前後の範囲で試す
+        server.listen(listeningPort, config.gui.host);
+      } else {
+        logger.error(`利用可能なポートが見つかりません (${originalPort}～${listeningPort})`);
+      }
+    } else {
+      logger.error('GUI サーバーのエラー:', err);
+    }
   });
 
-  attachViewer(botController, config.gui.port + 1);
+  server.listen(originalPort, config.gui.host, () => {
+    if (listeningPort !== originalPort) {
+      logger.info(`GUI を起動しました: http://${config.gui.host}:${listeningPort} (ポート ${originalPort} は使用中)`);
+    } else {
+      logger.info(`GUI を起動しました: http://${config.gui.host}:${listeningPort}`);
+    }
+  });
+
+  attachViewer(botController, listeningPort + 1);
 
   return { app, server, io };
 }

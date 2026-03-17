@@ -217,6 +217,8 @@ function connectSocket() {
   socket.on('connect', () => {
     reconnectAttempts = 0;
     setSocketState('connected', socket.id);
+    // Fleet リストを自動更新
+    renderBulkBotList();
     if (autoRefresh) {
       send('refresh');
     }
@@ -309,6 +311,22 @@ function connectSocket() {
       const total = Number(progress?.totalSteps || 0);
       oneclickProgressText.textContent = `${progress?.label || '処理中'} (${current}/${total}) ${progress?.percent || 0}%`;
     }
+  });
+
+  // Fleet Bot一覧ハンドラ
+  socket.on('fleet-bots-list', (botsList) => {
+    console.log('Fleet bots list received:', botsList);
+    if (Array.isArray(botsList)) {
+      renderBulkBotList(botsList);
+    }
+  });
+
+  // 一括操作結果ハンドラ
+  socket.on('bulk-action-result', (result) => {
+    console.log('Bulk action result:', result);
+    showResult(result);
+    // 実行後にFleetリストを更新
+    send('command:fleet-list-bots');
   });
 
   socket.on('unauthorized', (result) => {
@@ -627,6 +645,280 @@ if (document.getElementById('doctorButton')) {
     send('command:system-doctor', null);
   });
 }
+
+// ── Javaバージョン検出 ────────────────────────────────────────────────────
+if (document.getElementById('detectJavaButton')) {
+  document.getElementById('detectJavaButton').addEventListener('click', () => {
+    if (!socket || !socket.connected) {
+      alert('接続していません');
+      return;
+    }
+    send('command:detect-java', null);
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 推奨プリセット・役割プリセット・一括Bot管理
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// 推奨プリセット定義
+const RECOMMENDED_PRESETS = [
+  {
+    id: 'solo-player',
+    name: '🎮 ソロプレイ',
+    description: '1体のBotで全て自動化。初心者向け',
+    modeConfig: {
+      mode: 'autonomous',
+      autoEat: true,
+      autoStore: true,
+      autoMine: true
+    }
+  },
+  {
+    id: 'farming-focus',
+    name: '🌾 農業強化',
+    description: '農業特化。野菜・小麦を大量生産',
+    modeConfig: {
+      mode: 'autonomous',
+      farmingEnabled: true,
+      miningEnabled: false,
+      autoStore: true
+    }
+  },
+  {
+    id: 'mining-focus',
+    name: '⛏️ 採掘強化',
+    description: '鉱石採掘特化。ダイヤ・ネザライト稼ぎ',
+    modeConfig: {
+      mode: 'silent-mining',
+      miningEnabled: true,
+      farmingEnabled: false,
+      autoStore: true
+    }
+  },
+  {
+    id: 'combat-ready',
+    name: '⚔️ 戦闘特化',
+    description: 'PvM/PvP対応。敵MOB・プレイヤー討伐',
+    modeConfig: {
+      mode: 'autonomous',
+      combatEnabled: true,
+      combatProfile: 'berserker'
+    }
+  },
+  {
+    id: 'building-master',
+    name: '🏗️ 建築特化',
+    description: '大規模建築。自動補充機能付き',
+    modeConfig: {
+      mode: 'autonomous',
+      buildingEnabled: true,
+      autoRefill: true
+    }
+  },
+  {
+    id: 'multi-bot-cluster',
+    name: '🤖 マルチBot運用',
+    description: '複数Botの役割分担。効率最大化',
+    modeConfig: {
+      mode: 'autonomous',
+      orchestratorEnabled: true,
+      clusterMode: true
+    }
+  }
+];
+
+// 役割プリセット定義
+const ROLE_PRESETS = [
+  {
+    role: 'primary',
+    name: '主Bot',
+    color: '#4CAF50',
+    description: '全機能対応。指令官として機能',
+    recommendedMode: 'autonomous',
+    specialFeatures: ['全機能', 'AI学習', '他Botの指令']
+  },
+  {
+    role: 'miner',
+    name: '採掘Bot',
+    color: '#9C27B0',
+    description: '鉱石採掘特化',
+    recommendedMode: 'silent-mining',
+    specialFeatures: ['ブランチマイニング', '自動帰還', '鉱石検知']
+  },
+  {
+    role: 'farmer',
+    name: '農業Bot',
+    color: '#00BCD4',
+    description: '農業・採集特化',
+    recommendedMode: 'autonomous',
+    specialFeatures: ['自動耕作', '作物収穫', '紙・砂糖生産']
+  },
+  {
+    role: 'fighter',
+    name: '戦闘Bot',
+    color: '#F44336',
+    description: 'PvM/PvP',
+    recommendedMode: 'autonomous',
+    specialFeatures: ['MOB討伐', 'PvP対応', '回避機能']
+  },
+  {
+    role: 'builder',
+    name: '建築Bot',
+    color: '#FFEB3B',
+    description: '建築・装飾特化',
+    recommendedMode: 'autonomous',
+    specialFeatures: ['Schematic実行', '自動補充', 'ブロック検知']
+  },
+  {
+    role: 'assistant',
+    name: 'アシスタント',
+    color: '#FF9800',
+    description: '複数Botをサポート',
+    recommendedMode: 'player-command',
+    specialFeatures: ['マニュアル操作', 'UI連動', 'ログ監視']
+  },
+  {
+    role: 'worker',
+    name: 'ワーカー',
+    color: '#2196F3',
+    description: '汎用作業Bot',
+    recommendedMode: 'hybrid',
+    specialFeatures: ['混合モード', 'タスク受け付け', '柔軟対応']
+  }
+];
+
+// 推奨プリセットUIをレンダリング
+function renderRecommendedPresets() {
+  const container = document.getElementById('recommendedPresets');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  RECOMMENDED_PRESETS.forEach(preset => {
+    const card = document.createElement('div');
+    card.className = 'preset-card';
+    card.innerHTML = `<h3>${preset.name}</h3><p>${preset.description}</p>`;
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => {
+      showResult({
+        action: 'preset-selected',
+        preset: preset.id,
+        message: `推奨プリセット「${preset.name}」を選択しました`
+      });
+      // 設定をconfig.jsonに反映
+      const configEditor = document.getElementById('configEditor');
+      if (configEditor && socket && socket.connected) {
+        try {
+          const currentConfig = JSON.parse(configEditor.value);
+          Object.assign(currentConfig, preset.modeConfig);
+          configEditor.value = JSON.stringify(currentConfig, null, 2);
+          // 自動保存
+          send('command:config-save', currentConfig);
+        } catch (e) {
+          console.error('プリセット適用エラー:', e);
+        }
+      }
+    });
+    container.appendChild(card);
+  });
+}
+
+// すべての役割プリセットUIをレンダリング
+function renderRolePresetsAll() {
+  const container = document.getElementById('rolePresetsAll');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  ROLE_PRESETS.forEach(preset => {
+    const card = document.createElement('div');
+    card.className = 'preset-card';
+    card.style.borderColor = preset.color;
+    card.innerHTML = `
+      <h3>${preset.name}</h3>
+      <p>${preset.description}</p>
+      <small style="color: #666;">推奨: ${preset.recommendedMode}</small>
+    `;
+    card.addEventListener('click', () => {
+      const bulkPresetRole = document.getElementById('bulkPresetRole');
+      if (bulkPresetRole) {
+        bulkPresetRole.value = preset.role;
+      }
+      showResult({
+        action: 'role-preset-selected',
+        role: preset.role,
+        message: `役割「${preset.name}」を選択。新規Bot追加時に反映されます。`
+      });
+    });
+    container.appendChild(card);
+  });
+}
+
+// 一括Bot管理UIをレンダリング
+function renderBulkBotList() {
+  const container = document.getElementById('bulkBotList');
+  if (!container || !socket || !socket.connected) return;
+  
+  send('command:fleet-list-bots');
+}
+
+// 一括Bot追加イベントハンドラ
+const bulkBotAddButton = document.getElementById('bulkBotAddButton');
+if (bulkBotAddButton) {
+  bulkBotAddButton.addEventListener('click', () => {
+    const id = document.getElementById('bulkBotId')?.value?.trim();
+    const username = document.getElementById('bulkBotUsername')?.value?.trim();
+    const role = document.getElementById('bulkPresetRole')?.value || 'worker';
+    
+    if (!id || !username) {
+      showResult({ ok: false, message: 'BoT IDとユーザー名を入力してください' });
+      return;
+    }
+    
+    send('command:fleet-add-bot', {
+      id,
+      username,
+      role,
+      behavior: { mode: 'hybrid' },
+      memoryFile: `memory-${id}.json`
+    });
+    
+    // フォーム初期化
+    document.getElementById('bulkBotId').value = '';
+    document.getElementById('bulkBotUsername').value = '';
+    document.getElementById('bulkPresetRole').value = '';
+    
+    // リスト更新
+    setTimeout(() => renderBulkBotList(), 500);
+  });
+}
+
+// 一括操作イベントハンドラ
+const bulkActionButton = document.getElementById('bulkActionButton');
+if (bulkActionButton) {
+  bulkActionButton.addEventListener('click', () => {
+    const actionType = document.getElementById('bulkActionType')?.value;
+    const param = document.getElementById('bulkActionParam')?.value?.trim();
+    
+    if (!actionType) {
+      showResult({ ok: false, message: '操作を選択してください' });
+      return;
+    }
+    
+    const bulkPayload = {
+      actionType,
+      param
+    };
+    
+    send('command:bulk-action', bulkPayload);
+  });
+}
+
+// 初期化時にUIをレンダリング
+setTimeout(() => {
+  renderRecommendedPresets();
+  renderRolePresetsAll();
+  renderBulkBotList();
+}, 500);
 
 connectSocket();
 setAutoRefresh(true);
