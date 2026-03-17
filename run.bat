@@ -5,66 +5,31 @@ cd /d %~dp0
 
 echo.
 echo ============================================
-echo   minecraft-auto-bedrock run
+echo   minecraft-auto-bedrock GUI Manager
 echo ============================================
 echo.
 
-:: ── 自動更新 ──────────────────────────────────────────────────
-echo [run] コードを最新版に更新中...
-git pull --rebase 2>nul || echo [run] git pull skipped
-
 :: ── 依存関係更新 ──────────────────────────────────────────────
-echo [run] 依存関係を確認中...
+echo [run] Checking dependencies...
 call npm install --silent
 if errorlevel 1 (
-  echo [run] npm install failed.
-  pause
-  endlocal
-  exit /b 1
+  echo [run] ERROR: npm install failed.
+  echo [run] Continuing with existing installation...
 )
 
-:: ── ViaProxy / 設定ファイル確認 ──────────────────────────────
-call npm run setup --silent
+:: ── GUI を起動（ポート自動選択付き） ─────────────────────────────
+echo [run] Starting GUI...
+node scripts\start-gui.js
 if errorlevel 1 (
-  echo [run] setup step failed.
+  echo [run] ERROR: GUI startup failed.
   pause
   endlocal
   exit /b 1
 )
 
-:: ── Ollama サービス確認（設定済みの場合のみ） ─────────────────
-node scripts\is-llm-enabled.js >nul 2>nul
-if not errorlevel 1 (
-  curl -s http://127.0.0.1:11434/api/version >nul 2>nul
-  if errorlevel 1 (
-    echo [run] Ollama サービスを起動中...
-    start /b "" ollama serve >nul 2>&1
-    timeout /t 3 /nobreak >nul
-  )
-)
-
-:: ── PM2 で Bot 起動 (GUIは同一プロセス内) ─────────────────────
-echo [run] Starting bot with PM2...
-pm2 describe minecraft-auto-bedrock-gui >nul 2>nul
-if not errorlevel 1 (
-  echo [run] Removing legacy duplicate process: minecraft-auto-bedrock-gui
-  pm2 delete minecraft-auto-bedrock-gui >nul 2>nul
-)
-
-pm2 startOrRestart ecosystem.config.cjs
-if errorlevel 1 (
-  echo [run] PM2 startOrRestart failed.
-  pause
-  endlocal
-  exit /b 1
-)
-
-pm2 save
-start "" http://localhost:3000
 echo.
-echo [run] Startup complete.
-echo [run] Bot logs : pm2 logs minecraft-auto-bedrock
-echo [run] GUI URL  : http://localhost:3000
+echo [run] GUI is running. Access: http://localhost:3000
+echo [run] Bot/Java server management: GUI control panel
 echo.
 pause
 endlocal

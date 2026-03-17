@@ -428,7 +428,27 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
           encoding: 'utf-8',
           stdio: 'pipe'
         });
-        return { ok: result.status === 0, message: result.stdout || result.stderr };
+        
+        if (result.status === 0) {
+          // PM2 起動成功後、状態を確認
+          const statusResult = spawnSync('pm2', ['describe', processName || 'minecraft-auto-bedrock', '--json'], {
+            encoding: 'utf-8',
+            stdio: 'pipe'
+          });
+          
+          try {
+            const procInfo = JSON.parse(statusResult.stdout || '[]')[0];
+            if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'online') {
+              return { ok: true, message: `${processName} started successfully`, status: 'online' };
+            } else if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'errored') {
+              return { ok: false, message: 'Process started but errored immediately. Check logs:', logs: procInfo.pm2_env };
+            }
+          } catch {
+            return { ok: true, message: result.stdout || 'Process started' };
+          }
+        }
+        
+        return { ok: false, message: result.stderr || 'Start failed' };
       });
     });
 
@@ -450,7 +470,27 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
           encoding: 'utf-8',
           stdio: 'pipe'
         });
-        return { ok: result.status === 0, message: result.stdout || result.stderr };
+        
+        if (result.status === 0) {
+          // 再起動後、状態を確認
+          const statusResult = spawnSync('pm2', ['describe', processName || 'minecraft-auto-bedrock', '--json'], {
+            encoding: 'utf-8',
+            stdio: 'pipe'
+          });
+          
+          try {
+            const procInfo = JSON.parse(statusResult.stdout || '[]')[0];
+            if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'online') {
+              return { ok: true, message: `${processName} restarted successfully`, status: 'online' };
+            } else if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'errored') {
+              return { ok: false, message: 'Process restarted but errored. Check logs:', restart_count: procInfo.pm2_env.restart_time };
+            }
+          } catch {
+            return { ok: true, message: result.stdout || 'Process restarted' };
+          }
+        }
+        
+        return { ok: false, message: result.stderr || 'Restart failed' };
       });
     });
 
