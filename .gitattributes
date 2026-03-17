@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Windows バッチファイルは常に CRLF (cmd.exe が必要とする)
+*.bat text eol=crlf
+
+# シェルスクリプトは LF のみ
+*.sh  text eol=lf

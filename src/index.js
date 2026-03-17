@@ -1,3 +1,9 @@
+// Windows でコンソールへの日本語出力が化けないよう UTF-8 ストリームに設定
+if (process.platform === 'win32') {
+  try { process.stdout.setEncoding('utf8'); } catch (_) {}
+  try { process.stderr.setEncoding('utf8'); } catch (_) {}
+}
+
 const { loadConfig } = require('./config');
 const { logger } = require('./logger');
 const { ViaProxyManager } = require('./viaproxy');

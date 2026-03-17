@@ -1,6 +1,6 @@
 {
   "name": "minecraft-auto-bedrock",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Java/Bedrock両対応の自律Mineflayer Bot",
   "main": "src/index.js",
