@@ -1,8 +1,8 @@
 {
   "name": "minecraft-auto-bedrock",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Java/Bedrock両対応の自律Mineflayer Bot",
+  "description": "Java/Bedrock両対応の自律Mineflayer Bot - 状態機械AI・農業・探索・マルチサーバー対応",
   "main": "src/index.js",
   "type": "commonjs",
   "engines": {
@@ -18,24 +18,35 @@
     "configure:mining-only": "node scripts/configure-profile.js mining-only",
     "configure:conversation-jp": "node scripts/configure-profile.js conversation-jp",
     "configure:multibot-sample": "node scripts/configure-profile.js multibot-sample",
+    "configure:survival": "node scripts/configure-profile.js survival",
+    "configure:farming": "node scripts/configure-profile.js farming",
     "server:install": "node scripts/mc-server-manager.js install",
     "server:start": "node scripts/mc-server-manager.js start",
     "server:bootstrap": "node scripts/mc-server-manager.js bootstrap",
+    "server:selfhost": "node scripts/self-host-server.js",
+    "server:selfhost:start": "node scripts/self-host-server.js start",
+    "server:selfhost:stop": "node scripts/self-host-server.js stop",
     "bedrock:sync": "node scripts/sync-bedrock-samples.js",
     "doctor": "node scripts/system-doctor.js",
     "oneclick:setup": "node scripts/oneclick-setup.js",
     "gui": "node gui/server.js",
     "deploy": "node scripts/deploy.js",
-    "test": "node --test test/full_system.test.js test/bedrock_data_service.test.js",
+    "test": "node --test test/full_system.test.js test/bedrock_data_service.test.js test/statemachine.test.js",
     "test:gui": "node --test test/gui.integration.test.js",
     "test:e2e": "node --test test/e2e.connection.test.js",
-    "verify:all": "node setup.js && npm test && npm run test:gui && npm run test:e2e",
+    "test:integration": "node --test test/integration/flying_squid_bot.test.js",
+    "verify:all": "node setup.js && npm test && npm run test:gui",
     "pm2:start": "pm2 start ecosystem.config.cjs --env production",
-    "pm2:save": "pm2 save"
+    "pm2:save": "pm2 save",
+    "ollama:setup": "node scripts/install-ollama.js",
+    "ollama:setup:auto": "node scripts/install-ollama.js --auto",
+    "ollama:check": "node scripts/install-ollama.js --check",
+    "install:all": "node scripts/full-install.js",
+    "install:all:auto": "node scripts/full-install.js --auto"
   },
   "dependencies": {
     "express": "^4.21.2",
-    "lowdb": "^7.0.1",
+"minecraft-data": "^3.65.0",
     "mineflayer": "^4.21.0",
     "mineflayer-auto-eat": "^5.0.0",
     "mineflayer-collectblock": "^1.6.0",
@@ -43,11 +54,16 @@
     "mineflayer-pathfinder": "^2.4.5",
     "mineflayer-pvp": "^1.3.2",
     "mineflayer-schem": "^1.2.0",
+    "mineflayer-statemachine": "^1.2.2",
     "mineflayer-tool": "^1.2.0",
+    "minecraft-protocol": "^1.47.0",
     "pm2": "^5.4.3",
     "prismarine-viewer": "^1.28.0",
     "simple-git": "^3.27.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "flying-squid": "^1.5.3"
   }
 }

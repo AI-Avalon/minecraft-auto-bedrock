@@ -1,315 +1,555 @@
 # minecraft-auto-bedrock
 
-Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。ViaProxy 自動取得、記憶DB、GUI監視、運用自動化までを含みます。
+Java版・統合版(Bedrock)両対応の **自律Mineflayer Bot** フレームワーク。
+PrismarineJS エコシステムをフル活用した、状態機械AI・農業・探索・ブランチマイニング・マルチサーバー対応の高機能Bot環境です。
+
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+---
+
+## 目次
+
+- [主な機能](#主な機能)
+- [新機能 v2.0.0](#新機能-v200)
+- [セットアップ](#セットアップ)
+- [モード一覧](#モード一覧)
+- [チャットコマンド](#チャットコマンド)
+- [ブランチマイニング](#ブランチマイニング)
+- [農業モード](#農業モード)
+- [探索モード](#探索モード)
+- [防具・レシピ解析](#防具レシピ解析)
+- [マルチサーバー](#マルチサーバー)
+- [セルフホストサーバー](#セルフホストサーバー)
+- [テスト](#テスト)
+- [設定リファレンス](#設定リファレンス)
+- [クレジット](#クレジット)
+
+---
 
 ## 主な機能
-- edition 切替で Java/Bedrock 接続を自動分岐
-- Bedrock 時の ViaProxy 自動ダウンロードと自動再起動監視
-- チェスト/拠点/死亡地点の永続記憶と資材検索
-- Bedrock 用 waitForTicks を含む安全なアイテム移動
-- AFK対策 Jitter と簡易チャット行動
-- 自動採掘(鉱石プラン)と自動取得(目標数指定)
-- 自動保管モード（不要アイテムを近傍チェストへ自動格納）
-- 自動仕分けモード（近傍チェスト群をカテゴリ単位で巡回整理）
-- 建築失敗時の記憶チェスト自動補充 + リトライ
-- prismarine-viewer + Web GUI によるリアルタイム監視
-- GUIで oneclick 実行の段階進捗表示（ステップごとの進捗バー）
-- simple-git + PM2 連携による運用自動化
-- 起動時アップデート確認（ローカルversion / npm / git上流差分）
-- 外部サーバー接続ポリシー（許可/拒否/ホワイトリスト）
-- プレイヤーチャット指示（日本語ベース）
-- Ollama を使った無料ローカルLLM会話
-- 複数Bot同時起動（役割分担・個別メモリ）
-- Mojang bedrock-samples 解析によるレシピ/ドロップ推定
-- 戦闘/PvP（近接MOB戦闘・プレイヤー指定戦闘）
-- 戦闘AI強化（装備切替・回復行動・遠距離戦闘・敵種別戦術）
-- 役割ベースのタスク割当（Orchestrator）
+
+| カテゴリ | 機能 |
+|----------|------|
+| **接続** | Java/Bedrock 自動切替、ViaProxy 自動DL・管理 |
+| **記憶** | チェスト/拠点/死亡地点の永続記憶 (lowdb)、資材検索 |
+| **採掘** | 自動採掘、**ブランチマイニング**、ストリップマイニング、鉱石脈丸ごと採掘 |
+| **農業** | 自動収穫・種まき・動物繁殖、**水源自動配置**、**灌漑計画**、収穫後自動再植付け |
+| **探索** | 未探索チャンク自動移動、村/廃坑/砦などのPOI自動検出・記録、村人取引 |
+| **AI** | 状態機械AI (IDLE/MINING/FARMING/EXPLORING/COMBAT/RETREATING)、人間らしい行動 |
+| **戦闘** | PvP、近接/遠距離自動切替、装備自動交換、**防具自動装備** (スコアリング付き) |
+| **クラフト** | **レシピ解析** (依存ツリー)、資材不足自動判定、minecraft-data 連携 |
+| **収集** | **リソース収集モード** (採掘/伐採/狩猟/農業/クラフト/取引/宝箱回収) |
+| **GUI** | Web ダッシュボード (Socket.IO)、リアルタイム監視・遠隔操作 |
+| **マルチBot** | フリート管理、役割分担、個別メモリ |
+| **マルチサーバー** | 複数サーバー同時管理、ヘルスチェック、フェイルオーバー |
+| **テスト** | flying-squid による実サーバーなし統合テスト |
+
+---
+
+## 新機能 v2.0.0
+
+### 🧠 状態機械 AI (`src/behaviorStateMachine.js`)
+`mineflayer-statemachine` ベースの自律行動エンジン。
+体力・時間・インベントリ・敵の有無に応じて状態を自動遷移します。
+
+```
+IDLE → MINING → STORING → IDLE
+     ↓ 敵出現           ↓ 満杯
+     COMBAT → IDLE   RETREATING
+```
+
+### ⛏️ ブランチマイニング (`src/branchMiningModule.js`)
+```bash
+# チャットコマンドで起動
+!bot mine branch y=-57        # Y=-57でダイヤ採掘 (1.18+)
+!bot mine strip y=-57 w=16    # ストリップマイニング
+!bot mine vein                 # 近くの鉱石脈を丸ごと採掘
+!bot mine stop
+```
+
+- メイントンネル(1×2) + ブランチトンネルの自動掘削
+- 溶岩検出・水検出による安全チェック
+- たいまつ自動設置（8ブロックごと）
+- インベントリ満杯時に自動でチェストへ格納して再開
+
+### 🌾 農業モード (`src/farmingModule.js`)
+```bash
+!bot farm start    # 農業サイクル開始
+!bot farm harvest  # 収穫のみ
+!bot farm expand   # 農地拡張
+!bot farm water    # 灌漑計画を実行
+```
+
+**水源自動配置**: `autoWater: true` で農地拡張時に水を自動設置。
+空バケツがあれば近くの水源から自動で水を汲みます。
+
+**灌漑計画**: 指定サイズの農地に必要な最小水源数を計算し、最適配置を提示。
+
+### 🗺️ 探索モード (`src/explorerModule.js`)
+```bash
+!bot explore start   # 未探索エリアへ出発
+!bot explore stop
+!bot poi             # 発見済みPOI一覧
+```
+
+村、廃坑、砦、海底神殿、ポータルなどを自動検出・記録します。
+
+### 🛡️ 防具解析 (`src/armorAnalyzer.js`)
+```bash
+!bot armor equip   # 最良防具を自動装備
+!bot armor status  # 現在の防具スコアを表示
+!bot armor suggest # アップグレード提案
+```
+
+アーマーティア・エンチャント・タフネスを加味したスコアリングで最適な装備を選択します。
+
+### 📦 レシピ解析 (`src/recipeAnalyzer.js`)
+```bash
+!bot craft diamond_sword 1    # クラフト実行
+!bot recipe iron_pickaxe      # 材料と手順を表示
+!bot missing netherite_sword  # 不足材料をチェック
+```
+
+minecraft-data の全レシピから依存ツリーを解決。「ダイヤの剣を作るには棒が要る → 棒は板材から → 板材は木材から」まで自動計算します。
+
+### 🎭 人間らしい行動 (`src/humanBehavior.js`)
+- ランダムな首振り・視線追従
+- タイピング遅延付きチャット
+- ダメージ・レアアイテム入手時のリアクション
+- アクティビティ別の独り言フレーズ
+
+### 🌐 マルチサーバー管理 (`src/multiServerManager.js`)
+複数のMinecraftサーバーに対してBotをフリート管理。
+サーバーダウン時のフェイルオーバーにも対応。
+
+---
 
 ## セットアップ
-1. Node.js 20+ と Java をインストール
-2. 依存を導入
-3. 初期設定を生成
 
+### 必要環境
+- Node.js **20.0.0 以上**
+- Java (Bedrock/ローカルサーバー使用時)
+- Git
+
+### 1. 依存関係インストール
 ```bash
+git clone https://github.com/YOUR/minecraft-auto-bedrock
+cd minecraft-auto-bedrock
 npm install
 npm run setup
 ```
 
-### ほぼ全自動セットアップ
+### 2. 接続設定
+```bash
+# Java ローカルサーバー向け
+npm run configure:java
 
-前提ツール確認・依存導入・初期設定・bedrock samples 同期までを一括で実行します。
+# Bedrock サーバー向け
+npm run configure:bedrock
 
+# 外部 Java サーバー向け
+npm run configure:java-external
+
+# 採掘専用（無言モード）
+npm run configure:mining-only
+
+# 日本語会話モード (Ollama)
+npm run configure:conversation-jp
+
+# 複数Botサンプル
+npm run configure:multibot-sample
+
+# サバイバルモード（全自律）
+npm run configure:survival
+
+# 農業特化モード
+npm run configure:farming
+```
+
+### 3. Bot 起動
+```bash
+bash run.sh        # macOS/Linux（自動アップデート付き）
+run.bat            # Windows
+# または
+npm start
+```
+
+### ワンクリックセットアップ
 ```bash
 npm run oneclick:setup
 ```
 
-GUIの「運用 / セットアップ」からも実行でき、進捗バーで段階表示されます。
+---
 
-### Bedrockサンプルデータ同期（Mojang公式）
+## モード一覧
 
-以下で `data/bedrock-samples` に shallow clone / update します。
+| モード | 説明 |
+|--------|------|
+| `autonomous` | 状態機械AIによる完全自律動作 |
+| `hybrid` | 手動指示 + 自動タスクの組み合わせ |
+| `silent-mining` | 無言で採掘に専念 |
+| `player-command` | チャットコマンドのみで動作 |
+| `conversation` | LLM会話に特化 |
 
-```bash
-npm run bedrock:sync
+`config.json` の `behavior.mode` で設定、またはチャットで `!bot mode autonomous` と送信。
+
+---
+
+## チャットコマンド
+
+全コマンドは `!bot ` プレフィックス付きで送信（設定変更可能）。
+
+```
+!bot help                      - コマンド一覧
+!bot status                    - 現在の状態表示
+!bot mode <モード名>            - 動作モード切替
+
+# 採掘
+!bot mine branch [y=<Y>]       - ブランチマイニング開始
+!bot mine strip [y=<Y> w=<幅>] - ストリップマイニング
+!bot mine vein                  - 鉱石脈採掘
+!bot mine stop                  - 採掘停止
+!bot collect <ブロック名> <数>  - 指定ブロックを指定数集める
+
+# 農業
+!bot farm start                - 農業サイクル開始
+!bot farm stop                 - 農業停止
+!bot farm harvest              - 収穫のみ
+!bot farm expand               - 農地拡張
+!bot farm water                - 灌漑実行
+
+# 探索
+!bot explore start             - 探索開始
+!bot explore stop              - 探索停止
+!bot poi                       - POI一覧表示
+
+# 防具・アイテム
+!bot armor equip               - 最良防具装備
+!bot armor status              - 防具スコア表示
+!bot craft <アイテム名> [数]   - クラフト実行
+!bot recipe <アイテム名>       - レシピ・材料表示
+!bot gather <アイテム名> <数>  - リソース収集開始
+
+# 拠点・移動
+!bot base                      - 現在地を拠点に設定
+!bot base <名前>               - 指定名前で拠点設定
+!bot go <拠点名>               - 指定拠点へ移動
+!bot retreat                   - 最寄り拠点へ退避
+!bot fetch <アイテム名>        - チェストから取得
+
+# 保管・仕分け
+!bot store                     - 不要アイテムをチェストへ
+!bot autostore on/off          - 自動保管トグル
+!bot sortchest                 - 近くのチェストを仕分け
+!bot autosort on/off           - 自動仕分けトグル
+
+# 戦闘
+!bot fight <プレイヤー名>      - プレイヤーと戦闘
+!bot fightmob [mob名]          - 最寄りMOBと戦闘
+!bot stop                      - 全タスク停止
 ```
 
-解析対象の中心は `behavior_pack/recipes` と `behavior_pack/loot_tables` です。
+---
 
-### 接続モードの自動設定
-- Java ローカルサーバー向け:
+## ブランチマイニング
 
-```bash
-npm run configure:java
-```
-
-- 外部Javaサーバー接続向け（ローカルサーバー自動起動なし）:
-
-```bash
-npm run configure:java-external
-```
-
-- 採掘専用（無言）モード:
-
-```bash
-npm run configure:mining-only
-```
-
-- 日本語会話モード（Ollama）:
-
-```bash
-npm run configure:conversation-jp
-```
-
-- 複数Botサンプル設定:
-
-```bash
-npm run configure:multibot-sample
-```
-
-### ローカルJavaサーバーの自動準備・起動
-有名ソフトウェア（Vanilla / Paper / Purpur / Fabric / Forge）に対応しています。
-
-- 設定ファイル (`localJavaServer`) を使ってインストール:
-
-```bash
-npm run server:install
-```
-
-- 設定ファイル (`localJavaServer`) を使って起動:
-
-```bash
-npm run server:start
-```
-
-- インストール+起動を一括実行:
-
-```bash
-npm run server:bootstrap
-```
-
-- コマンド引数でソフトウェア/バージョンを指定してインストール:
-
-```bash
-npm run server:install -- --software paper --mc 1.21.4
-npm run server:install -- --software fabric --mc 1.21.4
-npm run server:install -- --software forge --mc 1.20.1 --forge 47.3.0
-npm run server:install -- --software vanilla --mc 1.21.4
-npm run server:install -- --software purpur --mc 1.21.4
-```
-
-`npm run configure:java` を実行すると、`edition=java` と `localJavaServer.autoStart=true` のローカル運用向け設定になります。
-
-## 自動採掘・自動素材収集・レシピ計算
-
-- GUI の「レシピ計算 / 素材計画」から必要素材を計算できます。
-- `素材収集を開始` は、算出素材に対して自動採取可能なものを優先して実行します。
-- MOBドロップが必要な素材は、候補MOB情報を計画に含めます。
-
-## 戦闘 / PvP
-
-- GUI から `近くの敵MOBを攻撃` / `プレイヤー攻撃` / `戦闘停止` を実行できます。
-- チャットコマンドでも以下を実行できます。
-	- `!bot fightmob`
-	- `!bot fight <playerName>`
-	- `!bot stop` (戦闘含む自動作業停止)
-
-### 戦闘AIの挙動
-
-- HPが閾値以下で回復アイテム（例: golden_apple）を優先使用
-- 敵種別で戦術を切替（例: creeper/witch は遠距離、skeleton/spider は近接）
-- 武器を自動切替（弓/クロスボウ/剣/斧）し、可能なら盾/トーテムをオフハンド装備
-- `combat` 設定で回復閾値や戦闘距離を調整可能
-
-## 指示系統 (Orchestrator)
-
-- GUI の Orchestrator で `role` 指定タスクを割り当てできます。
-- `mine / gather / fight-mob / fight-player` をサポート。
-- 例: `role=worker` に採掘、`role=assistant` に素材計算や会話支援を割り当て。
-
-## プレイヤーチャット指示（日本語）
-
-`chatControl.commandPrefix` が `!bot` の場合、以下をゲーム内チャットで実行できます。
-
-- `!bot help`
-- `!bot mode silent-mining|hybrid|conversation|player-command|autonomous`
-- `!bot mine <blockName> <count>`
-- `!bot stop`
-- `!bot base <name>`
-- `!bot fetch <itemName> <count>`
-- `!bot retreat`
-- `!bot status`
-- `!bot store`
-- `!bot autostore on|off`
-- `!bot sortchest`
-- `!bot autosort on|off`
-
-`mode=silent-mining` では Bot 側の自発チャットと会話応答を抑制し、無言運用できます。
-
-### 権限レベル（管理者/一般）
-
-`chatControl.playerRoles` にプレイヤー名を設定すると権限を分離できます。
+`config.json` の `behavior` に追加できる設定:
 
 ```json
-"chatControl": {
-	"playerRoles": {
-		"owner_name": "admin",
-		"friend_name": "general"
-	},
-	"dangerousCommands": ["mode", "stop", "retreat", "base"]
+{
+  "behavior": {
+    "miningSafetyChecks": true,
+    "miningPlaceTorches": true,
+    "miningReturnThreshold": 0.7,
+    "branchMining": {
+      "mainTunnelLength": 64,
+      "branchInterval": 3,
+      "branchLength": 16,
+      "stripHeight": -57,
+      "targetOres": [
+        "diamond_ore", "deepslate_diamond_ore",
+        "iron_ore", "deepslate_iron_ore",
+        "gold_ore", "deepslate_gold_ore",
+        "ancient_debris"
+      ]
+    }
+  }
 }
 ```
 
-`dangerousCommands` に含まれるコマンドは `admin` のみ実行可能です。
+### Y座標の目安 (1.18+)
 
-## LLM会話（無料運用）
+| 目的 | 推奨Y座標 |
+|------|----------|
+| ダイヤモンド | -57 |
+| レッドストーン | -57 |
+| 鉄鉱石 | 15 または -57 |
+| 金鉱石 | -17 |
+| エメラルド | 236 (山岳) |
+| 古代残骸 (ネザー) | 15 |
 
-ローカル無料構成は Ollama を推奨します。
+---
 
-1. Ollama を起動し、モデルを取得
+## 農業モード
 
-```bash
-ollama pull qwen2.5:3b
+```json
+{
+  "behavior": {
+    "farmScanRadius": 32,
+    "farmAutoExpand": true,
+    "farming": {
+      "autoWater": true,
+      "autoReplant": true,
+      "autoStoreToChest": true,
+      "breedRadius": 24
+    }
+  }
+}
 ```
 
-2. `config.json` の `llm.enabled=true` にする（または `npm run configure:conversation-jp`）
+### 灌漑計画
 
-3. Botにメンションを含めたチャットで会話
+ゲーム内のMinecraftの水和ルール: **水からマンハッタン距離4以内のfarmlandが湿る**
 
-例: `@bot 今日は何を掘る？`
-
-Bot は LLM へ以下のコンテキストを渡して応答品質を上げます。
-
-- 現在座標
-- 体力 / 空腹
-- インベントリ要約
-- 記憶チェスト数
-- 記憶チェストの中身要約
-
-## 推奨スペック
-
-### 最小（無料ローカル運用）
-- CPU: 4コア
-- RAM: 16GB
-- Javaサーバー: 2GB
-- Bot+GUI: 1GB
-- Ollama(3B): 4〜6GB
-
-### 推奨（複数Bot + 会話 + 戦闘）
-- CPU: 8コア以上
-- RAM: 32GB
-- Javaサーバー: 4〜8GB
-- Bot 1体あたり: 0.7〜1.2GB
-- Ollama 7B使用時: 8〜12GB 追加
-
-### GPU推奨（任意）
-- Ollamaの応答を高速化したい場合はVRAM 8GB以上を推奨
-
-- Bedrock (avalox.f5.si:19132) 向け:
-
-```bash
-npm run configure:bedrock
+botが自動的に最小水源数で最大農地をカバーする配置を計算します:
+```
+例: 9×9 農地 → 中央に1つの水源で全てカバー
+    17×17 農地 → 最適配置で水源を分散
 ```
 
-## 起動
-```bash
-npm run bootstrap
+---
+
+## 探索モード
+
+```json
+{
+  "behavior": {
+    "explorerStepDistance": 64,
+    "explorerMaxSteps": 20
+  }
+}
 ```
 
-## GUI
-起動後に次を開きます。
-- GUI: http://localhost:3000
-- 3D Viewer: http://localhost:3001
+検出されたPOI（村、廃坑、砦など）は `memory.json` に自動保存され、
+GUIの「記憶チェスト一覧」から確認できます。
 
-### GUI権限制御と監査ログ
-- [config.json](config.json) の gui.security で制御できます。
-- requireToken=true のときは WebUI 上部のトークン欄を入力して再接続してください。
-- readOnly=true で破壊的操作を無効化できます。
-- 操作監査ログは logs/gui-audit.log に JSON Lines 形式で追記されます。
-- WebUI から 自動取得ON/OFF, 自動採掘ON/OFF, 建築+自動補充 を直接実行できます。
-- WebUI の MultiBot 管理パネルから Bot の追加/削除/役割変更をリアルタイム操作できます。
-- WebUI の 戦闘/PvP, レシピ計算/素材計画, Orchestrator パネルで運用を完結できます。
+---
 
-## PM2 自動復旧
-```bash
-npm run pm2:start
-npm run pm2:save
-node scripts/pm2-startup-guide.js
+## 防具・レシピ解析
+
+### 防具スコア計算
+
+```
+スコア = 基本防御値 + タフネス×0.5 + ティア×2 + エンチャントボーナス
+ティア: leather=1 < chainmail=2 < iron=3 < gold=3 < diamond=5 < netherite=6
 ```
 
-## 自動更新
-```bash
-node scripts/deploy.js
+### レシピ依存ツリー例
+
 ```
+netherite_sword が必要
+  └─ diamond_sword (クラフト可能？)
+       ├─ diamond × 2 → 採掘必要
+       └─ stick × 1
+            └─ oak_planks × 2 (クラフト可能？)
+                 └─ oak_log × 1 → 伐採必要
+```
+
+---
+
+## マルチサーバー
+
+`config.json` に `multiServerManager` セクションを追加:
+
+```json
+{
+  "multiServerManager": {
+    "enabled": true,
+    "assignPolicy": "least-players",
+    "pingIntervalMs": 30000,
+    "servers": [
+      { "id": "srv1", "host": "mc1.example.com", "port": 25565, "tags": ["survival"] },
+      { "id": "srv2", "host": "mc2.example.com", "port": 25565, "tags": ["creative"] }
+    ]
+  }
+}
+```
+
+ポリシー: `round-robin` / `least-players` / `failover` / `specified`
+
+---
+
+## セルフホストサーバー
+
+[flying-squid](https://github.com/PrismarineJS/flying-squid) を使ったNode.jsネイティブのMinecraftサーバー。
+テスト・開発用に実サーバーなしで即起動できます。
+
+```bash
+# flying-squid をインストール（初回のみ）
+npm install --save-dev flying-squid
+
+# サーバー起動
+npm run server:selfhost:start
+
+# サーバー停止
+npm run server:selfhost:stop
+
+# 状態確認
+node scripts/self-host-server.js status
+```
+
+`config.json` に設定を追加:
+```json
+{
+  "selfHostServer": {
+    "port": 25565,
+    "version": "1.21.4",
+    "maxPlayers": 20,
+    "flatWorld": true,
+    "onlineMode": false
+  }
+}
+```
+
+---
 
 ## テスト
+
 ```bash
+# 単体テスト（全モジュール）
 npm test
-```
 
-### GUI統合テスト
-```bash
+# GUI統合テスト
 npm run test:gui
+
+# flying-squid を使った統合テスト（flying-squid要インストール）
+RUN_INTEGRATION=1 npm run test:integration
+
+# E2Eテスト（実サーバー必要）
+RUN_E2E=1 E2E_JAVA_HOST=127.0.0.1 npm run test:e2e
 ```
 
-### E2E 実接続テスト (Java/Bedrock)
-実サーバーがある環境のみで実行します。
+---
+
+## ローカル Java サーバー
 
 ```bash
-RUN_E2E=1 \
-E2E_JAVA_HOST=127.0.0.1 \
-E2E_JAVA_PORT=25565 \
-E2E_BEDROCK_HOST=avalox.f5.si \
-E2E_BEDROCK_PORT=19132 \
-E2E_BEDROCK_PROXY_HOST=127.0.0.1 \
-E2E_BEDROCK_PROXY_PORT=25566 \
-npm run test:e2e
+# サーバーインストール（Vanilla/Paper/Purpur/Fabric/Forge）
+npm run server:install
+
+# サーバー起動
+npm run server:start
+
+# インストール + 即起動
+npm run server:bootstrap
 ```
 
-### 全自動検証 (設定チェック + 単体 + GUI + E2E)
-```bash
-npm run verify:all
-```
+---
 
-## 補足
-- Discord通知は拡張ポイントのみで、本実装には含めていません。
-- ViaProxy 固定版を使う場合は config.json の bedrock.proxy.fixedVersion を設定してください。
-
-## 初心者向け: Clone後に一生放置で動かす最初のコマンド
-
-Bedrock(avalox)で常時運用する場合:
+## PM2 自動復旧
 
 ```bash
-npm install && npm run setup && npm run configure:bedrock && npm run pm2:start && npm run pm2:save
+# PM2 でBot起動
+npm run pm2:start
+
+# OS再起動後も自動起動するよう設定
+npm run pm2:save
+pm2 startup  # 表示されたコマンドをコピーして実行
 ```
 
-次にOS再起動時の自動復帰設定を表示:
+---
+
+## Ollama LLM会話
+
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "ollama",
+    "baseUrl": "http://127.0.0.1:11434",
+    "model": "qwen2.5:3b",
+    "timeoutMs": 12000,
+    "fallbackRuleBased": true
+  }
+}
+```
 
 ```bash
-node scripts/pm2-startup-guide.js
+# モデルをダウンロード
+ollama pull qwen2.5:3b
+
+# LLM会話モードでBot起動
+npm run configure:conversation-jp
+npm start
 ```
 
-Javaローカルサーバー（Paper）も含めて常時運用する場合:
+---
 
-```bash
-npm install && npm run setup && npm run configure:java && npm run pm2:start && npm run pm2:save
+## 設定リファレンス
+
+主要な `config.json` キーの抜粋:
+
+```json
+{
+  "edition": "java",
+  "bot": { "username": "AutoBot", "auth": "offline" },
+  "behavior": {
+    "mode": "autonomous",
+    "autoStoreIntervalMs": 12000,
+    "autoSortIntervalMs": 18000,
+    "humanChatIntervalMs": 90000,
+    "farmScanRadius": 32,
+    "farmAutoExpand": false,
+    "explorerStepDistance": 64,
+    "miningSafetyChecks": true,
+    "miningPlaceTorches": true,
+    "stateMachineTickMs": 2000
+  },
+  "combat": {
+    "healThreshold": 10,
+    "retreatThreshold": 8
+  }
+}
 ```
+
+全設定は `config.template.json` を参照してください。
+
+---
+
+## クレジット
+
+### PrismarineJS
+このプロジェクトは [PrismarineJS](https://github.com/PrismarineJS) コミュニティの成果物に大きく依存しています。
+
+| ライブラリ | 用途 | リポジトリ |
+|-----------|------|-----------|
+| mineflayer | Bot コアエンジン | [PrismarineJS/mineflayer](https://github.com/PrismarineJS/mineflayer) |
+| mineflayer-pathfinder | 経路探索・自律移動 | [PrismarineJS/mineflayer-pathfinder](https://github.com/PrismarineJS/mineflayer-pathfinder) |
+| mineflayer-statemachine | 状態機械AI基盤 | [PrismarineJS/mineflayer-statemachine](https://github.com/PrismarineJS/mineflayer-statemachine) |
+| mineflayer-pvp | PvP・戦闘 | [PrismarineJS/mineflayer-pvp](https://github.com/PrismarineJS/mineflayer-pvp) |
+| mineflayer-collectblock | ブロック自動採取 | [PrismarineJS/mineflayer-collectblock](https://github.com/PrismarineJS/mineflayer-collectblock) |
+| mineflayer-tool | ツール自動選択 | [PrismarineJS/mineflayer-tool](https://github.com/PrismarineJS/mineflayer-tool) |
+| mineflayer-auto-eat | 自動食事 | [link-discord/mineflayer-auto-eat](https://github.com/link-discord/mineflayer-auto-eat) |
+| mineflayer-schem | 建築(.schem) | [Rothen/mineflayer-schem](https://github.com/Rothen/mineflayer-schem) |
+| mineflayer-movement | 滑らかな歩行 | [PrismarineJS/mineflayer-movement](https://github.com/PrismarineJS/mineflayer-movement) |
+| prismarine-viewer | 3Dビューア | [PrismarineJS/prismarine-viewer](https://github.com/PrismarineJS/prismarine-viewer) |
+| minecraft-data | ゲームデータ (全レシピ・アイテム) | [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data) |
+| node-minecraft-protocol | プロトコル実装 | [PrismarineJS/node-minecraft-protocol](https://github.com/PrismarineJS/node-minecraft-protocol) |
+| flying-squid | Node.js MCサーバー (テスト用) | [PrismarineJS/flying-squid](https://github.com/PrismarineJS/flying-squid) |
+
+### その他
+| ライブラリ | 用途 |
+|-----------|------|
+| [lowdb](https://github.com/typicode/lowdb) | 永続記憶 (JSON DB) |
+| [express](https://github.com/expressjs/express) | Web GUI サーバー |
+| [socket.io](https://github.com/socketio/socket.io) | リアルタイム通信 |
+| [pm2](https://github.com/Unitech/pm2) | プロセス管理・自動復旧 |
+| [simple-git](https://github.com/steveukx/git-js) | 自動Git同期 |
+| [ViaProxy](https://github.com/ViaVersion/ViaProxy) | Bedrockプロキシ |
+
+---
+
+## ライセンス
+
+MIT License — 詳細は [LICENSE](LICENSE) を参照してください。

@@ -6,6 +6,14 @@ const autoEat = require('mineflayer-auto-eat').plugin;
 const { logger } = require('./logger');
 const { sleep } = require('./utils');
 const { JapaneseLLMResponder } = require('./llmChat');
+const { BotStateMachine }         = require('./behaviorStateMachine');
+const { HumanBehavior }           = require('./humanBehavior');
+const { FarmingModule }           = require('./farmingModule');
+const { ExplorerModule }          = require('./explorerModule');
+const { BranchMiningModule }      = require('./branchMiningModule');
+const { ResourceGatheringModule } = require('./resourceGatheringModule');
+const { ArmorAnalyzer }           = require('./armorAnalyzer');
+const { RecipeAnalyzer }          = require('./recipeAnalyzer');
 
 let movementPlugin;
 let schemPlugin;
@@ -50,6 +58,15 @@ class AutonomousBot {
     this.mode = this.config.behavior?.mode || 'hybrid';
     this.role = this.runtimeContext.role || 'worker';
     this.knowledgeService = this.runtimeContext.knowledgeService || null;
+    // 新モジュール（bot接続後に初期化）
+    this.stateMachine         = null;
+    this.humanBehavior        = null;
+    this.farmingModule        = null;
+    this.explorerModule       = null;
+    this.branchMiningModule   = null;
+    this.resourceGathering    = null;
+    this.armorAnalyzer        = null;
+    this.recipeAnalyzer       = null;
     this.combatConfig = {
       healThreshold: Number(this.config.combat?.healThreshold || 10),
       retreatThreshold: Number(this.config.combat?.retreatThreshold || 8),
@@ -154,6 +171,72 @@ class AutonomousBot {
       this.startChattyLoop();
       this.bot.autoEat.enable();
       await this.scanNearbyChests();
+
+      // ── 新モジュール初期化 ──────────────────────────────────────────────────
+      // 人間らしい行動パターン
+      this.humanBehavior = new HumanBehavior(this.bot, {
+        enableChat:         Boolean(this.config.bot?.chatty ?? true),
+        enableJitter:       true,
+        enableHeadMovement: true,
+        chatInterval:       this.config.behavior?.humanChatIntervalMs || 90_000,
+      });
+      this.humanBehavior.start();
+      // ダメージリアクションをフック
+      this.bot.on('entityHurt', (entity) => {
+        if (entity === this.bot.entity) this.humanBehavior?.onDamaged();
+      });
+      // アイテム拾得リアクション
+      this.bot.on('playerCollect', (_collector, item) => {
+        this.humanBehavior?.onPickup(item);
+      });
+
+      // 農業モジュール
+      this.farmingModule = new FarmingModule(this.bot, this.memoryStore, {
+        scanRadius:  this.config.behavior?.farmScanRadius  || 32,
+        autoExpand:  this.config.behavior?.farmAutoExpand  ?? false,
+      });
+
+      // 探索モジュール
+      this.explorerModule = new ExplorerModule(this.bot, this.memoryStore, {
+        stepDistance: this.config.behavior?.explorerStepDistance || 64,
+        maxSteps:     this.config.behavior?.explorerMaxSteps     || 20,
+      });
+
+      // レシピ解析モジュール（クラフト依存ツリーの解決）
+      this.recipeAnalyzer = new RecipeAnalyzer(this.bot, this.memoryStore);
+      this.recipeAnalyzer.initialize();
+
+      // 防具解析モジュール（最適防具の自動装備）
+      this.armorAnalyzer = new ArmorAnalyzer(this.bot, this.memoryStore);
+      this.armorAnalyzer.initialize();
+
+      // ブランチマイニングモジュール（鉱石採掘の自動化）
+      this.branchMiningModule = new BranchMiningModule(this.bot, this.memoryStore, {
+        safetyChecks:    this.config.behavior?.miningSafetyChecks    ?? true,
+        placeTorches:    this.config.behavior?.miningPlaceTorches     ?? true,
+        returnThreshold: this.config.behavior?.miningReturnThreshold  || 0.7,
+      });
+
+      // リソース収集モジュール（複合採集戦略の調整）
+      this.resourceGathering = new ResourceGatheringModule(this.bot, this.memoryStore, {
+        farming: this.farmingModule,
+        mining:  this.branchMiningModule,
+        recipes: this.recipeAnalyzer,
+      });
+
+      // 状態機械 AI（autonomous モードのとき起動）
+      if (this.mode === 'autonomous') {
+        const goalMap = {
+          'autonomous': 'auto',
+          'silent-mining': 'mine',
+        };
+        this.stateMachine = new BotStateMachine(this, {
+          initialGoal:    goalMap[this.mode] || 'auto',
+          tickIntervalMs: this.config.behavior?.stateMachineTickMs || 2000,
+        });
+        this.stateMachine.attach(this.bot);
+        logger.info('[Bot] 自律状態機械 AI を起動しました');
+      }
     });
 
     this.bot.on('health', async () => {
@@ -294,6 +377,36 @@ class AutonomousBot {
     if (this.bot?.pvp?.stop) {
       this.bot.pvp.stop();
     }
+
+    // 新モジュールのクリーンアップ
+    if (this.stateMachine) {
+      this.stateMachine.detach();
+      this.stateMachine = null;
+    }
+    if (this.humanBehavior) {
+      this.humanBehavior.stop();
+      this.humanBehavior = null;
+    }
+    if (this.explorerModule) {
+      this.explorerModule.stop();
+      this.explorerModule = null;
+    }
+    this.farmingModule = null;
+
+    // 新モジュールのクリーンアップ
+    if (this.branchMiningModule?._running) {
+      this.branchMiningModule._shouldStop = true;
+      this.branchMiningModule._running    = false;
+    }
+    this.branchMiningModule = null;
+
+    if (this.resourceGathering?._running) {
+      this.resourceGathering._running = false;
+    }
+    this.resourceGathering = null;
+
+    this.armorAnalyzer  = null;
+    this.recipeAnalyzer = null;
   }
 
   startAfkJitter() {
@@ -1366,6 +1479,11 @@ class AutonomousBot {
       return { ok: false, reason: 'bot-not-ready' };
     }
 
+    // recipeAnalyzer が初期化済みの場合はそちらに委譲（より高度なクラフト計画）
+    if (this.recipeAnalyzer) {
+      return this.recipeAnalyzer.craftItem(itemName, Number(count || 1));
+    }
+
     const target = this.bot.registry.itemsByName[itemName];
     if (!target) {
       return { ok: false, reason: 'unknown-item' };
@@ -1625,6 +1743,50 @@ class AutonomousBot {
     }
   }
 
+  // ── ブランチマイニング ────────────────────────────────────────────────────
+  /**
+   * ブランチマイニングセッションを開始する
+   * @param {object} options - BranchMiningModule のオプション
+   * @returns {object} 結果
+   */
+  async startBranchMining(options = {}) {
+    if (!this.branchMiningModule) {
+      return { ok: false, reason: 'branch-mining-module-not-initialized' };
+    }
+    return this.branchMiningModule.startBranchMining(options);
+  }
+
+  // ── リソース収集 ──────────────────────────────────────────────────────────
+  /**
+   * 収集プランを実行する
+   * @param {Array|string} plan - [{resource, count, strategy}] の配列、またはリソース名
+   * @param {number} count      - plan が文字列の場合の収集数
+   * @param {object} options    - オプション（strategy など）
+   * @returns {object} 収集結果
+   */
+  async gatherResources(plan, count = 1, options = {}) {
+    if (!this.resourceGathering) {
+      return { ok: false, reason: 'resource-gathering-module-not-initialized' };
+    }
+    // 配列なら gatherAll、文字列なら gatherResources
+    if (Array.isArray(plan)) {
+      return this.resourceGathering.gatherAll(plan);
+    }
+    return this.resourceGathering.gatherResources(plan, count, options);
+  }
+
+  // ── 防具自動装備 ──────────────────────────────────────────────────────────
+  /**
+   * インベントリから最良の防具を自動装備する
+   * @returns {object} 装備結果
+   */
+  async autoEquipArmor() {
+    if (!this.armorAnalyzer) {
+      return { ok: false, reason: 'armor-analyzer-not-initialized' };
+    }
+    return this.armorAnalyzer.autoEquipBestArmor();
+  }
+
   status() {
     const pos = this.bot?.entity?.position;
     return {
@@ -1679,7 +1841,13 @@ class AutonomousBot {
         name: item.name,
         count: item.count,
         displayName: item.displayName
-      })) || []
+      })) || [],
+      stateMachine:     this.stateMachine?.getStatus()          || null,
+      farming:          this.farmingModule?.getStatus()          || null,
+      explorer:         this.explorerModule?.getStatus()         || null,
+      branchMining:     this.branchMiningModule?.getProgress()   || null,
+      resourceGathering: this.resourceGathering?.getStatus()     || null,
+      armorScore:       this.armorAnalyzer?.getArmorScore()      ?? null,
     };
   }
 }

@@ -5,7 +5,6 @@ on:
     tags:
       - 'v*.*.*'
 
-# GitHub Releases への書き込み権限を付与
 permissions:
   contents: write
 
@@ -15,43 +14,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ─── 1. ソースコードを取得 ─────────────────────────────────────
       - name: チェックアウト
         uses: actions/checkout@v4
 
-      # ─── 2. Node.js のセットアップ (バージョン照合に使用) ───────────
       - name: Node.js セットアップ
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # ─── 3. タグからバージョン文字列を取得 ──────────────────────────
+      - name: 依存関係インストール
+        run: npm ci --ignore-scripts
+
       - name: バージョン取得
         id: ver
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           VER="${TAG#v}"
-          echo "tag=$TAG"  >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"     >> "$GITHUB_OUTPUT"
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "タグ: $TAG  /  バージョン: $VER"
+          echo "タグ=$TAG  バージョン=$VER"
 
-      # ─── 4. package.json バージョンとタグの照合 ─────────────────────
       - name: package.json バージョン照合
         run: |
           PKG_VER=$(node -p "require('./package.json').version")
           TAG_VER="${{ steps.ver.outputs.version }}"
-          echo "package.json: $PKG_VER  / タグ: $TAG_VER"
+          echo "package.json=$PKG_VER  タグ=$TAG_VER"
           if [ "$PKG_VER" != "$TAG_VER" ]; then
-            echo "::warning::package.json のバージョン ($PKG_VER) とタグ ($TAG_VER) が一致していません"
+            echo "::error::package.json ($PKG_VER) とタグ ($TAG_VER) が不一致"
+            exit 1
           fi
 
-      # ─── 5. Windows パッケージ (ZIP) 作成 ───────────────────────────
+      - name: テスト実行
+        run: npm test
+        continue-on-error: true
+
+      - name: dos2unix インストール
+        run: sudo apt-get install -y dos2unix
+
       - name: Windows パッケージ作成 (ZIP)
         run: |
           TAG="${{ steps.ver.outputs.tag }}"
           PKG="minecraft-auto-bedrock-windows-${TAG}"
 
-          # ファイルをコピー (node_modules / .git / 機密ファイル除外)
           rsync -a \
             --exclude='.git' \
             --exclude='dist' \
@@ -62,27 +66,24 @@ jobs:
             --exclude='.env' \
             --exclude='*.log' \
             --exclude='config.json' \
+            --exclude='memory.json' \
+            --exclude='.selfhost.pid' \
             ./ "dist/${PKG}/"
 
-          # BATファイルの改行コードを LF → CRLF に変換 (Windows cmd.exe に必須)
-          for bat_file in "dist/${PKG}/scripts/install-prereqs.bat" "dist/${PKG}/run.bat"; do
-            python3 - "$bat_file" << 'PYEOF'
-import sys, pathlib
-p = pathlib.Path(sys.argv[1])
-if p.exists():
-    p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', b'\r\n'))
-PYEOF
+          for bat_file in \
+            "dist/${PKG}/scripts/install-prereqs.bat" \
+            "dist/${PKG}/run.bat"; do
+            [ -f "$bat_file" ] && unix2dos "$bat_file"
           done
 
           cd dist
           zip -r "../${PKG}.zip" "${PKG}"
-          echo "✅ Windows ZIP 作成完了: ${PKG}.zip"
+          echo "Windows ZIP 完了: ${PKG}.zip"
 
-      # ─── 6. macOS パッケージ (tar.gz) 作成 ──────────────────────────
-      - name: macOS パッケージ作成 (tar.gz)
+      - name: macOS/Linux パッケージ作成 (tar.gz)
         run: |
           TAG="${{ steps.ver.outputs.tag }}"
-          PKG="minecraft-auto-bedrock-macos-${TAG}"
+          PKG="minecraft-auto-bedrock-macos-linux-${TAG}"
 
           rsync -a \
             --exclude='.git' \
@@ -94,56 +95,23 @@ PYEOF
             --exclude='.env' \
             --exclude='*.log' \
             --exclude='config.json' \
+            --exclude='memory.json' \
+            --exclude='.selfhost.pid' \
             ./ "dist/${PKG}/"
 
-          # シェルスクリプトに実行権限を付与
-          chmod +x "dist/${PKG}/scripts/install-prereqs.sh" \
-                   "dist/${PKG}/run.sh"
+          chmod +x \
+            "dist/${PKG}/scripts/install-prereqs.sh" \
+            "dist/${PKG}/run.sh"
 
           cd dist
           tar -czf "../${PKG}.tar.gz" "${PKG}"
-          echo "✅ macOS tar.gz 作成完了: ${PKG}.tar.gz"
+          echo "macOS/Linux tar.gz 完了: ${PKG}.tar.gz"
 
-      # ─── 7. リリースノート生成 ───────────────────────────────────────
       - name: リリースノート生成
-        env:
-          RELEASE_TAG: ${{ steps.ver.outputs.tag }}
         run: |
-          python3 - << 'PYEOF'
-import os, textwrap, pathlib
+          python3 scripts/make-release-notes.py "${{ steps.ver.outputs.tag }}" > release-notes.md
+          echo "リリースノート生成完了"
 
-tag = os.environ['RELEASE_TAG']
-
-notes = textwrap.dedent(f"""\
-## minecraft-auto-bedrock {tag}
-
-### インストール手順
-
-#### Windows
-1. `minecraft-auto-bedrock-windows-{tag}.zip` をダウンロードして解凍
-2. `install-prereqs.bat` を **管理者として実行** → Node.js / Java / Git を自動インストール
-3. `run.bat` をダブルクリックして Bot 起動
-
-#### macOS
-1. `minecraft-auto-bedrock-macos-{tag}.tar.gz` をダウンロードして展開
-2. ターミナルで `bash install-prereqs.sh` を実行 → Node.js / Java / Git を自動インストール
-3. `bash run.sh` で Bot 起動
-
----
-
-### 主な機能
-- Java / Bedrock 両対応の自律 Mineflayer Bot
-- 自動採掘・自動保管・自動仕分けモード
-- Web GUI (Socket.IO) による遠隔操作 & リアルタイム状態表示
-- ワンクリックセットアップ (進捗バー付き)
-- 起動時の自動アップデート確認
-""")
-
-pathlib.Path('release-notes.md').write_text(notes, encoding='utf-8')
-print("リリースノート生成完了")
-PYEOF
-
-      # ─── 8. GitHub Release を作成してアセットをアップロード ─────────
       - name: GitHub リリース作成
         env:
           GH_TOKEN: ${{ github.token }}
@@ -153,5 +121,5 @@ PYEOF
             --title "minecraft-auto-bedrock ${TAG}" \
             --notes-file release-notes.md \
             "minecraft-auto-bedrock-windows-${TAG}.zip" \
-            "minecraft-auto-bedrock-macos-${TAG}.tar.gz"
-          echo "🎉 リリース作成完了: $TAG"
+            "minecraft-auto-bedrock-macos-linux-${TAG}.tar.gz"
+          echo "リリース作成完了: $TAG"
