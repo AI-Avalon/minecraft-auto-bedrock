@@ -8,6 +8,19 @@ const PROFILES = {
       host: '127.0.0.1',
       port: 25565,
       version: false
+    },
+    localJavaServer: {
+      enabled: true,
+      autoStart: true,
+      software: 'paper',
+      minecraftVersion: '1.21.4',
+      forgeVersion: '',
+      directory: 'local-server',
+      javaPath: 'java',
+      xms: '1G',
+      xmx: '2G',
+      nogui: true,
+      eula: true
     }
   },
   'bedrock-avalox': {

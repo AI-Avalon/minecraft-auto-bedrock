@@ -4,11 +4,18 @@ const { ViaProxyManager } = require('./viaproxy');
 const { MemoryStore } = require('./memoryStore');
 const { AutonomousBot } = require('./bot');
 const { startGuiServer } = require('./guiServer');
+const { JavaServerManager } = require('./javaServer');
 
 async function bootstrap() {
   const config = loadConfig();
   const memoryStore = new MemoryStore(config);
   await memoryStore.init();
+
+  let javaServerManager = null;
+  if (config.edition === 'java' && config.localJavaServer?.enabled && config.localJavaServer?.autoStart) {
+    javaServerManager = new JavaServerManager(config.localJavaServer, config.java);
+    await javaServerManager.start();
+  }
 
   let proxyManager = null;
   if (config.edition === 'bedrock' && config.bedrock.proxy.enabled && config.bedrock.proxy.enableAutoStart) {
@@ -29,6 +36,10 @@ async function bootstrap() {
 
     if (proxyManager) {
       await proxyManager.stop();
+    }
+
+    if (javaServerManager) {
+      await javaServerManager.stop();
     }
 
     process.exit(0);

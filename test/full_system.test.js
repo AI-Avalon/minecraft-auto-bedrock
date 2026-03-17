@@ -51,3 +51,15 @@ test('設定プロファイルスクリプトが存在すること', () => {
   const root = process.cwd();
   assert.ok(fs.existsSync(path.join(root, 'scripts/configure-profile.js')));
 });
+
+test('ローカルJavaサーバー設定が存在し有効な software を持つこと', () => {
+  const config = loadConfig();
+  assert.equal(typeof config.localJavaServer, 'object');
+  const software = config.localJavaServer.software;
+  assert.ok(['vanilla', 'paper', 'purpur', 'fabric', 'forge'].includes(software));
+});
+
+test('ローカルJavaサーバー管理スクリプトが存在すること', () => {
+  const root = process.cwd();
+  assert.ok(fs.existsSync(path.join(root, 'scripts/mc-server-manager.js')));
+});

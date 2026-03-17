@@ -30,6 +30,39 @@ npm run setup
 npm run configure:java
 ```
 
+### ローカルJavaサーバーの自動準備・起動
+有名ソフトウェア（Vanilla / Paper / Purpur / Fabric / Forge）に対応しています。
+
+- 設定ファイル (`localJavaServer`) を使ってインストール:
+
+```bash
+npm run server:install
+```
+
+- 設定ファイル (`localJavaServer`) を使って起動:
+
+```bash
+npm run server:start
+```
+
+- インストール+起動を一括実行:
+
+```bash
+npm run server:bootstrap
+```
+
+- コマンド引数でソフトウェア/バージョンを指定してインストール:
+
+```bash
+npm run server:install -- --software paper --mc 1.21.4
+npm run server:install -- --software fabric --mc 1.21.4
+npm run server:install -- --software forge --mc 1.20.1 --forge 47.3.0
+npm run server:install -- --software vanilla --mc 1.21.4
+npm run server:install -- --software purpur --mc 1.21.4
+```
+
+`npm run configure:java` を実行すると、`edition=java` と `localJavaServer.autoStart=true` のローカル運用向け設定になります。
+
 - Bedrock (avalox.f5.si:19132) 向け:
 
 ```bash
@@ -110,4 +143,10 @@ npm install && npm run setup && npm run configure:bedrock && npm run pm2:start &
 
 ```bash
 node scripts/pm2-startup-guide.js
+```
+
+Javaローカルサーバー（Paper）も含めて常時運用する場合:
+
+```bash
+npm install && npm run setup && npm run configure:java && npm run pm2:start && npm run pm2:save
 ```

@@ -7,6 +7,18 @@ function ensureEdition(edition) {
   }
 }
 
+function ensureLocalJavaServer(localJavaServer) {
+  if (!localJavaServer) {
+    return;
+  }
+
+  const software = localJavaServer.software;
+  const allowed = ['vanilla', 'paper', 'purpur', 'fabric', 'forge'];
+  if (!allowed.includes(software)) {
+    throw new Error(`localJavaServer.software は次のみ指定できます: ${allowed.join(', ')}`);
+  }
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -17,6 +29,7 @@ function loadConfig() {
   const text = fs.readFileSync(configPath, 'utf8');
   const config = JSON.parse(text);
   ensureEdition(config.edition);
+  ensureLocalJavaServer(config.localJavaServer);
 
   return config;
 }
