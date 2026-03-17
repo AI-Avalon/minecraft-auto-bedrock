@@ -3,17 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MineCraft Auto Bot - コントロールセンター</title>
+    <title>Minecraft Auto Bot | Control Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/style.css" />
   </head>
-  <body>
+  <body class="theme-minecraft">
+    <div class="world-glow" aria-hidden="true"></div>
+    <div class="stone-noise" aria-hidden="true"></div>
     <!-- トースト通知コンテナ -->
     <div id="toast-container"></div>
 
     <!-- ヘッダー -->
     <header class="app-header">
       <div class="header-left">
-        <span class="logo">⛏️ Auto Bot</span>
+        <span class="logo">⛏ CONTROL FORGE</span>
         <span id="modeBadge" class="badge badge-mode">MODE: -</span>
         <span id="socketState" class="badge badge-disconnected">切断中</span>
         <span id="securityHint" class="badge badge-security visually-hidden"></span>

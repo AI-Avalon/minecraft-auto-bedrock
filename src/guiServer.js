@@ -3,6 +3,7 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { spawn, spawnSync } = require('child_process');
 const { logger } = require('./logger');
 const { systemDoctor, detectJavaVersion, oneClickBootstrap } = require('./systemManager');
 
@@ -72,6 +73,55 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
   const security = config.gui.security || {};
   const audit = createAuditWriter(config);
   const limiter = createCommandLimiter(config);
+  const logStreams = new Map();
+
+  function normalizeError(error) {
+    const message = error?.message || String(error || 'unknown-error');
+    return {
+      message,
+      detail: error?.stack || String(error || '')
+    };
+  }
+
+  function targetController(targetBotId) {
+    if (typeof botController.targetController === 'function') {
+      return botController.targetController(targetBotId);
+    }
+
+    if (!targetBotId) {
+      return botController.primaryEntry?.controller || botController;
+    }
+
+    return null;
+  }
+
+  function stopLogStream(socketId) {
+    const proc = logStreams.get(socketId);
+    if (!proc) {
+      return;
+    }
+
+    try {
+      proc.kill('SIGTERM');
+    } catch {
+      // noop
+    }
+    logStreams.delete(socketId);
+  }
+
+  function runPm2(args = []) {
+    const result = spawnSync('pm2', args, {
+      encoding: 'utf-8',
+      stdio: 'pipe',
+      maxBuffer: 10 * 1024 * 1024
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    return result;
+  }
 
   async function runCommand(socket, action, payload, handler) {
     if (security.readOnly) {
@@ -99,8 +149,14 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       socket.emit('command-result', { action, ok: true, result });
       audit({ type: 'command-ok', action, payload, socketId: socket.id });
     } catch (error) {
-      socket.emit('command-result', { action, ok: false, reason: 'internal-error' });
-      audit({ type: 'command-error', action, payload, socketId: socket.id, error: String(error) });
+      const err = normalizeError(error);
+      socket.emit('command-result', {
+        action,
+        ok: false,
+        reason: err.message,
+        result: { message: err.message }
+      });
+      audit({ type: 'command-error', action, payload, socketId: socket.id, error: err.message });
       logger.warn(`GUI command failed: ${action}`, error);
     }
   }
@@ -209,6 +265,159 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'stop-auto-mine', {}, async () => {
         return botController.stopAutoMine(targetBotId);
+      });
+    });
+
+    socket.on('command:mining-branch', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'mining-branch', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'startBranchMining', payload?.options || {});
+      });
+    });
+
+    socket.on('command:mining-strip', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'mining-strip', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.branchMiningModule?.startStripMining) {
+          throw new Error('strip-mining-not-available');
+        }
+        return ctrl.branchMiningModule.startStripMining(payload?.options || {});
+      });
+    });
+
+    socket.on('command:mining-vein', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      const oreName = payload?.oreName || 'diamond_ore';
+      await runCommand(socket, 'mining-vein', payload || {}, async () => {
+        return botController.startAutoCollect(oreName, Number(payload?.targetCount || 32), targetBotId);
+      });
+    });
+
+    socket.on('command:mining-stop', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'mining-stop', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        const stopped = [];
+        if (ctrl?.branchMiningModule?.stop) {
+          // eslint-disable-next-line no-await-in-loop
+          await ctrl.branchMiningModule.stop();
+          stopped.push('branch');
+        }
+        if (ctrl?.stopAutoMine) {
+          // eslint-disable-next-line no-await-in-loop
+          await ctrl.stopAutoMine();
+          stopped.push('auto-mine');
+        }
+        return { ok: true, stopped };
+      });
+    });
+
+    socket.on('command:farming-start', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-start', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule?.startCycle) {
+          throw new Error('farming-module-not-available');
+        }
+        return ctrl.farmingModule.startCycle();
+      });
+    });
+
+    socket.on('command:farming-harvest', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-harvest', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule?.harvestAll) {
+          throw new Error('farming-module-not-available');
+        }
+        const count = await ctrl.farmingModule.harvestAll();
+        return { ok: true, harvested: count };
+      });
+    });
+
+    socket.on('command:farming-expand', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-expand', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule?.expandFarmland) {
+          throw new Error('farming-module-not-available');
+        }
+        const count = await ctrl.farmingModule.expandFarmland();
+        return { ok: true, expanded: count };
+      });
+    });
+
+    socket.on('command:farming-water', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-water', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule) {
+          throw new Error('farming-module-not-available');
+        }
+        ctrl.farmingModule.autoWater = true;
+        const count = await ctrl.farmingModule.expandFarmland();
+        return { ok: true, watered: count };
+      });
+    });
+
+    socket.on('command:farming-breed', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-breed', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule?.breedAnimals) {
+          throw new Error('farming-module-not-available');
+        }
+        const count = await ctrl.farmingModule.breedAnimals();
+        return { ok: true, actions: count, mob: payload?.mob || 'all' };
+      });
+    });
+
+    socket.on('command:farming-stop', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'farming-stop', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.farmingModule) {
+          throw new Error('farming-module-not-available');
+        }
+        ctrl.farmingModule._running = false;
+        return { ok: true };
+      });
+    });
+
+    socket.on('command:explore-start', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'explore-start', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.explorerModule?.explore) {
+          throw new Error('explorer-module-not-available');
+        }
+        const steps = Number(payload?.steps || ctrl.explorerModule.maxSteps || 20);
+        ctrl.explorerModule.explore(steps);
+        return { ok: true, steps };
+      });
+    });
+
+    socket.on('command:explore-stop', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'explore-stop', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.explorerModule?.stop) {
+          throw new Error('explorer-module-not-available');
+        }
+        ctrl.explorerModule.stop();
+        return { ok: true };
+      });
+    });
+
+    socket.on('command:explore-poi', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'explore-poi', payload || {}, async () => {
+        const ctrl = targetController(targetBotId);
+        if (!ctrl?.explorerModule?.getPOIList) {
+          throw new Error('explorer-module-not-available');
+        }
+        return { ok: true, pois: ctrl.explorerModule.getPOIList() };
       });
     });
 
@@ -361,6 +570,54 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:external-add-bot', async (payload) => {
+      await runCommand(socket, 'external-add-bot', payload || {}, async () => {
+        const host = String(payload?.host || '').trim();
+        const username = String(payload?.username || '').trim();
+        const edition = payload?.edition === 'bedrock' ? 'bedrock' : 'java';
+
+        if (!host || !username) {
+          throw new Error('host-and-username-required');
+        }
+
+        const port = Number(payload?.port || (edition === 'bedrock' ? 19132 : 25565));
+        const role = payload?.role || 'worker';
+        const id = payload?.id || `${username}-${Date.now()}`;
+        const auth = payload?.authType || 'offline';
+
+        const spec = {
+          id,
+          username,
+          role,
+          auth,
+          behavior: {
+            mode: payload?.mode || 'hybrid'
+          },
+          memoryFile: `memory-${id}.json`
+        };
+
+        if (edition === 'bedrock') {
+          spec.bedrock = {
+            proxy: {
+              listenHost: host,
+              listenPort: port,
+              enabled: true,
+              enableAutoStart: false,
+              enableAutoDownload: true
+            }
+          };
+        } else {
+          spec.java = {
+            host,
+            port,
+            version: false
+          };
+        }
+
+        return botController.addBot(spec);
+      });
+    });
+
     socket.on('command:fleet-remove-bot', async (payload) => {
       await runCommand(socket, 'fleet-remove-bot', payload || {}, async () => {
         return botController.removeBot(payload?.id);
@@ -429,18 +686,11 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
     // ── プロセス管理コマンド ──────────────────────────────────────────────
     socket.on('command:process-start', async (processName) => {
       await runCommand(socket, 'process-start', { processName }, async () => {
-        const { spawnSync } = require('child_process');
-        const result = spawnSync('pm2', ['start', processName || 'ecosystem.config.cjs'], {
-          encoding: 'utf-8',
-          stdio: 'pipe'
-        });
+        const result = runPm2(['start', processName || 'ecosystem.config.cjs']);
         
         if (result.status === 0) {
           // PM2 起動成功後、状態を確認
-          const statusResult = spawnSync('pm2', ['describe', processName || 'minecraft-auto-bedrock', '--json'], {
-            encoding: 'utf-8',
-            stdio: 'pipe'
-          });
+          const statusResult = runPm2(['describe', processName || 'minecraft-auto-bedrock', '--json']);
           
           try {
             const procInfo = JSON.parse(statusResult.stdout || '[]')[0];
@@ -460,29 +710,18 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
 
     socket.on('command:process-stop', async (processName) => {
       await runCommand(socket, 'process-stop', { processName }, async () => {
-        const { spawnSync } = require('child_process');
-        const result = spawnSync('pm2', ['stop', processName || 'minecraft-auto-bedrock'], {
-          encoding: 'utf-8',
-          stdio: 'pipe'
-        });
+        const result = runPm2(['stop', processName || 'minecraft-auto-bedrock']);
         return { ok: result.status === 0, message: result.stdout || result.stderr };
       });
     });
 
     socket.on('command:process-restart', async (processName) => {
       await runCommand(socket, 'process-restart', { processName }, async () => {
-        const { spawnSync } = require('child_process');
-        const result = spawnSync('pm2', ['restart', processName || 'minecraft-auto-bedrock'], {
-          encoding: 'utf-8',
-          stdio: 'pipe'
-        });
+        const result = runPm2(['restart', processName || 'minecraft-auto-bedrock']);
         
         if (result.status === 0) {
           // 再起動後、状態を確認
-          const statusResult = spawnSync('pm2', ['describe', processName || 'minecraft-auto-bedrock', '--json'], {
-            encoding: 'utf-8',
-            stdio: 'pipe'
-          });
+          const statusResult = runPm2(['describe', processName || 'minecraft-auto-bedrock', '--json']);
           
           try {
             const procInfo = JSON.parse(statusResult.stdout || '[]')[0];
@@ -502,11 +741,7 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
 
     socket.on('command:process-list', async () => {
       await runCommand(socket, 'process-list', {}, async () => {
-        const { spawnSync } = require('child_process');
-        const result = spawnSync('pm2', ['list', '--json'], {
-          encoding: 'utf-8',
-          stdio: 'pipe'
-        });
+        const result = runPm2(['list', '--json']);
         if (result.status === 0) {
           try {
             return JSON.parse(result.stdout || '[]');
@@ -522,12 +757,7 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       const processName = payload?.processName || 'minecraft-auto-bedrock';
       const lines = payload?.lines || 50;
       await runCommand(socket, 'process-logs', { processName, lines }, async () => {
-        const { spawnSync } = require('child_process');
-        const result = spawnSync('pm2', ['logs', processName, '--lines', String(lines), '--nostream'], {
-          encoding: 'utf-8',
-          stdio: 'pipe',
-          maxBuffer: 10 * 1024 * 1024
-        });
+        const result = runPm2(['logs', processName, '--lines', String(lines), '--nostream']);
         if (result.status === 0) {
           return { ok: true, logs: result.stdout || '' };
         }
@@ -535,18 +765,28 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:process-delete', async (processName) => {
+      await runCommand(socket, 'process-delete', { processName }, async () => {
+        const target = processName || 'minecraft-auto-bedrock';
+        const result = runPm2(['delete', target]);
+        try {
+          runPm2(['flush', target]);
+        } catch {
+          // flush 失敗は許容
+        }
+        return { ok: result.status === 0, message: result.stdout || result.stderr };
+      });
+    });
+
     // ── リアルタイムログストリーミング ──────────────────────────────
     socket.on('stream:logs-start', async (payload) => {
-      const { spawn } = require('child_process');
       const processName = payload?.processName || 'minecraft-auto-bedrock';
-      
+      stopLogStream(socket.id);
+
       const pm2Proc = spawn('pm2', ['logs', processName, '--lines', '0'], {
         stdio: ['ignore', 'pipe', 'pipe']
       });
-
-      const cleanupStream = () => {
-        pm2Proc.kill();
-      };
+      logStreams.set(socket.id, pm2Proc);
 
       pm2Proc.stdout.on('data', (chunk) => {
         socket.emit('log-line', { text: chunk.toString() });
@@ -557,11 +797,13 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
 
       pm2Proc.on('close', () => {
+        logStreams.delete(socket.id);
         socket.emit('log-stream-closed', { processName });
       });
+    });
 
-      socket.on('disconnect', cleanupStream);
-      socket.on('stream:logs-stop', cleanupStream);
+    socket.on('stream:logs-stop', () => {
+      stopLogStream(socket.id);
     });
 
     // ── Fleet/Bot 一括管理 ──────────────────────────────────────────────
@@ -671,11 +913,8 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
-    socket.on('stream:logs-stop', () => {
-      // ストリーム停止はクライアント側で emit される
-    });
-
     socket.on('disconnect', () => {
+      stopLogStream(socket.id);
       limiter.remove(socket.id);
       audit({ type: 'disconnect', socketId: socket.id });
     });

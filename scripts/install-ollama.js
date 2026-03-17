@@ -41,10 +41,23 @@ const RECOMMENDED_MODELS = [
 ];
 
 const args = process.argv.slice(2);
+
+function getArgValue(flag) {
+  const idx = args.indexOf(flag);
+  if (idx < 0 || idx + 1 >= args.length) {
+    return null;
+  }
+  const value = args[idx + 1];
+  if (!value || value.startsWith('--')) {
+    return null;
+  }
+  return value;
+}
+
 const AUTO_MODE    = args.includes('--auto');
 const CHECK_ONLY   = args.includes('--check');
-const CLI_MODEL    = args[args.indexOf('--model') + 1] || null;
-const CLI_GPU_MODE = args[args.indexOf('--gpu')   + 1] || 'auto'; // auto/yes/no
+const CLI_MODEL    = getArgValue('--model');
+const CLI_GPU_MODE = getArgValue('--gpu') || 'auto'; // auto/yes/no
 
 // ── ユーティリティ ──────────────────────────────────────────────────────────
 function run(cmd, opts = {}) {
