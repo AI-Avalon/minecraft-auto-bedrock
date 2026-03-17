@@ -54,12 +54,12 @@ if errorlevel 1 (
 )
 
 pm2 save
-start "" http://127.0.0.1:3000
+start "" http://localhost:3000
 echo.
 echo [run] Startup complete.
 echo [run] Bot logs : pm2 logs minecraft-auto-bedrock
 echo [run] GUI logs : pm2 logs minecraft-auto-bedrock-gui
-echo [run] GUI URL  : http://127.0.0.1:3000
+echo [run] GUI URL  : http://localhost:3000
 echo.
 pause
 endlocal
