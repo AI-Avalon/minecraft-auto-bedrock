@@ -5,6 +5,7 @@ const toolPlugin = require('mineflayer-tool').plugin;
 const autoEat = require('mineflayer-auto-eat').plugin;
 const { logger } = require('./logger');
 const { sleep } = require('./utils');
+const { JapaneseLLMResponder } = require('./llmChat');
 
 let movementPlugin;
 let schemPlugin;
@@ -32,10 +33,34 @@ class AutonomousBot {
     this.chatTimer = null;
     this.autoCollectTask = null;
     this.autoMineTask = null;
+    this.mode = this.config.behavior?.mode || 'hybrid';
+    this.chatControl = {
+      enabled: Boolean(this.config.chatControl?.enabled ?? true),
+      requirePrefix: Boolean(this.config.chatControl?.requirePrefix ?? true),
+      commandPrefix: this.config.chatControl?.commandPrefix || '!bot',
+      allowAllPlayers: Boolean(this.config.chatControl?.allowAllPlayers ?? true),
+      allowedPlayers: this.config.chatControl?.allowedPlayers || []
+    };
+    this.llmResponder = new JapaneseLLMResponder(this.config.llm || {}, this.config.bot.username);
   }
 
   get isBedrockMode() {
     return this.config.edition === 'bedrock';
+  }
+
+  assertConnectionAllowed(host) {
+    const policy = this.config.connectionPolicy || {};
+    if (policy.allowExternalServers === false) {
+      const isLocal = ['127.0.0.1', 'localhost', '::1'].includes(String(host || '').toLowerCase());
+      if (!isLocal) {
+        throw new Error(`外部サーバー接続が無効化されています: ${host}`);
+      }
+    }
+
+    const allowedHosts = Array.isArray(policy.allowedHosts) ? policy.allowedHosts : [];
+    if (allowedHosts.length > 0 && !allowedHosts.includes(host)) {
+      throw new Error(`接続先ホストが許可リスト外です: ${host}`);
+    }
   }
 
   buildBotOptions() {
@@ -46,6 +71,7 @@ class AutonomousBot {
     };
 
     if (this.config.edition === 'java') {
+      this.assertConnectionAllowed(this.config.java.host);
       return {
         ...base,
         host: this.config.java.host,
@@ -53,6 +79,8 @@ class AutonomousBot {
         version: this.config.java.version || false
       };
     }
+
+    this.assertConnectionAllowed(this.config.bedrock.proxy.listenHost);
 
     return {
       ...base,
@@ -132,6 +160,14 @@ class AutonomousBot {
 
     this.bot.on('error', (error) => {
       logger.error('Bot でエラーが発生しました。', error);
+    });
+
+    this.bot.on('chat', async (username, message) => {
+      if (!this.bot || username === this.bot.username) {
+        return;
+      }
+
+      await this.handlePlayerChat(username, String(message || ''));
     });
   }
 
@@ -226,7 +262,7 @@ class AutonomousBot {
   }
 
   startChattyLoop() {
-    if (!this.config.bot.chatty) {
+    if (!this.config.bot.chatty || !this.isChattyEnabled()) {
       return;
     }
 
@@ -248,9 +284,180 @@ class AutonomousBot {
 
       if (Math.random() < 0.35) {
         const line = lines[Math.floor(Math.random() * lines.length)];
-        this.bot.chat(line);
+        this.sayJapanese(line);
       }
     }, 90000);
+  }
+
+  isChattyEnabled() {
+    return ['hybrid', 'autonomous', 'conversation'].includes(this.mode);
+  }
+
+  isPlayerControlEnabled() {
+    return this.chatControl.enabled && ['hybrid', 'player-command', 'conversation'].includes(this.mode);
+  }
+
+  isConversationEnabled() {
+    return this.llmResponder.isEnabled && ['hybrid', 'conversation'].includes(this.mode);
+  }
+
+  sayJapanese(text) {
+    if (!this.bot?.player) {
+      return;
+    }
+    if (this.mode === 'silent-mining') {
+      return;
+    }
+    this.bot.chat(String(text));
+  }
+
+  isPlayerAuthorized(username) {
+    if (this.chatControl.allowAllPlayers) {
+      return true;
+    }
+    const normalized = String(username || '').toLowerCase();
+    return this.chatControl.allowedPlayers.map((x) => String(x).toLowerCase()).includes(normalized);
+  }
+
+  parseCommandText(message) {
+    const text = String(message || '').trim();
+    if (!text) {
+      return null;
+    }
+
+    if (this.chatControl.requirePrefix) {
+      const prefix = this.chatControl.commandPrefix;
+      if (!text.startsWith(prefix)) {
+        return null;
+      }
+      return text.slice(prefix.length).trim();
+    }
+
+    return text;
+  }
+
+  parseModeName(raw) {
+    const m = String(raw || '').toLowerCase();
+    const map = {
+      silent: 'silent-mining',
+      'silent-mining': 'silent-mining',
+      mining: 'silent-mining',
+      hybrid: 'hybrid',
+      conversation: 'conversation',
+      chat: 'conversation',
+      control: 'player-command',
+      'player-command': 'player-command',
+      autonomous: 'autonomous'
+    };
+    return map[m] || null;
+  }
+
+  async handleControlCommand(username, commandLine) {
+    const [cmdRaw, ...args] = commandLine.split(/\s+/).filter(Boolean);
+    const cmd = String(cmdRaw || '').toLowerCase();
+
+    if (!cmd) {
+      return false;
+    }
+
+    if (cmd === 'help' || cmd === 'ヘルプ') {
+      this.sayJapanese('コマンド: mode mine collect stop base fetch retreat status help');
+      return true;
+    }
+
+    if (cmd === 'mode' || cmd === 'モード') {
+      const nextMode = this.parseModeName(args[0]);
+      if (!nextMode) {
+        this.sayJapanese('モード指定が不正です。silent-mining / hybrid / conversation / player-command / autonomous');
+        return true;
+      }
+      this.mode = nextMode;
+      this.sayJapanese(`モードを ${nextMode} に変更しました。`);
+      return true;
+    }
+
+    if (cmd === 'status' || cmd === '状態') {
+      const s = this.status();
+      this.sayJapanese(`状態: mode=${s.mode}, hp=${s.health}, food=${s.food}`);
+      return true;
+    }
+
+    if (cmd === 'stop' || cmd === '停止') {
+      this.stopAutoCollect();
+      this.stopAutoMine();
+      this.sayJapanese('自動作業を停止しました。');
+      return true;
+    }
+
+    if (cmd === 'base' || cmd === '拠点') {
+      const point = await this.setBaseHere(args[0] || `${username}-base`);
+      if (point) {
+        this.sayJapanese(`拠点登録: ${point.x}, ${point.y}, ${point.z}`);
+      }
+      return true;
+    }
+
+    if (cmd === 'fetch' || cmd === '補充') {
+      const itemName = args[0];
+      const amount = Number(args[1] || 1);
+      if (!itemName) {
+        this.sayJapanese('使い方: fetch <itemName> <amount>');
+        return true;
+      }
+      const ok = await this.fetchItemFromMemory(itemName, amount);
+      this.sayJapanese(ok ? `${itemName} を補充しました。` : `${itemName} の補充に失敗しました。`);
+      return true;
+    }
+
+    if (cmd === 'retreat' || cmd === '退避') {
+      await this.retreatNow();
+      this.sayJapanese('退避を実行します。');
+      return true;
+    }
+
+    if (cmd === 'mine' || cmd === '採掘' || cmd === 'collect' || cmd === '採取') {
+      const blockName = args[0];
+      const count = Number(args[1] || 32);
+      if (!blockName) {
+        this.sayJapanese('使い方: mine <blockName> <count>');
+        return true;
+      }
+      const result = await this.startAutoCollect(blockName, count);
+      this.sayJapanese(`${blockName} 採取: ${result.finalCount}/${result.targetCount}`);
+      return true;
+    }
+
+    return false;
+  }
+
+  async handlePlayerChat(username, message) {
+    if (!this.isPlayerAuthorized(username)) {
+      return;
+    }
+
+    const commandText = this.parseCommandText(message);
+    if (this.isPlayerControlEnabled() && commandText) {
+      const consumed = await this.handleControlCommand(username, commandText);
+      if (consumed) {
+        return;
+      }
+    }
+
+    if (!this.isConversationEnabled()) {
+      return;
+    }
+
+    const mention = message.includes(this.bot.username) || message.startsWith('@bot');
+    if (!mention) {
+      return;
+    }
+
+    const s = this.status();
+    const contextText = `mode=${s.mode}, hp=${s.health}, food=${s.food}, pos=${s.position ? `${s.position.x},${s.position.y},${s.position.z}` : 'n/a'}`;
+    const reply = await this.llmResponder.generateReply(username, message, contextText);
+    if (reply) {
+      this.sayJapanese(reply.slice(0, 120));
+    }
   }
 
   async waitForTicks(ticks) {
@@ -568,6 +775,9 @@ class AutonomousBot {
       health: this.bot?.health || 0,
       food: this.bot?.food || 0,
       automation: {
+        mode: this.mode,
+        playerControlEnabled: this.isPlayerControlEnabled(),
+        conversationEnabled: this.isConversationEnabled(),
         autoCollect: this.autoCollectTask ? {
           blockName: this.autoCollectTask.blockName,
           targetCount: this.autoCollectTask.targetCount,
@@ -579,6 +789,7 @@ class AutonomousBot {
           plan: this.autoMineTask.plan
         } : null
       },
+      mode: this.mode,
       inventory: this.bot?.inventory?.items()?.map((item) => ({
         name: item.name,
         count: item.count,

@@ -19,6 +19,37 @@ function ensureLocalJavaServer(localJavaServer) {
   }
 }
 
+function ensureBehavior(behavior) {
+  if (!behavior) {
+    return;
+  }
+
+  const allowedModes = ['silent-mining', 'hybrid', 'conversation', 'player-command', 'autonomous'];
+  if (behavior.mode && !allowedModes.includes(behavior.mode)) {
+    throw new Error(`behavior.mode は次のみ指定できます: ${allowedModes.join(', ')}`);
+  }
+}
+
+function ensureConnectionPolicy(policy) {
+  if (!policy) {
+    return;
+  }
+
+  if (policy.allowedHosts && !Array.isArray(policy.allowedHosts)) {
+    throw new Error('connectionPolicy.allowedHosts は配列で指定してください。');
+  }
+}
+
+function ensureMultiBot(multiBot) {
+  if (!multiBot) {
+    return;
+  }
+
+  if (multiBot.bots && !Array.isArray(multiBot.bots)) {
+    throw new Error('multiBot.bots は配列で指定してください。');
+  }
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -30,6 +61,9 @@ function loadConfig() {
   const config = JSON.parse(text);
   ensureEdition(config.edition);
   ensureLocalJavaServer(config.localJavaServer);
+  ensureBehavior(config.behavior);
+  ensureConnectionPolicy(config.connectionPolicy);
+  ensureMultiBot(config.multiBot);
 
   return config;
 }

@@ -104,6 +104,20 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
     }
   }
 
+  function splitTargetPayload(payload, keyName = 'value') {
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      return {
+        targetBotId: payload.targetBotId,
+        value: payload[keyName]
+      };
+    }
+
+    return {
+      targetBotId: undefined,
+      value: payload
+    };
+  }
+
   io.on('connection', (socket) => {
     if (!requireToken(socket, config)) {
       audit({ type: 'connect-denied', socketId: socket.id });
@@ -136,65 +150,81 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
     });
 
     socket.on('command:set-base', async (name) => {
+      const { targetBotId, value } = splitTargetPayload(name, 'name');
       await runCommand(socket, 'set-base', { name }, async () => {
-        return botController.setBaseHere(name);
+        return botController.setBaseHere(value, targetBotId);
       });
     });
 
     socket.on('command:collect', async (blockName) => {
+      const { targetBotId, value } = splitTargetPayload(blockName, 'blockName');
       await runCommand(socket, 'collect', { blockName }, async () => {
-        const ok = await botController.collectNearestBlock(blockName);
-        return { ok, blockName };
+        const ok = await botController.collectNearestBlock(value, targetBotId);
+        return { ok, blockName: value };
       });
     });
 
     socket.on('command:build', async (schemPath) => {
+      const { targetBotId, value } = splitTargetPayload(schemPath, 'schemPath');
       await runCommand(socket, 'build', { schemPath }, async () => {
-        const ok = await botController.buildSchem(schemPath);
-        return { ok, schemPath };
+        const ok = await botController.buildSchem(value, targetBotId);
+        return { ok, schemPath: value };
       });
     });
 
-    socket.on('command:build-with-refill', async ({ schemPath, requiredItems }) => {
-      await runCommand(socket, 'build-with-refill', { schemPath, requiredItems }, async () => {
-        return botController.autoBuildWithRefill(schemPath, requiredItems || []);
+    socket.on('command:build-with-refill', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      const schemPath = payload?.schemPath;
+      const requiredItems = payload?.requiredItems;
+      await runCommand(socket, 'build-with-refill', { schemPath, requiredItems, targetBotId }, async () => {
+        return botController.autoBuildWithRefill(schemPath, requiredItems || [], targetBotId);
       });
     });
 
-    socket.on('command:start-auto-collect', async ({ blockName, targetCount }) => {
-      await runCommand(socket, 'start-auto-collect', { blockName, targetCount }, async () => {
-        return botController.startAutoCollect(blockName, Number(targetCount || 64));
+    socket.on('command:start-auto-collect', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      const blockName = payload?.blockName;
+      const targetCount = payload?.targetCount;
+      await runCommand(socket, 'start-auto-collect', { blockName, targetCount, targetBotId }, async () => {
+        return botController.startAutoCollect(blockName, Number(targetCount || 64), targetBotId);
       });
     });
 
-    socket.on('command:stop-auto-collect', async () => {
+    socket.on('command:stop-auto-collect', async (payload) => {
+      const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'stop-auto-collect', {}, async () => {
-        return botController.stopAutoCollect();
+        return botController.stopAutoCollect(targetBotId);
       });
     });
 
-    socket.on('command:start-auto-mine', async () => {
+    socket.on('command:start-auto-mine', async (payload) => {
+      const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'start-auto-mine', {}, async () => {
-        return botController.startAutoMine();
+        return botController.startAutoMine(targetBotId);
       });
     });
 
-    socket.on('command:stop-auto-mine', async () => {
+    socket.on('command:stop-auto-mine', async (payload) => {
+      const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'stop-auto-mine', {}, async () => {
-        return botController.stopAutoMine();
+        return botController.stopAutoMine(targetBotId);
       });
     });
 
-    socket.on('command:fetch-item', async ({ itemName, amount }) => {
-      await runCommand(socket, 'fetch-item', { itemName, amount }, async () => {
-        const ok = await botController.fetchItemFromMemory(itemName, Number(amount || 1));
+    socket.on('command:fetch-item', async (payload) => {
+      const itemName = payload?.itemName;
+      const amount = payload?.amount;
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'fetch-item', { itemName, amount, targetBotId }, async () => {
+        const ok = await botController.fetchItemFromMemory(itemName, Number(amount || 1), targetBotId);
         return { ok, itemName, amount: Number(amount || 1) };
       });
     });
 
-    socket.on('command:retreat-base', async () => {
+    socket.on('command:retreat-base', async (payload) => {
+      const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'retreat-base', {}, async () => {
-        const ok = await botController.retreatNow();
+        const ok = await botController.retreatNow(targetBotId);
         return { ok };
       });
     });

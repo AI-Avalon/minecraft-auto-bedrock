@@ -9,6 +9,29 @@ const PROFILES = {
       port: 25565,
       version: false
     },
+    connectionPolicy: {
+      allowExternalServers: false,
+      allowLocalhost: true,
+      allowedHosts: ['127.0.0.1', 'localhost']
+    },
+    behavior: {
+      mode: 'hybrid'
+    },
+    chatControl: {
+      enabled: true,
+      requirePrefix: true,
+      commandPrefix: '!bot',
+      allowAllPlayers: true,
+      allowedPlayers: []
+    },
+    llm: {
+      enabled: false,
+      provider: 'ollama',
+      baseUrl: 'http://127.0.0.1:11434',
+      model: 'qwen2.5:3b',
+      timeoutMs: 12000,
+      fallbackRuleBased: true
+    },
     localJavaServer: {
       enabled: true,
       autoStart: true,
@@ -21,6 +44,87 @@ const PROFILES = {
       xmx: '2G',
       nogui: true,
       eula: true
+    }
+  },
+  'java-external': {
+    edition: 'java',
+    connectionPolicy: {
+      allowExternalServers: true,
+      allowLocalhost: true,
+      allowedHosts: []
+    },
+    localJavaServer: {
+      enabled: false,
+      autoStart: false
+    },
+    behavior: {
+      mode: 'player-command'
+    }
+  },
+  'mining-only': {
+    behavior: {
+      mode: 'silent-mining'
+    },
+    bot: {
+      chatty: false
+    },
+    chatControl: {
+      enabled: false
+    },
+    llm: {
+      enabled: false
+    }
+  },
+  'conversation-jp': {
+    behavior: {
+      mode: 'conversation'
+    },
+    chatControl: {
+      enabled: true,
+      requirePrefix: true,
+      commandPrefix: '!bot',
+      allowAllPlayers: true,
+      allowedPlayers: []
+    },
+    llm: {
+      enabled: true,
+      provider: 'ollama',
+      baseUrl: 'http://127.0.0.1:11434',
+      model: 'qwen2.5:3b',
+      timeoutMs: 12000,
+      fallbackRuleBased: true
+    }
+  },
+  'multibot-sample': {
+    behavior: {
+      mode: 'hybrid'
+    },
+    multiBot: {
+      enabled: true,
+      bots: [
+        {
+          id: 'miner-1',
+          role: 'primary',
+          username: 'AutoMiner1',
+          memoryFile: 'memory-miner-1.json',
+          behavior: { mode: 'silent-mining' }
+        },
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          username: 'AutoAssist1',
+          memoryFile: 'memory-assistant-1.json',
+          behavior: { mode: 'conversation' },
+          llm: {
+            enabled: true,
+            provider: 'ollama',
+            baseUrl: 'http://127.0.0.1:11434',
+            model: 'qwen2.5:3b',
+            timeoutMs: 12000,
+            fallbackRuleBased: true
+          }
+        }
+      ]
     }
   },
   'bedrock-avalox': {

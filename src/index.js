@@ -5,11 +5,64 @@ const { MemoryStore } = require('./memoryStore');
 const { AutonomousBot } = require('./bot');
 const { startGuiServer } = require('./guiServer');
 const { JavaServerManager } = require('./javaServer');
+const { FleetController, FleetMemoryStore } = require('./fleetController');
+
+function deepMerge(base, override) {
+  if (!override || typeof override !== 'object' || Array.isArray(override)) {
+    return override === undefined ? base : override;
+  }
+
+  const merged = { ...(base || {}) };
+  for (const [key, value] of Object.entries(override)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      merged[key] = deepMerge(merged[key], value);
+    } else {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function buildBotRuntimeConfigs(config) {
+  const fleet = config.multiBot || {};
+  const bots = Array.isArray(fleet.bots) ? fleet.bots : [];
+
+  if (!fleet.enabled || bots.length === 0) {
+    return [
+      {
+        id: config.bot.username,
+        role: 'primary',
+        config
+      }
+    ];
+  }
+
+  return bots.map((entry, index) => {
+    const override = {
+      bot: {
+        username: entry.username || `Bot${index + 1}`
+      },
+      behavior: entry.behavior || undefined,
+      chatControl: entry.chatControl || undefined,
+      llm: entry.llm || undefined,
+      java: entry.java || undefined,
+      bedrock: entry.bedrock || undefined,
+      memory: {
+        file: entry.memoryFile || `memory-${entry.id || entry.username || index + 1}.json`
+      }
+    };
+
+    return {
+      id: entry.id || entry.username || `bot-${index + 1}`,
+      role: entry.role || (index === 0 ? 'primary' : 'worker'),
+      config: deepMerge(config, override)
+    };
+  });
+}
 
 async function bootstrap() {
   const config = loadConfig();
-  const memoryStore = new MemoryStore(config);
-  await memoryStore.init();
+  const runtimeBots = buildBotRuntimeConfigs(config);
 
   let javaServerManager = null;
   if (config.edition === 'java' && config.localJavaServer?.enabled && config.localJavaServer?.autoStart) {
@@ -23,16 +76,27 @@ async function bootstrap() {
     await proxyManager.start();
   }
 
-  const botController = new AutonomousBot(config, memoryStore);
-  await botController.connect();
+  const entries = [];
+  for (const runtime of runtimeBots) {
+    const memoryStore = new MemoryStore(runtime.config);
+    // eslint-disable-next-line no-await-in-loop
+    await memoryStore.init();
+    const controller = new AutonomousBot(runtime.config, memoryStore);
+    // eslint-disable-next-line no-await-in-loop
+    await controller.connect();
+    entries.push({ id: runtime.id, role: runtime.role, controller, memoryStore });
+  }
+
+  const fleetController = new FleetController(entries);
+  const fleetMemoryStore = new FleetMemoryStore(entries);
 
   if (config.gui.enabled) {
-    startGuiServer(botController, memoryStore, config);
+    startGuiServer(fleetController, fleetMemoryStore, config);
   }
 
   const shutdown = async (signal) => {
     logger.warn(`${signal} を受信したため停止処理に入ります。`);
-    await botController.stop();
+    await fleetController.stopAll();
 
     if (proxyManager) {
       await proxyManager.stop();

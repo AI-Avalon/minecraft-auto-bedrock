@@ -32,11 +32,16 @@ const setBaseQuickButton = document.getElementById('setBaseQuickButton');
 const securityHint = document.getElementById('securityHint');
 
 const baseName = document.getElementById('baseName');
+const targetBotSelect = document.getElementById('targetBotSelect');
 const setBaseButton = document.getElementById('setBaseButton');
 const collectBlock = document.getElementById('collectBlock');
 const collectButton = document.getElementById('collectButton');
 const schemPath = document.getElementById('schemPath');
 const buildButton = document.getElementById('buildButton');
+
+function selectedTargetBotId() {
+  return targetBotSelect?.value || undefined;
+}
 
 function setSocketState(status, detail = '') {
   socketState.classList.remove('connected', 'connecting', 'disconnected');
@@ -88,6 +93,27 @@ function renderStatus(payload) {
     const li = document.createElement('li');
     li.textContent = `${item.displayName} x${item.count}`;
     inventoryList.appendChild(li);
+  }
+
+  if (targetBotSelect && payload.status?.fleet) {
+    const current = targetBotSelect.value;
+    targetBotSelect.innerHTML = '';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'primary';
+    targetBotSelect.appendChild(defaultOption);
+
+    for (const row of payload.status.fleet) {
+      const option = document.createElement('option');
+      option.value = row.id;
+      option.textContent = `${row.id} (${row.role})`;
+      targetBotSelect.appendChild(option);
+    }
+
+    if ([...targetBotSelect.options].some((x) => x.value === current)) {
+      targetBotSelect.value = current;
+    }
   }
 }
 
@@ -178,36 +204,38 @@ quickDiamondButton.addEventListener('click', () => {
   send('search-item', 'diamond');
 });
 
-setBaseButton.addEventListener('click', () => send('command:set-base', baseName.value));
-collectButton.addEventListener('click', () => send('command:collect', collectBlock.value));
-buildButton.addEventListener('click', () => send('command:build', schemPath.value));
-buildWithRefillButton.addEventListener('click', () => send('command:build-with-refill', getBuildWithRefillPayload()));
+setBaseButton.addEventListener('click', () => send('command:set-base', { name: baseName.value, targetBotId: selectedTargetBotId() }));
+collectButton.addEventListener('click', () => send('command:collect', { blockName: collectBlock.value, targetBotId: selectedTargetBotId() }));
+buildButton.addEventListener('click', () => send('command:build', { schemPath: schemPath.value, targetBotId: selectedTargetBotId() }));
+buildWithRefillButton.addEventListener('click', () => send('command:build-with-refill', { ...getBuildWithRefillPayload(), targetBotId: selectedTargetBotId() }));
 
 collectWoodButton.addEventListener('click', () => {
   collectBlock.value = 'oak_log';
-  send('command:collect', 'oak_log');
+  send('command:collect', { blockName: 'oak_log', targetBotId: selectedTargetBotId() });
 });
 
 startAutoCollectButton.addEventListener('click', () => {
   send('command:start-auto-collect', {
     blockName: collectBlock.value,
-    targetCount: Number(collectTargetCount.value || 64)
+    targetCount: Number(collectTargetCount.value || 64),
+    targetBotId: selectedTargetBotId()
   });
 });
 
-stopAutoCollectButton.addEventListener('click', () => send('command:stop-auto-collect'));
-startAutoMineButton.addEventListener('click', () => send('command:start-auto-mine'));
-stopAutoMineButton.addEventListener('click', () => send('command:stop-auto-mine'));
+stopAutoCollectButton.addEventListener('click', () => send('command:stop-auto-collect', { targetBotId: selectedTargetBotId() }));
+startAutoMineButton.addEventListener('click', () => send('command:start-auto-mine', { targetBotId: selectedTargetBotId() }));
+stopAutoMineButton.addEventListener('click', () => send('command:stop-auto-mine', { targetBotId: selectedTargetBotId() }));
 
 fetchItemButton.addEventListener('click', () => {
   send('command:fetch-item', {
     itemName: fetchItemName.value,
-    amount: Number(fetchAmount.value || 1)
+    amount: Number(fetchAmount.value || 1),
+    targetBotId: selectedTargetBotId()
   });
 });
 
-retreatButton.addEventListener('click', () => send('command:retreat-base'));
-setBaseQuickButton.addEventListener('click', () => send('command:set-base', baseName.value || 'quick-base'));
+retreatButton.addEventListener('click', () => send('command:retreat-base', { targetBotId: selectedTargetBotId() }));
+setBaseQuickButton.addEventListener('click', () => send('command:set-base', { name: baseName.value || 'quick-base', targetBotId: selectedTargetBotId() }));
 
 toggleRefreshButton.addEventListener('click', () => {
   setAutoRefresh(!autoRefresh);
@@ -220,11 +248,12 @@ reconnectButton.addEventListener('click', () => {
 });
 
 bindEnter(searchText, () => send('search-item', searchText.value));
-bindEnter(collectBlock, () => send('command:collect', collectBlock.value));
+bindEnter(collectBlock, () => send('command:collect', { blockName: collectBlock.value, targetBotId: selectedTargetBotId() }));
 bindEnter(fetchItemName, () => {
   send('command:fetch-item', {
     itemName: fetchItemName.value,
-    amount: Number(fetchAmount.value || 1)
+    amount: Number(fetchAmount.value || 1),
+    targetBotId: selectedTargetBotId()
   });
 });
 

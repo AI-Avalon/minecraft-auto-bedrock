@@ -12,6 +12,10 @@ Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。Via
 - 建築失敗時の記憶チェスト自動補充 + リトライ
 - prismarine-viewer + Web GUI によるリアルタイム監視
 - simple-git + PM2 連携による運用自動化
+- 外部サーバー接続ポリシー（許可/拒否/ホワイトリスト）
+- プレイヤーチャット指示（日本語ベース）
+- Ollama を使った無料ローカルLLM会話
+- 複数Bot同時起動（役割分担・個別メモリ）
 
 ## セットアップ
 1. Node.js 20+ と Java をインストール
@@ -28,6 +32,30 @@ npm run setup
 
 ```bash
 npm run configure:java
+```
+
+- 外部Javaサーバー接続向け（ローカルサーバー自動起動なし）:
+
+```bash
+npm run configure:java-external
+```
+
+- 採掘専用（無言）モード:
+
+```bash
+npm run configure:mining-only
+```
+
+- 日本語会話モード（Ollama）:
+
+```bash
+npm run configure:conversation-jp
+```
+
+- 複数Botサンプル設定:
+
+```bash
+npm run configure:multibot-sample
 ```
 
 ### ローカルJavaサーバーの自動準備・起動
@@ -62,6 +90,37 @@ npm run server:install -- --software purpur --mc 1.21.4
 ```
 
 `npm run configure:java` を実行すると、`edition=java` と `localJavaServer.autoStart=true` のローカル運用向け設定になります。
+
+## プレイヤーチャット指示（日本語）
+
+`chatControl.commandPrefix` が `!bot` の場合、以下をゲーム内チャットで実行できます。
+
+- `!bot help`
+- `!bot mode silent-mining|hybrid|conversation|player-command|autonomous`
+- `!bot mine <blockName> <count>`
+- `!bot stop`
+- `!bot base <name>`
+- `!bot fetch <itemName> <count>`
+- `!bot retreat`
+- `!bot status`
+
+`mode=silent-mining` では Bot 側の自発チャットと会話応答を抑制し、無言運用できます。
+
+## LLM会話（無料運用）
+
+ローカル無料構成は Ollama を推奨します。
+
+1. Ollama を起動し、モデルを取得
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+2. `config.json` の `llm.enabled=true` にする（または `npm run configure:conversation-jp`）
+
+3. Botにメンションを含めたチャットで会話
+
+例: `@bot 今日は何を掘る？`
 
 - Bedrock (avalox.f5.si:19132) 向け:
 

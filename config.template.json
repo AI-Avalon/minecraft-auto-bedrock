@@ -25,6 +25,52 @@
     "nogui": true,
     "eula": true
   },
+  "connectionPolicy": {
+    "allowExternalServers": true,
+    "allowLocalhost": true,
+    "allowedHosts": []
+  },
+  "behavior": {
+    "mode": "hybrid"
+  },
+  "chatControl": {
+    "enabled": true,
+    "requirePrefix": true,
+    "commandPrefix": "!bot",
+    "allowAllPlayers": true,
+    "allowedPlayers": []
+  },
+  "llm": {
+    "enabled": false,
+    "provider": "ollama",
+    "baseUrl": "http://127.0.0.1:11434",
+    "model": "qwen2.5:3b",
+    "timeoutMs": 12000,
+    "fallbackRuleBased": true
+  },
+  "multiBot": {
+    "enabled": false,
+    "bots": [
+      {
+        "id": "miner-1",
+        "role": "primary",
+        "username": "AutoMiner1",
+        "memoryFile": "memory-miner-1.json",
+        "behavior": {
+          "mode": "silent-mining"
+        }
+      },
+      {
+        "id": "assistant-1",
+        "role": "assistant",
+        "username": "AutoAssist1",
+        "memoryFile": "memory-assistant-1.json",
+        "behavior": {
+          "mode": "conversation"
+        }
+      }
+    ]
+  },
   "bedrock": {
     "host": "YOUR_BEDROCK_SERVER_HOST",
     "port": 19132,

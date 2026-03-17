@@ -25,6 +25,36 @@
     "nogui": true,
     "eula": true
   },
+  "connectionPolicy": {
+    "allowExternalServers": false,
+    "allowLocalhost": true,
+    "allowedHosts": [
+      "127.0.0.1",
+      "localhost"
+    ]
+  },
+  "behavior": {
+    "mode": "hybrid"
+  },
+  "chatControl": {
+    "enabled": true,
+    "requirePrefix": true,
+    "commandPrefix": "!bot",
+    "allowAllPlayers": true,
+    "allowedPlayers": []
+  },
+  "llm": {
+    "enabled": false,
+    "provider": "ollama",
+    "baseUrl": "http://127.0.0.1:11434",
+    "model": "qwen2.5:3b",
+    "timeoutMs": 12000,
+    "fallbackRuleBased": true
+  },
+  "multiBot": {
+    "enabled": false,
+    "bots": []
+  },
   "bedrock": {
     "host": "avalox.f5.si",
     "port": 19132,
