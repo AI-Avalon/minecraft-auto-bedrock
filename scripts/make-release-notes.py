@@ -33,7 +33,7 @@ PrismarineJS エコシステムをフル活用した高機能Bot環境です。
 
 #### Windows
 1. `{win}` をダウンロードして解凍
-2. `install-prereqs.bat` を管理者として実行 (Node.js / Java / Git を自動インストール)
+2. `install.bat` を実行 (ソース取得/更新 + 前提導入 + セットアップを自動実行)
 3. `run.bat` をダブルクリックして Bot 起動
 
 #### macOS / Linux

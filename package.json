@@ -48,7 +48,8 @@
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js --type=patch --yes",
     "release:minor": "node scripts/release.js --type=minor --yes",
-    "release:major": "node scripts/release.js --type=major --yes"
+    "release:major": "node scripts/release.js --type=major --yes",
+    "release:notes": "python3 scripts/make-release-notes.py"
   },
   "dependencies": {
     "express": "^4.21.2",

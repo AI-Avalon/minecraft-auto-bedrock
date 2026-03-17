@@ -143,7 +143,13 @@ npm run setup
 Windows では `run.bat` と同じ階層の `setup.bat` で、
 前提ツール確認・設定項目選択・途中再開付きのセットアップを実行できます。
 
+最短導線は `install.bat` です。これ1つでリポジトリ取得/更新、前提導入、
+セットアップ再開まで自動実行します。
+
 ```bat
+install.bat
+install.bat D:\minecraft-auto-bedrock --node-major=22
+
 setup.bat
 setup.bat --resume
 setup.bat --from-step=config
@@ -249,6 +255,9 @@ npm run release:major
 
 # 手動指定バージョン
 npm run release -- --version=2.1.0 --yes
+
+# タグ作成まで（push/releaseなし）
+npm run release -- --version=2.1.0 --yes --no-push --no-gh
 ```
 
 ---

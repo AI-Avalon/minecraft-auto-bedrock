@@ -72,6 +72,9 @@ jobs:
             ./ "dist/${PKG}/"
 
           for bat_file in \
+            "dist/${PKG}/install.bat" \
+            "dist/${PKG}/setup.bat" \
+            "dist/${PKG}/update.bat" \
             "dist/${PKG}/scripts/install-prereqs.bat" \
             "dist/${PKG}/run.bat"; do
             [ -f "$bat_file" ] && unix2dos "$bat_file"
@@ -114,14 +117,26 @@ jobs:
           python3 scripts/make-release-notes.py "${{ steps.ver.outputs.tag }}" > release-notes.md
           echo "リリースノート生成完了"
 
-      - name: GitHub リリース作成
+      - name: GitHub リリース作成 or 更新
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ steps.ver.outputs.tag }}"
-          gh release create "$TAG" \
-            --title "minecraft-auto-bedrock ${TAG}" \
-            --notes-file release-notes.md \
-            "minecraft-auto-bedrock-windows-${TAG}.zip" \
-            "minecraft-auto-bedrock-macos-linux-${TAG}.tar.gz"
-          echo "リリース作成完了: $TAG"
+          WIN_ASSET="minecraft-auto-bedrock-windows-${TAG}.zip"
+          UNIX_ASSET="minecraft-auto-bedrock-macos-linux-${TAG}.tar.gz"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "既存リリースを更新します: $TAG"
+            gh release upload "$TAG" "$WIN_ASSET" "$UNIX_ASSET" --clobber
+            gh release edit "$TAG" \
+              --title "minecraft-auto-bedrock ${TAG}" \
+              --notes-file release-notes.md
+          else
+            echo "新規リリースを作成します: $TAG"
+            gh release create "$TAG" \
+              --title "minecraft-auto-bedrock ${TAG}" \
+              --notes-file release-notes.md \
+              "$WIN_ASSET" \
+              "$UNIX_ASSET"
+          fi
+          echo "リリース処理完了: $TAG"
