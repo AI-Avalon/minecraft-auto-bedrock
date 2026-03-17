@@ -28,6 +28,18 @@ function ensureBehavior(behavior) {
   if (behavior.mode && !allowedModes.includes(behavior.mode)) {
     throw new Error(`behavior.mode は次のみ指定できます: ${allowedModes.join(', ')}`);
   }
+
+  if (behavior.autoStoreIntervalMs !== undefined && Number.isNaN(Number(behavior.autoStoreIntervalMs))) {
+    throw new Error('behavior.autoStoreIntervalMs は数値で指定してください。');
+  }
+
+  if (behavior.autoSortIntervalMs !== undefined && Number.isNaN(Number(behavior.autoSortIntervalMs))) {
+    throw new Error('behavior.autoSortIntervalMs は数値で指定してください。');
+  }
+
+  if (behavior.keepInInventory !== undefined && !Array.isArray(behavior.keepInInventory)) {
+    throw new Error('behavior.keepInInventory は配列で指定してください。');
+  }
 }
 
 function ensureConnectionPolicy(policy) {

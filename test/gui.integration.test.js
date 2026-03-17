@@ -44,6 +44,24 @@ function createFakeBotController() {
     },
     async retreatNow() {
       return true;
+    },
+    async runOnTarget(_targetBotId, fnName, ...args) {
+      if (fnName === 'setCombatProfile') {
+        return { ok: true, profile: args[0] || 'balanced' };
+      }
+      if (fnName === 'craftItem') {
+        return { ok: true, itemName: args[0], count: args[1] };
+      }
+      if (fnName === 'startCityMode') {
+        return { ok: true, started: true, modeName: args[0] || 'village' };
+      }
+      if (fnName === 'stopCityMode') {
+        return { ok: true, stopped: true };
+      }
+      if (fnName === 'setEvasionEnabled') {
+        return { ok: true, evasionEnabled: Boolean(args[0]) };
+      }
+      return { ok: true, fnName, args };
     }
   };
 }
@@ -66,7 +84,18 @@ function createFakeMemoryStore() {
   };
 }
 
-async function setupServer({ requireToken = false, token = '', readOnly = false } = {}) {
+async function setupServer({ requireToken = false, token = '', readOnly = false, allowedCommands } = {}) {
+  const defaultAllowed = [
+    'set-base',
+    'collect',
+    'set-combat-profile',
+    'craft-item',
+    'start-city-mode',
+    'stop-city-mode',
+    'set-evasion',
+    'system-doctor'
+  ];
+
   const config = {
     edition: 'bedrock',
     gui: {
@@ -76,8 +105,8 @@ async function setupServer({ requireToken = false, token = '', readOnly = false 
         requireToken,
         token,
         readOnly,
-        allowedCommands: ['set-base', 'collect'],
-        commandCooldownMs: 1,
+        allowedCommands: allowedCommands || defaultAllowed,
+        commandCooldownMs: 0,
         maxCommandsPerMinute: 100,
         auditLogFile: 'logs/gui-audit.test.log'
       }
@@ -173,6 +202,60 @@ test('GUI Security: トークン必須時に無効トークンは拒否される
 
     assert.equal(unauthorized.ok, false);
     assert.equal(unauthorized.reason, 'invalid-token');
+    client.close();
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('GUI Socket: 新規コマンド(craft/profile/city/system)が実行できること', { timeout: 20_000 }, async () => {
+  const ctx = await setupServer();
+
+  try {
+    const client = createClient(ctx.baseUrl, {
+      transports: ['websocket'],
+      reconnection: false
+    });
+
+    await new Promise((resolve, reject) => {
+      client.once('connect', resolve);
+      client.once('connect_error', reject);
+    });
+
+    async function emitAndWait(eventName, payload) {
+      const resultPromise = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`command-result timeout: ${eventName}`)), 5000);
+        client.once('command-result', (res) => {
+          clearTimeout(timer);
+          resolve(res);
+        });
+      });
+      client.emit(eventName, payload);
+      const result = await resultPromise;
+      await new Promise((resolve) => setTimeout(resolve, 820));
+      return result;
+    }
+
+    const profile = await emitAndWait('command:set-combat-profile', { profile: 'guardian' });
+    assert.equal(profile.action, 'set-combat-profile');
+    assert.equal(profile.ok, true);
+
+    const craft = await emitAndWait('command:craft-item', { itemName: 'torch', count: 8 });
+    assert.equal(craft.action, 'craft-item');
+    assert.equal(craft.ok, true, JSON.stringify(craft));
+
+    const city = await emitAndWait('command:start-city-mode', { modeName: 'city' });
+    assert.equal(city.action, 'start-city-mode');
+    assert.equal(city.ok, true);
+
+    const cityStop = await emitAndWait('command:stop-city-mode', {});
+    assert.equal(cityStop.action, 'stop-city-mode');
+    assert.equal(cityStop.ok, true);
+
+    const system = await emitAndWait('command:system-doctor', {});
+    assert.equal(system.action, 'system-doctor');
+    assert.equal(system.ok, true);
+
     client.close();
   } finally {
     await ctx.close();

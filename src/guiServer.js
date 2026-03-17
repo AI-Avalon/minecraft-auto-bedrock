@@ -4,6 +4,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { logger } = require('./logger');
+const { systemDoctor, oneClickBootstrap } = require('./systemManager');
 
 function createAuditWriter(config) {
   const security = config.gui.security || {};
@@ -211,6 +212,48 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:store-inventory', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'store-inventory', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'storeInventoryToNearestChest');
+      });
+    });
+
+    socket.on('command:start-auto-store', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'start-auto-store', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'startAutoStoreMode');
+      });
+    });
+
+    socket.on('command:stop-auto-store', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'stop-auto-store', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'stopAutoStoreMode');
+      });
+    });
+
+    socket.on('command:sort-chests-once', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'sort-chests-once', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'sortNearestChestsOnce', Number(payload?.maxMoves || 12));
+      });
+    });
+
+    socket.on('command:start-auto-sort', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'start-auto-sort', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'startAutoSortMode');
+      });
+    });
+
+    socket.on('command:stop-auto-sort', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'stop-auto-sort', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'stopAutoSortMode');
+      });
+    });
+
     socket.on('command:fetch-item', async (payload) => {
       const itemName = payload?.itemName;
       const amount = payload?.amount;
@@ -250,6 +293,48 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:set-combat-profile', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'set-combat-profile', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'setCombatProfile', payload?.profile);
+      });
+    });
+
+    socket.on('command:set-evasion', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'set-evasion', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'setEvasionEnabled', Boolean(payload?.enabled));
+      });
+    });
+
+    socket.on('command:craft-item', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'craft-item', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'craftItem', payload?.itemName, Number(payload?.count || 1));
+      });
+    });
+
+    socket.on('command:equip-best-armor', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'equip-best-armor', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'equipBestArmor');
+      });
+    });
+
+    socket.on('command:start-city-mode', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'start-city-mode', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'startCityMode', payload?.modeName || 'village');
+      });
+    });
+
+    socket.on('command:stop-city-mode', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'stop-city-mode', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'stopCityMode');
+      });
+    });
+
     socket.on('command:planner-calc-recipe', async (payload) => {
       const targetBotId = payload?.targetBotId;
       await runCommand(socket, 'planner-calc-recipe', payload || {}, async () => {
@@ -285,6 +370,36 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
     socket.on('command:fleet-update-role', async (payload) => {
       await runCommand(socket, 'fleet-update-role', payload || {}, async () => {
         return botController.updateRole(payload?.id, payload?.role);
+      });
+    });
+
+    socket.on('command:system-doctor', async (payload) => {
+      await runCommand(socket, 'system-doctor', payload || {}, async () => {
+        return systemDoctor();
+      });
+    });
+
+    socket.on('command:oneclick-setup', async (payload) => {
+      await runCommand(socket, 'oneclick-setup', payload || {}, async () => {
+        return oneClickBootstrap({ syncBedrockSamples: Boolean(payload?.syncBedrockSamples ?? true) });
+      });
+    });
+
+    socket.on('command:oneclick-setup-live', async (payload) => {
+      await runCommand(socket, 'oneclick-setup-live', payload || {}, async () => {
+        socket.emit('oneclick-progress', {
+          stepIndex: 0,
+          totalSteps: 1,
+          label: '開始',
+          percent: 3
+        });
+
+        return oneClickBootstrap({
+          syncBedrockSamples: Boolean(payload?.syncBedrockSamples ?? true),
+          onStep(step) {
+            socket.emit('oneclick-progress', step);
+          }
+        });
       });
     });
 

@@ -23,6 +23,12 @@ const startAutoCollectButton = document.getElementById('startAutoCollectButton')
 const stopAutoCollectButton = document.getElementById('stopAutoCollectButton');
 const startAutoMineButton = document.getElementById('startAutoMineButton');
 const stopAutoMineButton = document.getElementById('stopAutoMineButton');
+const storeInventoryButton = document.getElementById('storeInventoryButton');
+const startAutoStoreButton = document.getElementById('startAutoStoreButton');
+const stopAutoStoreButton = document.getElementById('stopAutoStoreButton');
+const sortChestsButton = document.getElementById('sortChestsButton');
+const startAutoSortButton = document.getElementById('startAutoSortButton');
+const stopAutoSortButton = document.getElementById('stopAutoSortButton');
 const buildWithRefillButton = document.getElementById('buildWithRefillButton');
 const fetchItemName = document.getElementById('fetchItemName');
 const fetchAmount = document.getElementById('fetchAmount');
@@ -49,10 +55,19 @@ const fightNearestMobButton = document.getElementById('fightNearestMobButton');
 const fightPlayerName = document.getElementById('fightPlayerName');
 const fightPlayerButton = document.getElementById('fightPlayerButton');
 const stopFightButton = document.getElementById('stopFightButton');
+const combatProfile = document.getElementById('combatProfile');
+const combatProfileButton = document.getElementById('combatProfileButton');
+const evasionEnabled = document.getElementById('evasionEnabled');
+const evasionToggleButton = document.getElementById('evasionToggleButton');
 const plannerItemName = document.getElementById('plannerItemName');
 const plannerItemCount = document.getElementById('plannerItemCount');
 const plannerCalcRecipeButton = document.getElementById('plannerCalcRecipeButton');
 const plannerGatherForCraftButton = document.getElementById('plannerGatherForCraftButton');
+const craftItemButton = document.getElementById('craftItemButton');
+const equipBestArmorButton = document.getElementById('equipBestArmorButton');
+const cityModeName = document.getElementById('cityModeName');
+const startCityModeButton = document.getElementById('startCityModeButton');
+const stopCityModeButton = document.getElementById('stopCityModeButton');
 const orchestratorTaskType = document.getElementById('orchestratorTaskType');
 const orchestratorRole = document.getElementById('orchestratorRole');
 const orchestratorBlockName = document.getElementById('orchestratorBlockName');
@@ -60,6 +75,12 @@ const orchestratorItemName = document.getElementById('orchestratorItemName');
 const orchestratorCount = document.getElementById('orchestratorCount');
 const orchestratorPlayerName = document.getElementById('orchestratorPlayerName');
 const orchestratorAssignButton = document.getElementById('orchestratorAssignButton');
+const systemDoctorButton = document.getElementById('systemDoctorButton');
+const oneclickSetupButton = document.getElementById('oneclickSetupButton');
+const oneclickSyncBedrock = document.getElementById('oneclickSyncBedrock');
+const oneclickProgress = document.getElementById('oneclickProgress');
+const oneclickProgressText = document.getElementById('oneclickProgressText');
+const fleetStatusList = document.getElementById('fleetStatusList');
 
 function selectedTargetBotId() {
   return targetBotSelect?.value || undefined;
@@ -135,6 +156,20 @@ function renderStatus(payload) {
 
     if ([...targetBotSelect.options].some((x) => x.value === current)) {
       targetBotSelect.value = current;
+    }
+  }
+
+  if (fleetStatusList) {
+    fleetStatusList.innerHTML = '';
+    const rows = payload.status?.fleet || [];
+    for (const row of rows) {
+      const li = document.createElement('li');
+      const hp = row.status?.health ?? '-';
+      const food = row.status?.food ?? '-';
+      const pos = row.status?.position ? `${row.status.position.x},${row.status.position.y},${row.status.position.z}` : 'n/a';
+      const mode = row.status?.mode || row.status?.automation?.mode || 'unknown';
+      li.textContent = `${row.id} role=${row.role} mode=${mode} hp=${hp} food=${food} pos=${pos}`;
+      fleetStatusList.appendChild(li);
     }
   }
 }
@@ -213,6 +248,17 @@ function connectSocket() {
     send('refresh');
   });
 
+  socket.on('oneclick-progress', (progress) => {
+    if (oneclickProgress) {
+      oneclickProgress.value = Number(progress?.percent || 0);
+    }
+    if (oneclickProgressText) {
+      const current = Number(progress?.stepIndex || 0);
+      const total = Number(progress?.totalSteps || 0);
+      oneclickProgressText.textContent = `${progress?.label || '処理中'} (${current}/${total}) ${progress?.percent || 0}%`;
+    }
+  });
+
   socket.on('unauthorized', (result) => {
     showResult(result);
     setSocketState('disconnected', 'unauthorized');
@@ -247,6 +293,12 @@ startAutoCollectButton.addEventListener('click', () => {
 stopAutoCollectButton.addEventListener('click', () => send('command:stop-auto-collect', { targetBotId: selectedTargetBotId() }));
 startAutoMineButton.addEventListener('click', () => send('command:start-auto-mine', { targetBotId: selectedTargetBotId() }));
 stopAutoMineButton.addEventListener('click', () => send('command:stop-auto-mine', { targetBotId: selectedTargetBotId() }));
+storeInventoryButton?.addEventListener('click', () => send('command:store-inventory', { targetBotId: selectedTargetBotId() }));
+startAutoStoreButton?.addEventListener('click', () => send('command:start-auto-store', { targetBotId: selectedTargetBotId() }));
+stopAutoStoreButton?.addEventListener('click', () => send('command:stop-auto-store', { targetBotId: selectedTargetBotId() }));
+sortChestsButton?.addEventListener('click', () => send('command:sort-chests-once', { targetBotId: selectedTargetBotId() }));
+startAutoSortButton?.addEventListener('click', () => send('command:start-auto-sort', { targetBotId: selectedTargetBotId() }));
+stopAutoSortButton?.addEventListener('click', () => send('command:stop-auto-sort', { targetBotId: selectedTargetBotId() }));
 
 fetchItemButton.addEventListener('click', () => {
   send('command:fetch-item', {
@@ -311,6 +363,20 @@ stopFightButton?.addEventListener('click', () => {
   send('command:stop-fight', { targetBotId: selectedTargetBotId() });
 });
 
+combatProfileButton?.addEventListener('click', () => {
+  send('command:set-combat-profile', {
+    targetBotId: selectedTargetBotId(),
+    profile: combatProfile?.value || 'balanced'
+  });
+});
+
+evasionToggleButton?.addEventListener('click', () => {
+  send('command:set-evasion', {
+    targetBotId: selectedTargetBotId(),
+    enabled: Boolean(evasionEnabled?.checked)
+  });
+});
+
 plannerCalcRecipeButton?.addEventListener('click', () => {
   send('command:planner-calc-recipe', {
     targetBotId: selectedTargetBotId(),
@@ -327,6 +393,33 @@ plannerGatherForCraftButton?.addEventListener('click', () => {
   });
 });
 
+craftItemButton?.addEventListener('click', () => {
+  send('command:craft-item', {
+    targetBotId: selectedTargetBotId(),
+    itemName: plannerItemName?.value?.trim(),
+    count: Number(plannerItemCount?.value || 1)
+  });
+});
+
+equipBestArmorButton?.addEventListener('click', () => {
+  send('command:equip-best-armor', {
+    targetBotId: selectedTargetBotId()
+  });
+});
+
+startCityModeButton?.addEventListener('click', () => {
+  send('command:start-city-mode', {
+    targetBotId: selectedTargetBotId(),
+    modeName: cityModeName?.value?.trim() || 'village'
+  });
+});
+
+stopCityModeButton?.addEventListener('click', () => {
+  send('command:stop-city-mode', {
+    targetBotId: selectedTargetBotId()
+  });
+});
+
 orchestratorAssignButton?.addEventListener('click', () => {
   send('command:orchestrator-assign-task', {
     type: orchestratorTaskType?.value,
@@ -335,6 +428,23 @@ orchestratorAssignButton?.addEventListener('click', () => {
     itemName: orchestratorItemName?.value?.trim(),
     playerName: orchestratorPlayerName?.value?.trim(),
     count: Number(orchestratorCount?.value || 1)
+  });
+});
+
+systemDoctorButton?.addEventListener('click', () => {
+  send('command:system-doctor', {});
+});
+
+oneclickSetupButton?.addEventListener('click', () => {
+  if (oneclickProgress) {
+    oneclickProgress.value = 0;
+  }
+  if (oneclickProgressText) {
+    oneclickProgressText.textContent = '準備中...';
+  }
+
+  send('command:oneclick-setup-live', {
+    syncBedrockSamples: Boolean(oneclickSyncBedrock?.checked)
   });
 });
 

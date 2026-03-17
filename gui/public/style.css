@@ -93,6 +93,7 @@ body {
 }
 
 input,
+select,
 button {
   padding: 10px;
   border-radius: 8px;
@@ -101,6 +102,19 @@ button {
 
 input {
   flex: 1;
+}
+
+select {
+  min-width: 140px;
+  background: #fff;
+}
+
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #3f3a31;
 }
 
 button {
@@ -137,6 +151,22 @@ pre {
 ul {
   margin: 0;
   padding-left: 18px;
+}
+
+#fleetStatusList {
+  max-height: 220px;
+  overflow: auto;
+}
+
+#fleetStatusList li {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+progress {
+  accent-color: var(--accent);
+  height: 14px;
+  width: 100%;
 }
 
 @keyframes fadein {

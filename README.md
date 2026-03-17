@@ -9,9 +9,13 @@ Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。Via
 - Bedrock 用 waitForTicks を含む安全なアイテム移動
 - AFK対策 Jitter と簡易チャット行動
 - 自動採掘(鉱石プラン)と自動取得(目標数指定)
+- 自動保管モード（不要アイテムを近傍チェストへ自動格納）
+- 自動仕分けモード（近傍チェスト群をカテゴリ単位で巡回整理）
 - 建築失敗時の記憶チェスト自動補充 + リトライ
 - prismarine-viewer + Web GUI によるリアルタイム監視
+- GUIで oneclick 実行の段階進捗表示（ステップごとの進捗バー）
 - simple-git + PM2 連携による運用自動化
+- 起動時アップデート確認（ローカルversion / npm / git上流差分）
 - 外部サーバー接続ポリシー（許可/拒否/ホワイトリスト）
 - プレイヤーチャット指示（日本語ベース）
 - Ollama を使った無料ローカルLLM会話
@@ -30,6 +34,16 @@ Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。Via
 npm install
 npm run setup
 ```
+
+### ほぼ全自動セットアップ
+
+前提ツール確認・依存導入・初期設定・bedrock samples 同期までを一括で実行します。
+
+```bash
+npm run oneclick:setup
+```
+
+GUIの「運用 / セットアップ」からも実行でき、進捗バーで段階表示されます。
 
 ### Bedrockサンプルデータ同期（Mojang公式）
 
@@ -144,6 +158,10 @@ npm run server:install -- --software purpur --mc 1.21.4
 - `!bot fetch <itemName> <count>`
 - `!bot retreat`
 - `!bot status`
+- `!bot store`
+- `!bot autostore on|off`
+- `!bot sortchest`
+- `!bot autosort on|off`
 
 `mode=silent-mining` では Bot 側の自発チャットと会話応答を抑制し、無言運用できます。
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minecraft Auto Bedrock Command Center</title>
     <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style-mobile.css" />
   </head>
   <body>
     <main class="layout">
@@ -23,6 +24,11 @@
       <section class="panel">
         <h2>状態</h2>
         <pre id="statusView">loading...</pre>
+      </section>
+
+      <section class="panel">
+        <h2>Bot一覧 / 動作状況</h2>
+        <ul id="fleetStatusList"></ul>
       </section>
 
       <section class="panel">
@@ -59,7 +65,7 @@
         </div>
         <div class="row">
           <input id="collectBlock" placeholder="oak_log など" />
-          <input id="collectTargetCount" type="number" min="1" value="64" />
+          <input id="collectTargetCount" type="number" min="1" value="64" title="採取目標数" />
           <button id="collectButton">採取開始</button>
           <button id="collectWoodButton">木材採取</button>
         </div>
@@ -70,13 +76,21 @@
           <button id="stopAutoMineButton">自動採掘OFF</button>
         </div>
         <div class="row">
+          <button id="storeInventoryButton">手動保管</button>
+          <button id="startAutoStoreButton">自動保管ON</button>
+          <button id="stopAutoStoreButton">自動保管OFF</button>
+          <button id="sortChestsButton">仕分け実行</button>
+          <button id="startAutoSortButton">自動仕分けON</button>
+          <button id="stopAutoSortButton">自動仕分けOFF</button>
+        </div>
+        <div class="row">
           <input id="schemPath" placeholder="schematics/house.schem" />
           <button id="buildButton">建築実行</button>
           <button id="buildWithRefillButton">建築+自動補充</button>
         </div>
         <div class="row">
           <input id="fetchItemName" placeholder="補充したい資材名" />
-          <input id="fetchAmount" type="number" min="1" value="64" />
+          <input id="fetchAmount" type="number" min="1" value="64" title="補充数量" />
           <button id="fetchItemButton">資材補充</button>
         </div>
         <div class="row">
@@ -94,12 +108,12 @@
           <input id="fleetBotUsername" placeholder="username" />
         </div>
         <div class="row">
-          <select id="fleetBotRole">
+          <select id="fleetBotRole" title="Botの役割">
             <option value="worker">worker</option>
             <option value="assistant">assistant</option>
             <option value="primary">primary</option>
           </select>
-          <select id="fleetBotMode">
+          <select id="fleetBotMode" title="Botのモード">
             <option value="hybrid">hybrid</option>
             <option value="silent-mining">silent-mining</option>
             <option value="conversation">conversation</option>
@@ -122,24 +136,42 @@
           <button id="fightPlayerButton">プレイヤー攻撃</button>
           <button id="stopFightButton">戦闘停止</button>
         </div>
+        <div class="row">
+          <select id="combatProfile" title="戦闘プロファイル">
+            <option value="balanced">balanced</option>
+            <option value="berserker">berserker</option>
+            <option value="guardian">guardian</option>
+            <option value="sniper">sniper</option>
+          </select>
+          <button id="combatProfileButton">戦闘プロファイル適用</button>
+          <label><input id="evasionEnabled" type="checkbox" checked />回避ON</label>
+          <button id="evasionToggleButton">回避設定反映</button>
+        </div>
       </section>
 
       <section class="panel">
         <h2>レシピ計算 / 素材計画</h2>
         <div class="row">
           <input id="plannerItemName" placeholder="diamond_sword など" />
-          <input id="plannerItemCount" type="number" min="1" value="1" />
+          <input id="plannerItemCount" type="number" min="1" value="1" title="個数" />
         </div>
         <div class="row">
           <button id="plannerCalcRecipeButton">必要素材を計算</button>
           <button id="plannerGatherForCraftButton">素材収集を開始</button>
+          <button id="craftItemButton">クラフト実行</button>
+          <button id="equipBestArmorButton">最強防具を装備</button>
+        </div>
+        <div class="row">
+          <input id="cityModeName" placeholder="city mode name (village/city)" />
+          <button id="startCityModeButton">街づくりモード開始</button>
+          <button id="stopCityModeButton">街づくりモード停止</button>
         </div>
       </section>
 
       <section class="panel">
         <h2>指示系統 (Orchestrator)</h2>
         <div class="row">
-          <select id="orchestratorTaskType">
+          <select id="orchestratorTaskType" title="タスク種類">
             <option value="mine">mine</option>
             <option value="gather">gather</option>
             <option value="fight-mob">fight-mob</option>
@@ -150,12 +182,37 @@
         <div class="row">
           <input id="orchestratorBlockName" placeholder="mine用 blockName" />
           <input id="orchestratorItemName" placeholder="gather用 itemName" />
-          <input id="orchestratorCount" type="number" min="1" value="16" />
+          <input id="orchestratorCount" type="number" min="1" value="16" title="タスク個数" />
           <input id="orchestratorPlayerName" placeholder="fight-player用 name" />
         </div>
         <div class="row">
           <button id="orchestratorAssignButton">タスク割当</button>
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>運用 / セットアップ</h2>
+        <div class="row">
+          <button id="systemDoctorButton">システム診断</button>
+          <label><input id="oneclickSyncBedrock" type="checkbox" checked />bedrock samples 同期</label>
+          <button id="oneclickSetupButton">ワンクリック初期化</button>
+        </div>
+        <div class="row">
+          <progress id="oneclickProgress" value="0" max="100"></progress>
+        </div>
+        <div class="row">
+          <small id="oneclickProgressText">未実行</small>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>使い方（クイック）</h2>
+        <ul>
+          <li>資材を一括で整理する場合は 手動保管 → 仕分け実行 の順で実行</li>
+          <li>常時運用は 自動保管ON と 自動仕分けON を併用</li>
+          <li>初期導入は ワンクリック初期化 で前提確認・依存導入・設定生成まで自動化</li>
+          <li>対象Botを切り替えると複数Botへ個別に命令可能</li>
+        </ul>
       </section>
     </main>
 

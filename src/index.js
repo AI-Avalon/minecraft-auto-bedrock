@@ -7,6 +7,7 @@ const { startGuiServer } = require('./guiServer');
 const { JavaServerManager } = require('./javaServer');
 const { FleetController, FleetMemoryStore } = require('./fleetController');
 const { BedrockDataService } = require('./bedrockDataService');
+const { checkStartupUpdates } = require('./systemManager');
 
 function deepMerge(base, override) {
   if (!override || typeof override !== 'object' || Array.isArray(override)) {
@@ -88,6 +89,13 @@ function buildRuntimeFromSpec(baseConfig, spec = {}, index = 0) {
 
 async function bootstrap() {
   const config = loadConfig();
+  try {
+    const updateInfo = checkStartupUpdates();
+    logger.info(`起動時アップデート確認: current=${updateInfo.currentVersion}, latest=${updateInfo.latestVersion || 'n/a'}, remoteBehind=${updateInfo.gitRemoteBehindCount ?? 'n/a'}`);
+  } catch (error) {
+    logger.warn('起動時アップデート確認に失敗しました。', error);
+  }
+
   const runtimeBots = buildBotRuntimeConfigs(config);
   const knowledgeService = new BedrockDataService(config.bedrockKnowledge || {});
   if (config.bedrockKnowledge?.enabled !== false) {

@@ -42,6 +42,11 @@ class AutonomousBot {
     this.autoCollectTask = null;
     this.autoMineTask = null;
     this.combatTask = null;
+    this.autoStoreTask = null;
+    this.autoSortTask = null;
+    this.cityModeTask = null;
+    this.evasionEnabled = Boolean(this.config.combat?.evasionEnabled ?? true);
+    this.combatProfile = this.config.combat?.profile || 'balanced';
     this.mode = this.config.behavior?.mode || 'hybrid';
     this.role = this.runtimeContext.role || 'worker';
     this.knowledgeService = this.runtimeContext.knowledgeService || null;
@@ -59,6 +64,13 @@ class AutonomousBot {
       allowedPlayers: this.config.chatControl?.allowedPlayers || [],
       playerRoles: this.config.chatControl?.playerRoles || {},
       dangerousCommands: this.config.chatControl?.dangerousCommands || ['mode', 'stop', 'retreat', 'base']
+    };
+    this.storageConfig = {
+      autoStoreIntervalMs: Number(this.config.behavior?.autoStoreIntervalMs || 12_000),
+      autoSortIntervalMs: Number(this.config.behavior?.autoSortIntervalMs || 18_000),
+      keepInInventory: this.config.behavior?.keepInInventory || [
+        'pickaxe', 'axe', 'sword', 'shield', 'bow', 'crossbow', 'arrow', 'torch', 'bread', 'steak', 'totem'
+      ]
     };
     this.llmResponder = new JapaneseLLMResponder(this.config.llm || {}, this.config.bot.username);
   }
@@ -259,9 +271,24 @@ class AutonomousBot {
       this.autoMineTask = null;
     }
 
+    if (this.autoStoreTask) {
+      this.autoStoreTask.running = false;
+      this.autoStoreTask = null;
+    }
+
+    if (this.autoSortTask) {
+      this.autoSortTask.running = false;
+      this.autoSortTask = null;
+    }
+
     if (this.combatTask) {
       this.combatTask.running = false;
       this.combatTask = null;
+    }
+
+    if (this.cityModeTask) {
+      this.cityModeTask.running = false;
+      this.cityModeTask = null;
     }
 
     if (this.bot?.pvp?.stop) {
@@ -444,7 +471,45 @@ class AutonomousBot {
     if (cmd === 'stop' || cmd === '停止') {
       this.stopAutoCollect();
       this.stopAutoMine();
+      this.stopAutoStoreMode();
+      this.stopAutoSortMode();
       this.sayJapanese('自動作業を停止しました。');
+      return true;
+    }
+
+    if (cmd === 'store' || cmd === '保管') {
+      const result = await this.storeInventoryToNearestChest();
+      this.sayJapanese(result.ok ? `保管完了: ${result.movedStacks}スタック` : '保管先チェストが見つかりません。');
+      return true;
+    }
+
+    if (cmd === 'autostore' || cmd === '自動保管') {
+      const mode = String(args[0] || 'on').toLowerCase();
+      if (mode === 'off' || mode === 'stop') {
+        const result = this.stopAutoStoreMode();
+        this.sayJapanese(result.stopped ? '自動保管モードを停止しました。' : '自動保管モードは停止中です。');
+      } else {
+        const result = this.startAutoStoreMode();
+        this.sayJapanese(result.ok ? '自動保管モードを開始しました。' : '自動保管モードは既に実行中です。');
+      }
+      return true;
+    }
+
+    if (cmd === 'sortchest' || cmd === '仕分け') {
+      const result = await this.sortNearestChestsOnce();
+      this.sayJapanese(result.ok ? `仕分け実行: ${result.movedStacks}スタック` : '仕分けに失敗しました。');
+      return true;
+    }
+
+    if (cmd === 'autosort' || cmd === '自動仕分け') {
+      const mode = String(args[0] || 'on').toLowerCase();
+      if (mode === 'off' || mode === 'stop') {
+        const result = this.stopAutoSortMode();
+        this.sayJapanese(result.stopped ? '自動仕分けモードを停止しました。' : '自動仕分けモードは停止中です。');
+      } else {
+        const result = this.startAutoSortMode();
+        this.sayJapanese(result.ok ? '自動仕分けモードを開始しました。' : '自動仕分けモードは既に実行中です。');
+      }
       return true;
     }
 
@@ -675,6 +740,12 @@ class AutonomousBot {
     await container.withdraw(itemType, null, count);
   }
 
+  async safeDeposit(container, itemType, count) {
+    const tickWait = this.isBedrockMode ? this.config.bedrock.waitForTicks : 1;
+    await this.waitForTicks(tickWait);
+    await container.deposit(itemType, null, count);
+  }
+
   async fetchItemFromMemory(itemName, amount = 1) {
     if (!this.bot?.entity) {
       return false;
@@ -844,6 +915,288 @@ class AutonomousBot {
     return summary;
   }
 
+  classifyItem(name = '') {
+    const n = String(name || '').toLowerCase();
+    if (/(ore|ingot|raw_|diamond|emerald|lapis|redstone|quartz)/.test(n)) {
+      return 'ore';
+    }
+    if (/(log|planks|wood|stick|sapling)/.test(n)) {
+      return 'wood';
+    }
+    if (/(bread|beef|pork|chicken|fish|apple|potato|carrot|melon|berry|food|stew)/.test(n)) {
+      return 'food';
+    }
+    if (/(sword|pickaxe|axe|shovel|hoe|bow|crossbow|shield)/.test(n)) {
+      return 'tool';
+    }
+    if (/(helmet|chestplate|leggings|boots|armor)/.test(n)) {
+      return 'armor';
+    }
+    if (/(gunpowder|bone|string|spider_eye|rotten_flesh|ender_pearl|slime)/.test(n)) {
+      return 'mob';
+    }
+    if (/(stone|cobblestone|deepslate|dirt|sand|gravel|clay)/.test(n)) {
+      return 'block';
+    }
+    return 'misc';
+  }
+
+  isEssentialInventoryItem(itemName = '') {
+    const n = String(itemName || '').toLowerCase();
+    return this.storageConfig.keepInInventory.some((part) => n.includes(String(part).toLowerCase()));
+  }
+
+  getNearbyChests(maxDistance = 12, count = 8) {
+    const blocks = this.bot.findBlocks({
+      matching: (block) => block?.name?.includes('chest'),
+      maxDistance,
+      count
+    });
+
+    return blocks
+      .map((p) => this.bot.blockAt(p))
+      .filter(Boolean)
+      .sort((a, b) => {
+        const da = this.bot.entity.position.distanceTo(a.position);
+        const db = this.bot.entity.position.distanceTo(b.position);
+        return da - db;
+      });
+  }
+
+  chooseBestChestForItem(itemName, chestBlocks = []) {
+    if (chestBlocks.length === 0) {
+      return null;
+    }
+
+    const category = this.classifyItem(itemName);
+    const snapshot = this.memoryStore.snapshot();
+    const scored = chestBlocks.map((block) => {
+      const key = `${block.position.x},${block.position.y},${block.position.z}`;
+      const chest = (snapshot.chests || []).find((x) => x.key === key);
+      const same = (chest?.items || []).filter((x) => this.classifyItem(x.name) === category).length;
+      return { block, score: same };
+    }).sort((a, b) => b.score - a.score);
+
+    return scored[0]?.block || chestBlocks[0];
+  }
+
+  async storeInventoryToNearestChest() {
+    if (!this.bot?.entity) {
+      return { ok: false, reason: 'bot-not-ready' };
+    }
+
+    const chestBlocks = this.getNearbyChests(14, 10);
+    if (chestBlocks.length === 0) {
+      return { ok: false, reason: 'no-chest-found', movedStacks: 0 };
+    }
+
+    let movedStacks = 0;
+    const items = this.bot.inventory.items().filter((item) => !this.isEssentialInventoryItem(item.name));
+    for (const item of items) {
+      const targetBlock = this.chooseBestChestForItem(item.name, chestBlocks);
+      if (!targetBlock) {
+        continue;
+      }
+
+      try {
+        const goal = new goals.GoalNear(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z, 2);
+        // eslint-disable-next-line no-await-in-loop
+        await this.bot.pathfinder.goto(goal);
+        // eslint-disable-next-line no-await-in-loop
+        const container = await this.bot.openContainer(targetBlock);
+        // eslint-disable-next-line no-await-in-loop
+        await this.safeDeposit(container, item.type, item.count);
+        movedStacks += 1;
+
+        const current = container.containerItems();
+        // eslint-disable-next-line no-await-in-loop
+        await this.memoryStore.upsertChest(targetBlock.position, current);
+        container.close();
+      } catch (error) {
+        logger.warn('自動保管でチェスト投入に失敗しました。', error);
+      }
+    }
+
+    return { ok: true, movedStacks };
+  }
+
+  startAutoStoreMode() {
+    if (this.autoStoreTask?.running) {
+      return { ok: false, reason: 'already-running' };
+    }
+
+    const task = {
+      running: true,
+      startedAt: Date.now(),
+      lastResult: null
+    };
+    this.autoStoreTask = task;
+
+    (async () => {
+      while (task.running) {
+        // eslint-disable-next-line no-await-in-loop
+        task.lastResult = await this.storeInventoryToNearestChest();
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(this.storageConfig.autoStoreIntervalMs);
+      }
+      this.autoStoreTask = null;
+    })().catch((error) => {
+      logger.warn('自動保管モードでエラーが発生しました。', error);
+      this.autoStoreTask = null;
+    });
+
+    return { ok: true, started: true };
+  }
+
+  stopAutoStoreMode() {
+    if (!this.autoStoreTask) {
+      return { ok: true, stopped: false };
+    }
+
+    this.autoStoreTask.running = false;
+    return { ok: true, stopped: true };
+  }
+
+  async moveItemBetweenChests(sourceBlock, targetBlock, item, moveCount) {
+    const sourceGoal = new goals.GoalNear(sourceBlock.position.x, sourceBlock.position.y, sourceBlock.position.z, 2);
+    await this.bot.pathfinder.goto(sourceGoal);
+    const source = await this.bot.openContainer(sourceBlock);
+    await this.safeWithdraw(source, item.type, moveCount);
+    const sourceItems = source.containerItems();
+    await this.memoryStore.upsertChest(sourceBlock.position, sourceItems);
+    source.close();
+
+    const targetGoal = new goals.GoalNear(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z, 2);
+    await this.bot.pathfinder.goto(targetGoal);
+    const target = await this.bot.openContainer(targetBlock);
+    const invItem = this.bot.inventory.items().find((x) => x.type === item.type);
+    if (invItem) {
+      await this.safeDeposit(target, invItem.type, Math.min(moveCount, invItem.count));
+    }
+    const targetItems = target.containerItems();
+    await this.memoryStore.upsertChest(targetBlock.position, targetItems);
+    target.close();
+  }
+
+  buildChestCategoryMap(chestBlocks = []) {
+    const categories = ['ore', 'wood', 'food', 'tool', 'armor', 'mob', 'block', 'misc'];
+    const map = new Map();
+    const snapshot = this.memoryStore.snapshot();
+
+    chestBlocks.forEach((block, index) => {
+      const key = `${block.position.x},${block.position.y},${block.position.z}`;
+      const chest = (snapshot.chests || []).find((x) => x.key === key);
+      if (!chest?.items?.length) {
+        map.set(key, categories[index % categories.length]);
+        return;
+      }
+
+      const score = new Map();
+      for (const item of chest.items) {
+        const cat = this.classifyItem(item.name);
+        score.set(cat, (score.get(cat) || 0) + Number(item.count || 0));
+      }
+
+      const top = [...score.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || categories[index % categories.length];
+      map.set(key, top);
+    });
+
+    return map;
+  }
+
+  async sortNearestChestsOnce(maxMoves = 12) {
+    const chestBlocks = this.getNearbyChests(14, 10);
+    if (chestBlocks.length < 2) {
+      return { ok: false, reason: 'need-multiple-chests', movedStacks: 0 };
+    }
+
+    const categoryMap = this.buildChestCategoryMap(chestBlocks);
+    let movedStacks = 0;
+
+    for (const sourceBlock of chestBlocks) {
+      if (movedStacks >= maxMoves) {
+        break;
+      }
+
+      try {
+        const sourceGoal = new goals.GoalNear(sourceBlock.position.x, sourceBlock.position.y, sourceBlock.position.z, 2);
+        // eslint-disable-next-line no-await-in-loop
+        await this.bot.pathfinder.goto(sourceGoal);
+        // eslint-disable-next-line no-await-in-loop
+        const container = await this.bot.openContainer(sourceBlock);
+        const sourceKey = `${sourceBlock.position.x},${sourceBlock.position.y},${sourceBlock.position.z}`;
+        const sourceCategory = categoryMap.get(sourceKey);
+        const items = container.containerItems();
+        container.close();
+
+        for (const item of items) {
+          if (movedStacks >= maxMoves) {
+            break;
+          }
+
+          const itemCategory = this.classifyItem(item.name);
+          if (itemCategory === sourceCategory) {
+            continue;
+          }
+
+          const targetBlock = chestBlocks.find((block) => {
+            const key = `${block.position.x},${block.position.y},${block.position.z}`;
+            return key !== sourceKey && categoryMap.get(key) === itemCategory;
+          });
+
+          if (!targetBlock) {
+            continue;
+          }
+
+          // eslint-disable-next-line no-await-in-loop
+          await this.moveItemBetweenChests(sourceBlock, targetBlock, item, Math.min(item.count, 16));
+          movedStacks += 1;
+        }
+      } catch (error) {
+        logger.warn('チェスト仕分け中の処理に失敗しました。', error);
+      }
+    }
+
+    return { ok: true, movedStacks };
+  }
+
+  startAutoSortMode() {
+    if (this.autoSortTask?.running) {
+      return { ok: false, reason: 'already-running' };
+    }
+
+    const task = {
+      running: true,
+      startedAt: Date.now(),
+      lastResult: null
+    };
+    this.autoSortTask = task;
+
+    (async () => {
+      while (task.running) {
+        // eslint-disable-next-line no-await-in-loop
+        task.lastResult = await this.sortNearestChestsOnce(8);
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(this.storageConfig.autoSortIntervalMs);
+      }
+      this.autoSortTask = null;
+    })().catch((error) => {
+      logger.warn('自動仕分けモードでエラーが発生しました。', error);
+      this.autoSortTask = null;
+    });
+
+    return { ok: true, started: true };
+  }
+
+  stopAutoSortMode() {
+    if (!this.autoSortTask) {
+      return { ok: true, stopped: false };
+    }
+
+    this.autoSortTask.running = false;
+    return { ok: true, stopped: true };
+  }
+
   stopAutoMine() {
     if (!this.autoMineTask) {
       return { ok: true, stopped: false };
@@ -961,6 +1314,153 @@ class AutonomousBot {
     }
   }
 
+  async performEvasionStep() {
+    if (!this.evasionEnabled || !this.bot) {
+      return;
+    }
+
+    const useSneakBack = Math.random() < 0.6;
+    const useStrafeLeft = Math.random() < 0.5;
+
+    this.bot.setControlState('sneak', useSneakBack);
+    this.bot.setControlState('back', useSneakBack);
+    this.bot.setControlState('left', useStrafeLeft);
+    this.bot.setControlState('right', !useStrafeLeft && Math.random() < 0.5);
+
+    await sleep(350 + Math.floor(Math.random() * 220));
+
+    this.bot.setControlState('sneak', false);
+    this.bot.setControlState('back', false);
+    this.bot.setControlState('left', false);
+    this.bot.setControlState('right', false);
+  }
+
+  setCombatProfile(profileName) {
+    const normalized = String(profileName || '').toLowerCase();
+    const presets = {
+      balanced: { rangedPreferDistance: 9, meleeMaxDistance: 3, evasionEnabled: true },
+      berserker: { rangedPreferDistance: 6, meleeMaxDistance: 2, evasionEnabled: false },
+      guardian: { rangedPreferDistance: 11, meleeMaxDistance: 3, evasionEnabled: true },
+      sniper: { rangedPreferDistance: 14, meleeMaxDistance: 4, evasionEnabled: true }
+    };
+
+    const next = presets[normalized];
+    if (!next) {
+      return { ok: false, reason: 'unknown-profile' };
+    }
+
+    this.combatProfile = normalized;
+    this.combatConfig.rangedPreferDistance = next.rangedPreferDistance;
+    this.combatConfig.meleeMaxDistance = next.meleeMaxDistance;
+    this.evasionEnabled = next.evasionEnabled;
+    return { ok: true, profile: normalized, config: { ...this.combatConfig, evasionEnabled: this.evasionEnabled } };
+  }
+
+  setEvasionEnabled(enabled) {
+    this.evasionEnabled = Boolean(enabled);
+    return { ok: true, evasionEnabled: this.evasionEnabled };
+  }
+
+  async craftItem(itemName, count = 1) {
+    if (!this.bot?.registry) {
+      return { ok: false, reason: 'bot-not-ready' };
+    }
+
+    const target = this.bot.registry.itemsByName[itemName];
+    if (!target) {
+      return { ok: false, reason: 'unknown-item' };
+    }
+
+    const table = this.bot.findBlock({
+      matching: (block) => block?.name === 'crafting_table',
+      maxDistance: 12
+    });
+
+    const recipes = this.bot.recipesFor(target.id, null, 1, table || null);
+    if (!recipes || recipes.length === 0) {
+      return { ok: false, reason: 'recipe-not-found' };
+    }
+
+    const recipe = recipes[0];
+    const perCraft = Number(recipe.result?.count || 1);
+    const times = Math.max(1, Math.ceil(Number(count || 1) / perCraft));
+
+    try {
+      await this.bot.craft(recipe, times, table || null);
+      return { ok: true, itemName, count: Number(count || 1), times };
+    } catch (error) {
+      logger.warn('クラフト処理に失敗しました。', error);
+      return { ok: false, reason: 'craft-failed' };
+    }
+  }
+
+  async equipBestArmor() {
+    const priorities = ['netherite', 'diamond', 'iron', 'golden', 'chainmail', 'leather'];
+    const slots = [
+      { slot: 'head', suffix: 'helmet' },
+      { slot: 'torso', suffix: 'chestplate' },
+      { slot: 'legs', suffix: 'leggings' },
+      { slot: 'feet', suffix: 'boots' }
+    ];
+
+    const equipped = [];
+    for (const info of slots) {
+      const names = priorities.map((p) => `${p}_${info.suffix}`);
+      const item = this.findInventoryItemByNames(names);
+      if (!item) {
+        continue;
+      }
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await this.bot.equip(item, info.slot);
+        equipped.push(item.name);
+      } catch {}
+    }
+
+    return { ok: true, equipped };
+  }
+
+  async startCityMode(modeName = 'village') {
+    if (this.cityModeTask?.running) {
+      return { ok: false, reason: 'already-running' };
+    }
+
+    const task = {
+      running: true,
+      modeName,
+      startedAt: Date.now()
+    };
+    this.cityModeTask = task;
+
+    (async () => {
+      while (task.running) {
+        // 最低限の街づくりループ: 木材収集→装備整備→周回会話
+        // eslint-disable-next-line no-await-in-loop
+        await this.startAutoCollect('oak_log', 32);
+        // eslint-disable-next-line no-await-in-loop
+        await this.equipBestArmor();
+        this.sayJapanese('街づくりモード: 資材を整えて開発を進めています。');
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(15_000);
+      }
+
+      this.cityModeTask = null;
+    })().catch((error) => {
+      logger.warn('街づくりモードでエラーが発生しました。', error);
+      this.cityModeTask = null;
+    });
+
+    return { ok: true, started: true, modeName };
+  }
+
+  stopCityMode() {
+    if (!this.cityModeTask) {
+      return { ok: true, stopped: false };
+    }
+    this.cityModeTask.running = false;
+    return { ok: true, stopped: true };
+  }
+
   async executeCombatTactic(entity, durationMs = 12_000) {
     if (!entity) {
       return { ok: false, reason: 'no-target' };
@@ -994,6 +1494,10 @@ class AutonomousBot {
       } else {
         this.bot.attack(entity);
       }
+
+      // 人間らしい回避: しゃがみ後退とストレイフを混ぜる
+      // eslint-disable-next-line no-await-in-loop
+      await this.performEvasionStep();
 
       // eslint-disable-next-line no-await-in-loop
       await sleep(700);
@@ -1135,6 +1639,8 @@ class AutonomousBot {
       food: this.bot?.food || 0,
       automation: {
         mode: this.mode,
+        combatProfile: this.combatProfile,
+        evasionEnabled: this.evasionEnabled,
         playerControlEnabled: this.isPlayerControlEnabled(),
         conversationEnabled: this.isConversationEnabled(),
         autoCollect: this.autoCollectTask ? {
@@ -1147,9 +1653,24 @@ class AutonomousBot {
           running: this.autoMineTask.running,
           plan: this.autoMineTask.plan
         } : null,
+        autoStore: this.autoStoreTask ? {
+          running: this.autoStoreTask.running,
+          startedAt: this.autoStoreTask.startedAt,
+          lastResult: this.autoStoreTask.lastResult
+        } : null,
+        autoSort: this.autoSortTask ? {
+          running: this.autoSortTask.running,
+          startedAt: this.autoSortTask.startedAt,
+          lastResult: this.autoSortTask.lastResult
+        } : null,
         combat: this.combatTask ? {
           running: this.combatTask.running,
           target: this.combatTask.target
+        } : null,
+        cityMode: this.cityModeTask ? {
+          running: this.cityModeTask.running,
+          modeName: this.cityModeTask.modeName,
+          startedAt: this.cityModeTask.startedAt
         } : null
       },
       mode: this.mode,

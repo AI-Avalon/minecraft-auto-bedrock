@@ -31,7 +31,20 @@
     "allowedHosts": []
   },
   "behavior": {
-    "mode": "hybrid"
+    "mode": "hybrid",
+    "autoStoreIntervalMs": 12000,
+    "autoSortIntervalMs": 18000,
+    "keepInInventory": [
+      "pickaxe",
+      "axe",
+      "sword",
+      "bow",
+      "shield",
+      "arrow",
+      "totem",
+      "bread",
+      "torch"
+    ]
   },
   "combat": {
     "healThreshold": 10,
@@ -134,15 +147,30 @@
         "stop-auto-collect",
         "start-auto-mine",
         "stop-auto-mine",
+        "store-inventory",
+        "start-auto-store",
+        "stop-auto-store",
+        "sort-chests-once",
+        "start-auto-sort",
+        "stop-auto-sort",
         "fleet-add-bot",
         "fleet-remove-bot",
         "fleet-update-role",
         "fight-nearest-mob",
         "fight-player",
         "stop-fight",
+        "set-combat-profile",
+        "set-evasion",
+        "craft-item",
+        "equip-best-armor",
+        "start-city-mode",
+        "stop-city-mode",
         "planner-calc-recipe",
         "planner-gather-for-craft",
-        "orchestrator-assign-task"
+        "orchestrator-assign-task",
+        "system-doctor",
+        "oneclick-setup",
+        "oneclick-setup-live"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,
