@@ -66,6 +66,70 @@ function acceptEula(serverDir) {
   fs.writeFileSync(eulaPath, 'eula=true\n', 'utf8');
 }
 
+function parseProperties(text) {
+  const map = new Map();
+  const lines = String(text || '').split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    const idx = line.indexOf('=');
+    if (idx <= 0) {
+      continue;
+    }
+    const key = line.slice(0, idx).trim();
+    const value = line.slice(idx + 1).trim();
+    map.set(key, value);
+  }
+  return map;
+}
+
+function writeProperties(filePath, baseText, updates) {
+  const originalLines = String(baseText || '').split(/\r?\n/);
+  const touched = new Set();
+  const result = [];
+
+  for (const raw of originalLines) {
+    if (!raw || raw.trim().startsWith('#') || raw.indexOf('=') <= 0) {
+      result.push(raw);
+      continue;
+    }
+
+    const idx = raw.indexOf('=');
+    const key = raw.slice(0, idx).trim();
+    if (Object.prototype.hasOwnProperty.call(updates, key)) {
+      result.push(`${key}=${updates[key]}`);
+      touched.add(key);
+    } else {
+      result.push(raw);
+    }
+  }
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (!touched.has(key)) {
+      result.push(`${key}=${value}`);
+    }
+  }
+
+  fs.writeFileSync(filePath, `${result.join('\n').trim()}\n`, 'utf8');
+}
+
+function syncServerProperties(serverDir, botConfig = {}) {
+  const filePath = path.join(serverDir, 'server.properties');
+  const currentText = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+  const props = parseProperties(currentText);
+  const isOfflineAuth = String(botConfig.auth || 'offline').toLowerCase() === 'offline';
+
+  // Bot auth 設定に合わせてローカルサーバーの認証設定を自動同期する。
+  const updates = {
+    'online-mode': isOfflineAuth ? 'false' : (props.get('online-mode') || 'true'),
+    'enforce-secure-profile': isOfflineAuth ? 'false' : (props.get('enforce-secure-profile') || 'true')
+  };
+
+  writeProperties(filePath, currentText, updates);
+}
+
 function loadMeta(serverDir) {
   const metaPath = path.join(serverDir, 'server-meta.json');
   if (!fs.existsSync(metaPath)) {
@@ -331,9 +395,10 @@ async function waitForPort(host, port, timeoutMs = 35_000) {
 }
 
 class JavaServerManager {
-  constructor(configInput, javaConfig = { host: '127.0.0.1', port: 25565 }) {
+  constructor(configInput, javaConfig = { host: '127.0.0.1', port: 25565 }, botConfig = {}) {
     this.config = resolveConfig(configInput);
     this.javaConfig = javaConfig;
+    this.botConfig = botConfig;
     this.process = null;
   }
 
@@ -426,6 +491,7 @@ class JavaServerManager {
     }
 
     const { meta } = await this.ensureInstalled();
+    syncServerProperties(this.serverDir, this.botConfig);
     const launch = this.buildLaunchCommand(meta);
 
     logger.info(`ローカルJavaサーバーを起動: ${launch.command} ${launch.args.join(' ')}`);

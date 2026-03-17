@@ -114,7 +114,7 @@ async function bootstrap() {
 
   let javaServerManager = null;
   if (config.edition === 'java' && config.localJavaServer?.enabled && config.localJavaServer?.autoStart) {
-    javaServerManager = new JavaServerManager(config.localJavaServer, config.java);
+    javaServerManager = new JavaServerManager(config.localJavaServer, config.java, config.bot);
     await javaServerManager.start();
   }
 
