@@ -1,9 +1,32 @@
 #!/usr/bin/env node
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { io } = require('socket.io-client');
 
+function loadGuiPort() {
+  const envPort = Number(process.env.GUI_PORT || process.env.PORT || 0);
+  if (envPort > 0) {
+    return envPort;
+  }
+
+  try {
+    const configPath = path.resolve(process.cwd(), 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const cfgPort = Number(config?.gui?.port || 0);
+    if (cfgPort > 0) {
+      return cfgPort;
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  return 3000;
+}
+
 // テスト対象ポート
-const PORT = 3002;
+const PORT = loadGuiPort();
+const HOST = '127.0.0.1';
 
 // テスト結果を保存
 const testResults = {
@@ -44,7 +67,7 @@ async function testHTTPEndpoints() {
   for (const endpoint of endpoints) {
     try {
       const response = await new Promise((resolve, reject) => {
-        const req = http.get(`http://localhost:${PORT}${endpoint.path}`, (res) => {
+        const req = http.get(`http://${HOST}:${PORT}${endpoint.path}`, (res) => {
           let data = '';
           res.on('data', chunk => data += chunk);
           res.on('end', () => {
@@ -105,10 +128,10 @@ async function testSocketIOCommands() {
   ];
 
   return new Promise((resolve) => {
-    const socket = io(`http://localhost:${PORT}`, {
+    const socket = io(`http://${HOST}:${PORT}`, {
       reconnection: false,
       forceNew: true,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       timeout: 10000
     });
 
@@ -176,6 +199,17 @@ async function testSocketIOCommands() {
       log(`refresh: ${keys.join(', ')}`, 'success');
     });
 
+    socket.on('fleet-bots-list', (rows) => {
+      testResults.commands.push({
+        command: 'fleet-list-bots',
+        description: 'Fleet Bot 一覧',
+        dataCount: Array.isArray(rows) ? rows.length : 0,
+        success: true
+      });
+      responsesReceived++;
+      log(`fleet-list-bots: ${Array.isArray(rows) ? rows.length : 0}件`, 'success');
+    });
+
     socket.on('error', (error) => {
       log(`Socket.IO Error: ${error}`, 'error');
       testResults.errors.push({ type: 'socket-error', message: error });
@@ -196,10 +230,10 @@ async function testUIFeatures() {
   logSection('WEB UI 機能テスト');
 
   return new Promise((resolve) => {
-    const socket = io(`http://localhost:${PORT}`, {
+    const socket = io(`http://${HOST}:${PORT}`, {
       reconnection: false,
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket', 'polling']
     });
 
     const features = [];
@@ -270,7 +304,7 @@ async function main() {
   const successfulEndpoints = testResults.httpEndpoints.filter(e => e.success).length;
   console.log(`\n📡 HTTP エンドポイント: ${successfulEndpoints}/${testResults.httpEndpoints.length} 成功`);
 
-  const successfulCommands = testResults.commands.filter(c => c.ok !== false).length;
+  const successfulCommands = testResults.commands.filter(c => c.success === true).length;
   console.log(`🔌 Socket.IO コマンド: ${successfulCommands}/${testResults.commands.length} 成功`);
 
   if (testResults.errors.length > 0) {
@@ -282,8 +316,8 @@ async function main() {
     console.log(`\n✓ エラーなし`);
   }
 
-  const totalTests = testResults.httpEndpoints.length + testResults.commands.filter(c => c.ok !== undefined).length;
-  const passedTests = successfulEndpoints + testResults.commands.filter(c => c.ok === true).length;
+  const totalTests = testResults.httpEndpoints.length + testResults.commands.length;
+  const passedTests = successfulEndpoints + successfulCommands;
   
   console.log(`\n総テスト数: ${totalTests}`);
   console.log(`合格数: ${passedTests}`);

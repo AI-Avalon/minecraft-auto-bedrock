@@ -35,6 +35,7 @@
     "test:gui": "node --test test/gui.integration.test.js",
     "test:e2e": "node --test test/e2e.connection.test.js",
     "test:integration": "node --test test/integration/flying_squid_bot.test.js",
+    "test:windows": "cmd /c run-tests.bat full",
     "verify:all": "node setup.js && npm test && npm run test:gui",
     "pm2:start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:save": "pm2 save",

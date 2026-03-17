@@ -1,18 +1,42 @@
 #!/usr/bin/env node
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { io } = require('socket.io-client');
 
-// テスト対象ポート（複数試行）
-const ports = [3002, 3003, 3004, 3005, 8080];
+function loadGuiPort() {
+  const envPort = Number(process.env.GUI_PORT || process.env.PORT || 0);
+  if (envPort > 0) {
+    return envPort;
+  }
+
+  try {
+    const configPath = path.resolve(process.cwd(), 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const cfgPort = Number(config?.gui?.port || 0);
+    if (cfgPort > 0) {
+      return cfgPort;
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  return 3000;
+}
+
+// テスト対象ポート（設定ポート + フォールバック）
+const configuredPort = loadGuiPort();
+const ports = [...new Set([configuredPort, 3000, 3001, 3002, 8080])];
 
 async function testGUIServer(port) {
+  const host = '127.0.0.1';
   console.log(`\n========== ポート ${port} でGUIサーバーテスト ==========\n`);
 
   // HTTP 接続テスト
-  console.log(`[HTTP] GET http://localhost:${port}/health`);
+  console.log(`[HTTP] GET http://${host}:${port}/health`);
   try {
     const response = await new Promise((resolve, reject) => {
-      const req = http.get(`http://localhost:${port}/health`, (res) => {
+      const req = http.get(`http://${host}:${port}/health`, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -29,10 +53,10 @@ async function testGUIServer(port) {
   }
 
   // HTTP API テスト
-  console.log(`\n[HTTP] GET http://localhost:${port}/api/state`);
+  console.log(`\n[HTTP] GET http://${host}:${port}/api/state`);
   try {
     const response = await new Promise((resolve, reject) => {
-      const req = http.get(`http://localhost:${port}/api/state`, (res) => {
+      const req = http.get(`http://${host}:${port}/api/state`, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -56,12 +80,12 @@ async function testGUIServer(port) {
   }
 
   // Socket.IO 接続テスト
-  console.log(`\n[Socket.IO] ws://localhost:${port}`);
+  console.log(`\n[Socket.IO] ws://${host}:${port}`);
   return new Promise((resolve) => {
-    const socket = io(`http://localhost:${port}`, {
+    const socket = io(`http://${host}:${port}`, {
       reconnection: false,
       forceNew: true,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       timeout: 5000
     });
 
@@ -132,6 +156,13 @@ async function testGUIServer(port) {
 
     socket.on('fleet-bots-list', (data) => {
       console.log(`✓ fleet-bots-list: ${Array.isArray(data) ? data.length : 0}個のBot`);
+      if (testResults.commandsTestedCount >= 5) {
+        console.log(`\n✓ ${testResults.commandsTestedCount}個のコマンド経路を確認\n`);
+        console.log('===== テスト成功 =====\n');
+        socket.disconnect();
+        clearTimeout(timeout);
+        resolve(true);
+      }
     });
 
     socket.on('error', (error) => {
