@@ -68,6 +68,9 @@ test('会話・プレイヤー制御設定が存在すること', () => {
   const config = loadConfig();
   assert.equal(typeof config.behavior, 'object');
   assert.ok(['silent-mining', 'hybrid', 'conversation', 'player-command', 'autonomous'].includes(config.behavior.mode));
+  assert.equal(typeof config.combat, 'object');
+  assert.equal(typeof config.combat.healThreshold, 'number');
+  assert.equal(typeof config.combat.rangedPreferDistance, 'number');
   assert.equal(typeof config.chatControl, 'object');
   assert.equal(typeof config.chatControl.commandPrefix, 'string');
   assert.equal(typeof config.chatControl.playerRoles, 'object');

@@ -18,6 +18,7 @@ Java版/統合版を切り替えて動かせる Mineflayer 自律Botです。Via
 - 複数Bot同時起動（役割分担・個別メモリ）
 - Mojang bedrock-samples 解析によるレシピ/ドロップ推定
 - 戦闘/PvP（近接MOB戦闘・プレイヤー指定戦闘）
+- 戦闘AI強化（装備切替・回復行動・遠距離戦闘・敵種別戦術）
 - 役割ベースのタスク割当（Orchestrator）
 
 ## セットアップ
@@ -117,6 +118,13 @@ npm run server:install -- --software purpur --mc 1.21.4
 	- `!bot fightmob`
 	- `!bot fight <playerName>`
 	- `!bot stop` (戦闘含む自動作業停止)
+
+### 戦闘AIの挙動
+
+- HPが閾値以下で回復アイテム（例: golden_apple）を優先使用
+- 敵種別で戦術を切替（例: creeper/witch は遠距離、skeleton/spider は近接）
+- 武器を自動切替（弓/クロスボウ/剣/斧）し、可能なら盾/トーテムをオフハンド装備
+- `combat` 設定で回復閾値や戦闘距離を調整可能
 
 ## 指示系統 (Orchestrator)
 

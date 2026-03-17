@@ -74,6 +74,19 @@ function ensureBedrockKnowledge(knowledge) {
   }
 }
 
+function ensureCombat(combat) {
+  if (!combat) {
+    return;
+  }
+
+  const keys = ['healThreshold', 'retreatThreshold', 'rangedPreferDistance', 'meleeMaxDistance'];
+  for (const key of keys) {
+    if (combat[key] !== undefined && Number.isNaN(Number(combat[key]))) {
+      throw new Error(`combat.${key} は数値で指定してください。`);
+    }
+  }
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -90,6 +103,7 @@ function loadConfig() {
   ensureMultiBot(config.multiBot);
   ensureChatControl(config.chatControl);
   ensureBedrockKnowledge(config.bedrockKnowledge);
+  ensureCombat(config.combat);
 
   return config;
 }

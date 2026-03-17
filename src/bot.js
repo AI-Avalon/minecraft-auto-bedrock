@@ -45,6 +45,12 @@ class AutonomousBot {
     this.mode = this.config.behavior?.mode || 'hybrid';
     this.role = this.runtimeContext.role || 'worker';
     this.knowledgeService = this.runtimeContext.knowledgeService || null;
+    this.combatConfig = {
+      healThreshold: Number(this.config.combat?.healThreshold || 10),
+      retreatThreshold: Number(this.config.combat?.retreatThreshold || 8),
+      rangedPreferDistance: Number(this.config.combat?.rangedPreferDistance || 9),
+      meleeMaxDistance: Number(this.config.combat?.meleeMaxDistance || 3)
+    };
     this.chatControl = {
       enabled: Boolean(this.config.chatControl?.enabled ?? true),
       requirePrefix: Boolean(this.config.chatControl?.requirePrefix ?? true),
@@ -139,7 +145,9 @@ class AutonomousBot {
     });
 
     this.bot.on('health', async () => {
-      if (this.bot.health <= 10) {
+      await this.tryEmergencyRecovery();
+
+      if (this.bot.health <= this.combatConfig.retreatThreshold) {
         await this.retreatToNearestBase();
       }
     });
@@ -479,7 +487,7 @@ class AutonomousBot {
     }
 
     if (cmd === 'fightmob' || cmd === 'mob') {
-      const result = this.fightNearestMob();
+      const result = await this.fightNearestMob();
       this.sayJapanese(result.ok ? '近くの敵MOBへ戦闘開始。' : '敵MOBが見つかりません。');
       return true;
     }
@@ -490,7 +498,7 @@ class AutonomousBot {
         this.sayJapanese('使い方: fight <playerName>');
         return true;
       }
-      const result = this.fightPlayer(target);
+      const result = await this.fightPlayer(target);
       this.sayJapanese(result.ok ? `${target} へ戦闘開始。` : `${target} が見つかりません。`);
       return true;
     }
@@ -866,6 +874,139 @@ class AutonomousBot {
     return true;
   }
 
+  findInventoryItemByNames(nameParts = []) {
+    const normalized = nameParts.map((x) => String(x).toLowerCase());
+    return this.bot?.inventory?.items()?.find((item) => {
+      const itemName = String(item.name || '').toLowerCase();
+      return normalized.some((part) => itemName.includes(part));
+    }) || null;
+  }
+
+  async tryEmergencyRecovery() {
+    if (!this.bot?.health) {
+      return false;
+    }
+
+    if (this.bot.health > this.combatConfig.healThreshold) {
+      return false;
+    }
+
+    const healItem = this.findInventoryItemByNames(['golden_apple', 'enchanted_golden_apple', 'potion']);
+    if (!healItem) {
+      return false;
+    }
+
+    try {
+      await this.bot.equip(healItem, 'hand');
+      this.bot.activateItem();
+      await sleep(900);
+      this.bot.deactivateItem();
+      return true;
+    } catch (error) {
+      logger.warn('緊急回復アイテムの使用に失敗しました。', error);
+      return false;
+    }
+  }
+
+  getEntityTactic(entity) {
+    const name = String(entity?.name || '').toLowerCase();
+    const rangedKeep = this.combatConfig.rangedPreferDistance;
+    const meleeKeep = this.combatConfig.meleeMaxDistance;
+    const map = {
+      creeper: { style: 'ranged', keepDistance: Math.max(7, rangedKeep), weapon: ['bow', 'crossbow'] },
+      witch: { style: 'ranged', keepDistance: Math.max(7, rangedKeep), weapon: ['bow', 'crossbow'] },
+      skeleton: { style: 'melee', keepDistance: meleeKeep, weapon: ['sword', 'axe'] },
+      spider: { style: 'melee', keepDistance: meleeKeep, weapon: ['sword', 'axe'] },
+      enderman: { style: 'melee', keepDistance: meleeKeep, weapon: ['sword', 'axe'] }
+    };
+
+    return map[name] || { style: 'melee', keepDistance: meleeKeep, weapon: ['sword', 'axe'] };
+  }
+
+  async equipCombatLoadout(entity) {
+    const tactic = this.getEntityTactic(entity);
+    const weapon = this.findInventoryItemByNames(tactic.weapon);
+    if (weapon) {
+      try {
+        await this.bot.equip(weapon, 'hand');
+      } catch {}
+    }
+
+    const offhand = this.findInventoryItemByNames(['shield', 'totem']);
+    if (offhand) {
+      try {
+        await this.bot.equip(offhand, 'off-hand');
+      } catch {}
+    }
+
+    return tactic;
+  }
+
+  async tryRangedAttack(entity) {
+    const ranged = this.findInventoryItemByNames(['bow', 'crossbow']);
+    if (!ranged) {
+      return { ok: false, reason: 'ranged-weapon-not-found' };
+    }
+
+    try {
+      await this.bot.equip(ranged, 'hand');
+      await this.bot.lookAt(entity.position.offset(0, 1.4, 0), true);
+      this.bot.activateItem();
+      await sleep(ranged.name.includes('crossbow') ? 1200 : 900);
+      this.bot.deactivateItem();
+      return { ok: true, weapon: ranged.name };
+    } catch (error) {
+      logger.warn('遠距離攻撃に失敗しました。', error);
+      return { ok: false, reason: 'ranged-attack-failed' };
+    }
+  }
+
+  async executeCombatTactic(entity, durationMs = 12_000) {
+    if (!entity) {
+      return { ok: false, reason: 'no-target' };
+    }
+
+    const tactic = await this.equipCombatLoadout(entity);
+    const startedAt = Date.now();
+    this.combatTask = { running: true, target: entity.name, style: tactic.style };
+
+    while (this.combatTask?.running && Date.now() - startedAt < durationMs) {
+      if (!entity.isValid) {
+        break;
+      }
+
+      await this.tryEmergencyRecovery();
+
+      const me = this.bot.entity?.position;
+      const targetPos = entity.position;
+      if (!me || !targetPos) {
+        break;
+      }
+
+      const distance = me.distanceTo(targetPos);
+
+      if (tactic.style === 'ranged' && distance >= tactic.keepDistance - 1) {
+        // 遠距離戦術: 距離維持して弓攻撃
+        // eslint-disable-next-line no-await-in-loop
+        await this.tryRangedAttack(entity);
+      } else if (this.bot.pvp?.attack) {
+        this.bot.pvp.attack(entity);
+      } else {
+        this.bot.attack(entity);
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(700);
+    }
+
+    if (this.bot?.pvp?.stop) {
+      this.bot.pvp.stop();
+    }
+
+    this.combatTask = null;
+    return { ok: true, target: entity.name, style: tactic.style };
+  }
+
   findNearestHostileMob(maxDistance = 24) {
     if (!this.bot?.nearestEntity) {
       return null;
@@ -893,32 +1034,14 @@ class AutonomousBot {
     });
   }
 
-  attackEntity(entity, durationMs = 12_000) {
+  async attackEntity(entity, durationMs = 12_000) {
     if (!entity || !this.bot) {
       return { ok: false, reason: 'no-target' };
     }
-
-    this.combatTask = { running: true, target: entity.name };
-
-    if (this.bot.pvp?.attack) {
-      this.bot.pvp.attack(entity);
-      setTimeout(() => {
-        if (this.bot?.pvp?.stop) {
-          this.bot.pvp.stop();
-        }
-        this.combatTask = null;
-      }, Math.max(1000, Number(durationMs || 12_000)));
-      return { ok: true, target: entity.name, mode: 'pvp-plugin' };
-    }
-
-    this.bot.attack(entity);
-    setTimeout(() => {
-      this.combatTask = null;
-    }, 1200);
-    return { ok: true, target: entity.name, mode: 'basic-attack' };
+    return this.executeCombatTactic(entity, durationMs);
   }
 
-  fightNearestMob() {
+  async fightNearestMob() {
     const mob = this.findNearestHostileMob(28);
     if (!mob) {
       return { ok: false, reason: 'mob-not-found' };
@@ -926,7 +1049,7 @@ class AutonomousBot {
     return this.attackEntity(mob, 15_000);
   }
 
-  fightPlayer(playerName) {
+  async fightPlayer(playerName) {
     const player = this.bot?.players?.[playerName]?.entity;
     if (!player) {
       return { ok: false, reason: 'player-not-found' };

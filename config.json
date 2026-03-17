@@ -36,6 +36,12 @@
   "behavior": {
     "mode": "hybrid"
   },
+  "combat": {
+    "healThreshold": 10,
+    "retreatThreshold": 8,
+    "rangedPreferDistance": 9,
+    "meleeMaxDistance": 3
+  },
   "chatControl": {
     "enabled": true,
     "requirePrefix": true,
