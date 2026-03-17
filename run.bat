@@ -5,13 +5,13 @@ cd /d %~dp0
 
 echo.
 echo ============================================
-echo   minecraft-auto-bedrock 起動
+echo   minecraft-auto-bedrock run
 echo ============================================
 echo.
 
 :: ── 自動更新 ──────────────────────────────────────────────────
 echo [run] コードを最新版に更新中...
-git pull --rebase 2>nul || echo [run] git pull スキップ
+git pull --rebase 2>nul || echo [run] git pull skipped
 
 :: ── 依存関係更新 ──────────────────────────────────────────────
 echo [run] 依存関係を確認中...
@@ -43,7 +43,7 @@ if %errorlevel%==0 (
 
 pm2 save
 echo.
-echo [run] 起動完了。ログ確認: pm2 logs minecraft-auto-bedrock
+echo [run] Startup complete. Logs: pm2 logs minecraft-auto-bedrock
 echo.
 pause
 endlocal

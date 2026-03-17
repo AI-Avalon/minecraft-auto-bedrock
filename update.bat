@@ -16,16 +16,16 @@ for %%A in (%*) do (
 )
 
 :menu
-echo 1. コード更新 (git pull --rebase)
-echo 2. 依存更新 (npm install)
-echo 3. セットアップ再開 (setup.bat --resume)
-echo 4. 途中ステップからセットアップ (setup.bat --from-step=...)
-echo 5. Node仮想環境(Volta)設定
-echo 6. 環境診断 (npm run doctor)
-echo 7. すべて実行 (1-3)
-echo 0. 終了
+echo 1. Update code via git pull --rebase
+echo 2. Update dependencies via npm install
+echo 3. Resume setup via setup.bat --resume
+echo 4. Start setup from step via --from-step
+echo 5. Configure project Node env with Volta
+echo 6. Run system doctor
+echo 7. Run all steps 1 through 3
+echo 0. Exit
 echo.
-set /p CHOICE="選択してください [0-7]: "
+set /p CHOICE="Select [0-7]: "
 
 if "%CHOICE%"=="1" goto :update_code
 if "%CHOICE%"=="2" goto :update_deps
@@ -36,37 +36,37 @@ if "%CHOICE%"=="6" goto :doctor
 if "%CHOICE%"=="7" goto :all
 if "%CHOICE%"=="0" goto :end
 
-echo [update] 不正な入力です。
+echo [update] Invalid input.
 echo.
 goto :menu
 
 :update_code
-echo [update] コードを更新します...
+echo [update] Updating repository code...
 git pull --rebase
-if errorlevel 1 echo [update] git pull に失敗しました。
+if errorlevel 1 echo [update] git pull failed.
 echo.
 goto :menu
 
 :update_deps
-echo [update] 依存関係を更新します...
+echo [update] Updating dependencies...
 call npm install
-if errorlevel 1 echo [update] npm install に失敗しました。
+if errorlevel 1 echo [update] npm install failed.
 echo.
 goto :menu
 
 :resume_setup
-echo [update] セットアップを再開します...
+echo [update] Resuming setup...
 call setup.bat --resume --node-major=%NODE_MAJOR%
 echo.
 goto :menu
 
 :from_step
 echo.
-echo 利用可能ステップ例:
+echo Example step IDs:
 echo   prereqs, env, npmInstall, config, viaProxy, bedrockSamples, ollama, tests, resident
-set /p STEP_ID="開始ステップIDを入力: "
+set /p STEP_ID="Enter step ID: "
 if "%STEP_ID%"=="" (
-  echo [update] ステップIDが未入力です。
+  echo [update] Step ID is required.
   echo.
   goto :menu
 )
@@ -75,25 +75,25 @@ echo.
 goto :menu
 
 :doctor
-echo [update] システム診断を実行します...
+echo [update] Running system doctor...
 call npm run doctor
 echo.
 goto :menu
 
 :node_env
-echo [update] Node 仮想環境 (Volta) を設定します...
+echo [update] Configuring Node environment with Volta...
 call node scripts\setup-node-env.js --node-major=%NODE_MAJOR%
 echo.
 goto :menu
 
 :all
-echo [update] 一括更新を実行します...
-git pull --rebase || echo [update] git pull をスキップ
-call npm install || echo [update] npm install をスキップ
+echo [update] Running all update steps...
+git pull --rebase || echo [update] git pull skipped
+call npm install || echo [update] npm install skipped
 call setup.bat --resume --node-major=%NODE_MAJOR%
 echo.
 goto :menu
 
 :end
-echo [update] 終了します。
+echo [update] Done.
 endlocal

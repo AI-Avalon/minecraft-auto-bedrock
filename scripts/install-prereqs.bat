@@ -130,33 +130,33 @@ if not errorlevel 1 (
       set INSTALL_OLLAMA=Y
     ) else (
       set INSTALL_OLLAMA=n
-      echo [INFO] Ollama は任意機能のためスキップしました (--with-ollama で有効化)
+      echo [INFO] Ollama optional setup skipped. Use --with-ollama to enable.
     )
   ) else (
     echo.
-    echo [INFO] Ollama が見つかりません。
-    echo        Ollama はLLM日本語会話機能に必要です。
+    echo [INFO] Ollama was not found.
+    echo        Ollama is required for LLM chat features.
     if "%WITH_OLLAMA%"=="1" (
       set INSTALL_OLLAMA=Y
     ) else (
-      set /p INSTALL_OLLAMA="  Ollama をインストールしますか? [Y/n]: "
+      set /p INSTALL_OLLAMA="  Install Ollama now? [Y/n]: "
     )
   )
 
   if /i not "!INSTALL_OLLAMA!"=="n" (
     if "%WINGET_OK%"=="1" (
-      echo [INFO] winget で Ollama をインストール中...
+      echo [INFO] Installing Ollama via winget...
       winget install Ollama.Ollama --silent --accept-source-agreements --accept-package-agreements
-      echo [OK] Ollama インストール完了
+      echo [OK] Ollama installation completed
     ) else (
-      echo [INFO] 公式インストーラーをダウンロードしてください:
+      echo [INFO] Download the official installer:
       echo        https://ollama.com/download/OllamaSetup.exe
-      echo        インストール後、このスクリプトを再実行するか
-      echo        "node scripts/install-ollama.js" を実行してください。
+      echo        After install, rerun this script or run:
+      echo        node scripts/install-ollama.js
     )
   ) else (
-    echo [INFO] Ollama のインストールをスキップしました。
-    echo        後で "npm run ollama:setup" で設定できます。
+    echo [INFO] Ollama installation was skipped.
+    echo        You can set it up later with: npm run ollama:setup
   )
 )
 
@@ -172,15 +172,15 @@ if not errorlevel 1 (
 
 echo.
 echo ============================================
-echo   前提ツール確認・インストール完了
+echo   Prerequisites complete
 echo ============================================
 echo.
-echo 次のステップ:
+echo Next steps:
 echo   1. npm install ^&^& npm run setup
-echo   2. npm run configure:java  (または configure:bedrock)
+echo   2. npm run configure:java or configure:bedrock
 echo   3. run.bat
 echo.
-echo LLM会話を有効化する場合:
+echo To enable LLM chat:
 echo   npm run ollama:setup
 echo.
 if "%AUTO_MODE%"=="1" goto :end
