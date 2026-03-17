@@ -3,154 +3,155 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>自動Botコマンドセンター</title>
+    <title>MineCraft Auto Bot - コントロールセンター</title>
     <link rel="stylesheet" href="/style.css" />
-    <link rel="stylesheet" href="/style-mobile.css" />
-    <style>
-      .preset-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 10px;
-        margin: 10px 0;
-      }
-      .preset-card {
-        border: 2px solid #666;
-        border-radius: 8px;
-        padding: 10px;
-        background: #222;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-      .preset-card:hover {
-        background: #333;
-        border-color: #4CAF50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
-      }
-      .preset-card h3 {
-        margin: 0 0 5px 0;
-        font-size: 14px;
-        color: #fff;
-      }
-      .preset-card p {
-        margin: 0;
-        font-size: 12px;
-        color: #aaa;
-      }
-      .bulk-bot-manager {
-        background: #222;
-        border-left: 4px solid #2196F3;
-        padding: 15px;
-        border-radius: 4px;
-        margin-bottom: 15px;
-      }
-      .bulk-bot-manager h3 {
-        color: #fff;
-        margin-top: 0;
-      }
-      .bot-item {
-        background: #2a2a2a;
-        padding: 10px 15px;
-        margin: 8px 0;
-        border-left: 3px solid #4CAF50;
-        border-radius: 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-      }
-      .bot-item strong {
-        color: #4CAF50;
-      }
-      .role-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: bold;
-        margin-left: 5px;
-        white-space: nowrap;
-      }
-      .role-primary { background: #4CAF50; color: white; }
-      .role-worker { background: #2196F3; color: white; }
-      .role-assistant { background: #FF9800; color: white; }
-      .role-miner { background: #9C27B0; color: white; }
-      .role-farmer { background: #00BCD4; color: white; }
-      .role-fighter { background: #F44336; color: white; }
-      .role-builder { background: #FFEB3B; color: black; }
-      .small-btn {
-        padding: 5px 10px;
-        margin-right: 5px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        color: white;
-        transition: all 0.2s;
-      }
-      .small-btn:hover {
-        opacity: 0.8;
-        transform: scale(1.05);
-      }
-    </style>
   </head>
   <body>
-    <main class="layout">
-      <section class="hero">
-        <h1>自動Botコマンドセンター</h1>
-        <p>Java/Bedrock ハイブリッド版 - マルチBot統合管理</p>
-        <div id="modeBadge" class="mode">モード: -</div>
-        <div id="socketState" class="socket-state">接続状態: 接続中</div>
-        <div class="row compact">
-          <input id="guiToken" placeholder="GUIトークン(必要な場合)" />
-          <button id="reconnectButton">再接続</button>
-          <button id="toggleRefreshButton">自動更新: ON</button>
+    <!-- トースト通知コンテナ -->
+    <div id="toast-container"></div>
+
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="logo">⛏️ Auto Bot</span>
+        <span id="modeBadge" class="badge badge-mode">MODE: -</span>
+        <span id="socketState" class="badge badge-disconnected">切断中</span>
+        <span id="securityHint" class="badge badge-security visually-hidden"></span>
+      </div>
+      <div class="header-right">
+        <input id="guiToken" class="token-input" placeholder="GUIトークン(任意)" title="GUIセキュリティトークン" />
+        <button id="reconnectButton" type="button" class="btn btn-sm">再接続</button>
+        <button id="toggleRefreshButton" type="button" class="btn btn-sm btn-active">自動更新 ON</button>
+      </div>
+    </header>
+
+    <!-- タブナビゲーション -->
+    <nav class="tab-nav" id="tabNav">
+      <button type="button" class="tab-btn active" data-tab="overview">📊 概要</button>
+      <button type="button" class="tab-btn" data-tab="bots">🤖 Bot管理</button>
+      <button type="button" class="tab-btn" data-tab="servers">🌐 サーバー</button>
+      <button type="button" class="tab-btn" data-tab="actions">⚡ アクション</button>
+      <button type="button" class="tab-btn" data-tab="inventory">📦 インベントリ</button>
+      <button type="button" class="tab-btn" data-tab="process">⚙️ プロセス</button>
+      <button type="button" class="tab-btn" data-tab="logs">📋 ログ</button>
+      <button type="button" class="tab-btn" data-tab="config">🔧 設定</button>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+
+      <!-- ═══ 概要タブ ═══ -->
+      <div class="tab-panel active" id="tab-overview">
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🤖 Bot ステータス</h2>
+            <button id="refreshBotsButton" type="button" class="btn btn-sm">🔄 更新</button>
+          </div>
+          <div id="fleetStatusCards" class="bot-cards"></div>
+          <ul id="fleetStatusList" class="visually-hidden"></ul>
         </div>
-      </section>
 
-      <section class="panel">
-        <h2>📊 システム状態</h2>
-        <pre id="statusView">読み込み中...</pre>
-      </section>
+        <div class="card">
+          <div class="card-header">
+            <h2>📊 システム状態</h2>
+          </div>
+          <pre id="statusView" class="view-box">読み込み中...</pre>
+        </div>
 
-      <section class="panel">
-        <h2>🤖 Bot一覧 / 動作状況</h2>
-        <ul id="fleetStatusList"></ul>
-      </section>
+        <div class="card">
+          <div class="card-header">
+            <h2>⚡ クイックアクション</h2>
+          </div>
+          <div class="quick-actions">
+            <button id="quickMineBranchButton" type="button" class="btn btn-action btn-purple">⛏️ ブランチ採掘</button>
+            <button id="quickFarmButton"       type="button" class="btn btn-action btn-green">🌾 農業開始</button>
+            <button id="quickExploreButton"    type="button" class="btn btn-action btn-blue">🗺️ 探索開始</button>
+            <button id="quickStopAllButton"    type="button" class="btn btn-action btn-orange">⏹️ 全停止</button>
+            <button id="quickRetreatButton"    type="button" class="btn btn-action btn-red">🏠 全員帰還</button>
+            <button id="quickDiamondButton"    type="button" class="btn btn-action">💎 ダイヤ検索</button>
+          </div>
+        </div>
 
-      <!-- 推奨プリセット -->
-      <section class="panel">
-        <h2>⚡ 推奨プリセット</h2>
-        <p style="color: #aaa; font-size: 12px;">プレイスタイルに合わせた推奨設定を選択</p>
-        <div class="preset-grid" id="recommendedPresets"></div>
-      </section>
+      </div>
 
-      <!-- 一括Bot管理 -->
-      <section class="panel">
-        <h2>⚙️ Bot一括管理</h2>
-        <div class="bulk-bot-manager">
-          <h3>新しいBot追加</h3>
+      <!-- ═══ Bot管理タブ ═══ -->
+      <div class="tab-panel" id="tab-bots">
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🎯 操作対象 Bot</h2>
+          </div>
           <div class="row">
-            <input id="bulkBotId" placeholder="Bot ID (例: miner-1)" />
-            <input id="bulkBotUsername" placeholder="ユーザー名" />
-            <select id="bulkPresetRole" title="役割プリセット">
+            <select id="targetBotSelect" class="select-wide" title="操作するBotを選択">
+              <option value="">プライマリ Bot</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>➕ Bot 追加</h2>
+          </div>
+          <div class="form-grid">
+            <input id="bulkBotId"         placeholder="Bot ID (例: miner-1)" />
+            <input id="bulkBotUsername"   placeholder="Minecraft ユーザー名" />
+            <select id="bulkPresetRole"   title="役割プリセット">
               <option value="">-- 役割を選択 --</option>
               <option value="primary">主Bot (プライマリ)</option>
-              <option value="miner">採掘専門Bot</option>
-              <option value="farmer">農業専門Bot</option>
-              <option value="fighter">戦闘専門Bot</option>
-              <option value="builder">建築専門Bot</option>
-              <option value="assistant">アシスタントBot</option>
+              <option value="miner">採掘Bot</option>
+              <option value="farmer">農業Bot</option>
+              <option value="fighter">戦闘Bot</option>
+              <option value="builder">建築Bot</option>
+              <option value="assistant">アシスタント</option>
+              <option value="worker">ワーカー</option>
             </select>
-            <button id="bulkBotAddButton" style="background-color: #4CAF50;">追加</button>
+            <select id="bulkBotMode" title="動作モード">
+              <option value="hybrid">ハイブリッド</option>
+              <option value="autonomous">自律</option>
+              <option value="silent-mining">静粛採掘</option>
+              <option value="player-command">コマンド待機</option>
+              <option value="conversation">会話</option>
+            </select>
+            <input id="botAddServerHost" placeholder="接続先ホスト(省略=デフォルト)" />
+            <input id="botAddServerPort" type="number" placeholder="ポート番号" title="接続ポート(省略=デフォルト)" />
           </div>
+          <div class="row mt-8">
+            <button id="bulkBotAddButton" type="button" class="btn btn-green">🤖 Bot 追加</button>
+          </div>
+        </div>
 
-          <h3 style="margin-top: 15px;">登録済みBot</h3>
-          <div id="bulkBotList"></div>
-
-          <h3 style="margin-top: 15px;">一括操作</h3>
+        <div class="card">
+          <div class="card-header">
+            <h2>📋 登録済み Bot</h2>
+            <button id="refreshFleetButton" type="button" class="btn btn-sm">🔄 更新</button>
+          </div>
+          <div id="bulkBotList" class="bot-list"></div>
+          <div class="row mt-8">
+            <input id="removeFleetBotId" placeholder="削除する Bot ID" />
+            <button id="fleetRemoveButton" type="button" class="btn btn-red">🗑️ 削除</button>
+          </div>
           <div class="row">
-            <select id="bulkActionType">
+            <input id="updateRoleBotId" placeholder="役割変更する Bot ID" />
+            <select id="updateRoleValue" title="変更後の役割">
+              <option value="primary">primary</option>
+              <option value="miner">miner</option>
+              <option value="farmer">farmer</option>
+              <option value="fighter">fighter</option>
+              <option value="builder">builder</option>
+              <option value="worker">worker</option>
+              <option value="assistant">assistant</option>
+            </select>
+            <button id="fleetRoleUpdateButton" type="button" class="btn btn-blue">役割変更</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>⚡ 一括操作</h2>
+          </div>
+          <div class="row">
+            <select id="bulkActionType" title="一括操作の種類">
               <option value="">-- 一括操作を選択 --</option>
               <option value="set-role">役割変更</option>
               <option value="set-mode">モード変更</option>
@@ -159,202 +160,382 @@
               <option value="gather-to-base">全員を拠点に集合</option>
             </select>
             <input id="bulkActionParam" placeholder="パラメータ（必要な場合）" />
-            <button id="bulkActionButton" style="background-color: #2196F3;">実行</button>
+            <button id="bulkActionButton" type="button" class="btn btn-blue">実行</button>
           </div>
         </div>
-      </section>
 
-      <!-- 役割プリセット管理 -->
-      <section class="panel">
-        <h2>👔 役割プリセット</h2>
-        <div class="preset-grid" id="rolePresetsAll"></div>
-      </section>
-
-      <section class="panel">
-        <h2>📦 インベントリ</h2>
-        <ul id="inventoryList"></ul>
-      </section>
-
-      <section class="panel">
-        <h2>⚙️ プロセス管理</h2>
-        <div class="row">
-          <select id="processSelect">
-            <option value="minecraft-auto-bedrock">minecraft-auto-bedrock (Bot)</option>
-          </select>
-          <button id="processRefreshButton">更新</button>
-          <button id="processStartButton" style="background-color: #4CAF50;">起動</button>
-          <button id="processStopButton" style="background-color: #f44336;">停止</button>
-          <button id="processRestartButton" style="background-color: #2196F3;">再起動</button>
-        </div>
-        <pre id="processListView"></pre>
-      </section>
-
-      <section class="panel">
-        <h2>📋 ログ表示</h2>
-        <div class="row">
-          <select id="logProcessSelect">
-            <option value="minecraft-auto-bedrock">minecraft-auto-bedrock</option>
-          </select>
-          <input id="logLinesInput" type="number" value="50" min="1" max="500" placeholder="行数" />
-          <button id="logLoadButton">読み込む</button>
-          <button id="logStreamToggleButton">ストリーミング: OFF</button>
-        </div>
-        <pre id="logView"></pre>
-      </section>
-
-      <section class="panel">
-        <h2>⚙️ 設定 (config.json)</h2>
-        <div class="row">
-          <button id="configLoadButton">読み込む</button>
-          <button id="configSaveButton">保存</button>
-          <button id="configResetButton">リセット</button>
-        </div>
-        <textarea id="configEditor" style="width: 100%; min-height: 300px; font-family: monospace;"></textarea>
-      </section>
-
-      <section class="panel">
-        <h2>🔍 システム診断</h2>
-        <button id="doctorButton">診断実行</button>
-        <pre id="doctorView"></pre>
-      </section>
-
-      <section class="panel">
-        <h2>🎮 コマンド実行</h2>
-        <div class="row">
-          <label for="targetBotSelect">対象Bot:</label>
-          <select id="targetBotSelect">
-            <option value="">プライマリ</option>
-          </select>
+        <div class="card">
+          <div class="card-header">
+            <h2>🎭 役割プリセット</h2>
+          </div>
+          <div class="preset-grid" id="rolePresetsAll"></div>
         </div>
 
-        <h3>拠点管理</h3>
-        <div class="row">
-          <input id="baseName" placeholder="拠点名" />
-          <button id="setBaseButton">ここを拠点登録</button>
-          <button id="setBaseQuickButton">現在地を拠点化</button>
-          <button id="retreatButton">拠点へ帰還</button>
+        <div class="card">
+          <div class="card-header">
+            <h2>⭐ 推奨プリセット</h2>
+          </div>
+          <div class="preset-grid" id="recommendedPresets"></div>
         </div>
 
-        <h3>採掘・採集</h3>
-        <div class="row">
-          <input id="collectBlock" placeholder="oak_log など" />
-          <input id="collectTargetCount" type="number" min="1" value="64" title="採取目標数" />
-          <button id="collectButton">採取開始</button>
-          <button id="collectWoodButton">木材採取</button>
-        </div>
-        <div class="row">
-          <button id="startAutoCollectButton">自動採取ON</button>
-          <button id="stopAutoCollectButton">自動採取OFF</button>
-          <button id="startAutoMineButton">自動採掘ON</button>
-          <button id="stopAutoMineButton">自動採掘OFF</button>
-        </div>
-
-        <h3>保管・整理</h3>
-        <div class="row">
-          <button id="storeInventoryButton">手動保管</button>
-          <button id="startAutoStoreButton">自動保管ON</button>
-          <button id="stopAutoStoreButton">自動保管OFF</button>
-        </div>
-        <div class="row">
-          <button id="sortChestsButton">仕分け実行</button>
-          <button id="startAutoSortButton">自動仕分けON</button>
-          <button id="stopAutoSortButton">自動仕分けOFF</button>
+        <div class="card">
+          <div class="card-header">
+            <h2>📋 タスク割当</h2>
+          </div>
+          <div class="row">
+            <select id="orchestratorTaskType" title="タスク種別">
+              <option value="mine">採掘</option>
+              <option value="gather">採集</option>
+              <option value="fight-mob">MOB討伐</option>
+              <option value="fight-player">プレイヤー戦</option>
+            </select>
+            <input id="orchestratorRole" placeholder="役割 (worker/assistant)" value="worker" />
+          </div>
+          <div class="row">
+            <input id="orchestratorBlockName"  placeholder="採掘対象ブロック" />
+            <input id="orchestratorItemName"   placeholder="採集対象アイテム" />
+            <input id="orchestratorCount"      type="number" min="1" value="16" title="タスク数量" />
+            <input id="orchestratorPlayerName" placeholder="対戦相手名" />
+          </div>
+          <div class="row">
+            <button id="orchestratorAssignButton" type="button" class="btn btn-blue">📋 タスク割当</button>
+          </div>
         </div>
 
-        <h3>建築・補充</h3>
-        <div class="row">
-          <input id="schemPath" placeholder="schematics/house.schem" />
-          <button id="buildButton">建築実行</button>
-          <button id="buildWithRefillButton">建築+自動補充</button>
-        </div>
-        <div class="row">
-          <input id="fetchItemName" placeholder="補充したい資材名" />
-          <input id="fetchAmount" type="number" min="1" value="64" title="補充数量" />
-          <button id="fetchItemButton">資材補充</button>
+        <!-- app.js 互換用 非表示要素 -->
+        <div class="compat-hidden">
+          <input id="fleetBotId" placeholder="Bot ID" title="Bot ID" />
+          <input id="fleetBotUsername" placeholder="ユーザー名" title="ユーザー名" />
+          <select id="fleetBotRole" title="役割"><option value="worker">worker</option></select>
+          <select id="fleetBotMode" title="モード"><option value="hybrid">hybrid</option></select>
+          <button id="fleetAddButton" type="button" title="Bot追加">Bot追加</button>
         </div>
 
-        <h3>戦闘</h3>
-        <div class="row">
-          <button id="fightNearestMobButton">近くの敵を攻撃</button>
-          <input id="fightPlayerName" placeholder="プレイヤー名" />
-          <button id="fightPlayerButton">プレイヤー攻撃</button>
-          <button id="stopFightButton">戦闘停止</button>
-        </div>
-        <div class="row">
-          <select id="combatProfile" title="戦闘プロファイル">
-            <option value="balanced">バランス型</option>
-            <option value="berserker">猛攻型</option>
-            <option value="guardian">防御型</option>
-            <option value="sniper">狙撃型</option>
-          </select>
-          <button id="combatProfileButton">戦闘プロファイル適用</button>
-          <label><input id="evasionEnabled" type="checkbox" checked />回避有効</label>
-          <button id="evasionToggleButton">回避設定反映</button>
+      </div>
+
+      <!-- ═══ サーバー接続タブ ═══ -->
+      <div class="tab-panel" id="tab-servers">
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🌐 外部サーバーに Bot を追加</h2>
+          </div>
+          <div class="form-grid form-grid-3">
+            <input id="extServerHost"  placeholder="サーバーアドレス (例: play.example.com)" />
+            <input id="extServerPort"  type="number" placeholder="ポート番号" title="サーバーポート" value="25565" />
+            <input id="extBotUsername" placeholder="Bot ユーザー名" />
+            <select id="extBotRole" title="Bot の役割">
+              <option value="worker">ワーカー</option>
+              <option value="miner">採掘Bot</option>
+              <option value="farmer">農業Bot</option>
+              <option value="fighter">戦闘Bot</option>
+              <option value="assistant">アシスタント</option>
+            </select>
+            <select id="extEdition" title="Minecraft エディション">
+              <option value="java">Java Edition</option>
+              <option value="bedrock">Bedrock Edition</option>
+            </select>
+            <select id="extAuthType" title="認証方式">
+              <option value="offline">オフライン (offline)</option>
+              <option value="microsoft">Microsoft 認証</option>
+            </select>
+          </div>
+          <div class="row mt-8">
+            <button id="extConnectButton" type="button" class="btn btn-green">🔗 接続して Bot 追加</button>
+          </div>
         </div>
 
-        <h3>クラフト・装備</h3>
-        <div class="row">
-          <input id="plannerItemName" placeholder="diamond_sword など" />
-          <input id="plannerItemCount" type="number" min="1" value="1" title="個数" />
-        </div>
-        <div class="row">
-          <button id="plannerCalcRecipeButton">必要素材を計算</button>
-          <button id="plannerGatherForCraftButton">素材収集開始</button>
-          <button id="craftItemButton">クラフト実行</button>
-          <button id="equipBestArmorButton">最強防具装備</button>
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>📡 Bot 接続先一覧</h2>
+            <button id="serverListRefreshButton" type="button" class="btn btn-sm">🔄 更新</button>
+          </div>
+          <div id="serverList">
+            <p class="text-muted">Bot を追加すると接続先が表示されます</p>
+          </div>
         </div>
 
-        <h3>タスク割当</h3>
-        <div class="row">
-          <select id="orchestratorTaskType" title="タスク種類">
-            <option value="mine">採掘</option>
-            <option value="gather">採集</option>
-            <option value="fight-mob">MOB討伐</option>
-            <option value="fight-player">プレイヤー戦</option>
-          </select>
-          <input id="orchestratorRole" placeholder="役割 (worker/assistant)" value="worker" />
-        </div>
-        <div class="row">
-          <input id="orchestratorBlockName" placeholder="採掘対象ブロック" />
-          <input id="orchestratorItemName" placeholder="採集対象アイテム" />
-          <input id="orchestratorCount" type="number" min="1" value="16" title="タスク個数" />
-          <input id="orchestratorPlayerName" placeholder="対戦相手名" />
-        </div>
-        <div class="row">
-          <button id="orchestratorAssignButton">タスク割当</button>
+      </div>
+
+      <!-- ═══ アクションタブ ═══ -->
+      <div class="tab-panel" id="tab-actions">
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🏠 拠点管理</h2>
+          </div>
+          <div class="row">
+            <input id="baseName" placeholder="拠点名" />
+            <button id="setBaseButton"      type="button" class="btn btn-green">📍 拠点登録</button>
+            <button id="setBaseQuickButton" type="button" class="btn">現在地を拠点化</button>
+            <button id="retreatButton"      type="button" class="btn btn-orange">🏃 帰還</button>
+          </div>
         </div>
 
-        <pre id="commandResult"></pre>
-      </section>
+        <div class="card">
+          <div class="card-header">
+            <h2>⛏️ 採掘</h2>
+          </div>
+          <div class="row">
+            <button id="mineBranchButton" type="button" class="btn btn-purple">🔱 ブランチマイニング</button>
+            <button id="mineStripButton"  type="button" class="btn btn-blue">📏 ストリップマイニング</button>
+            <button id="mineVeinButton"   type="button" class="btn">🎯 鉱脈採掘</button>
+            <button id="mineStopButton"   type="button" class="btn btn-red">⏹️ 採掘停止</button>
+          </div>
+          <div class="row">
+            <input id="collectBlock"       placeholder="oak_log, stone など" />
+            <input id="collectTargetCount" type="number" min="1" value="64" title="採取目標数" />
+            <button id="collectButton"     type="button" class="btn btn-green">採取</button>
+            <button id="collectWoodButton" type="button" class="btn">🌲 木材採取</button>
+          </div>
+          <div class="row">
+            <button id="startAutoCollectButton" type="button" class="btn btn-green">自動採取 ON</button>
+            <button id="stopAutoCollectButton"  type="button" class="btn btn-red">自動採取 OFF</button>
+            <button id="startAutoMineButton"    type="button" class="btn btn-green">自動採掘 ON</button>
+            <button id="stopAutoMineButton"     type="button" class="btn btn-red">自動採掘 OFF</button>
+          </div>
+        </div>
 
-      <section class="panel">
-        <h2>🚀 運用 / セットアップ</h2>
-        <div class="row">
-          <button id="systemDoctorButton">システム診断</button>
-          <button id="detectJavaButton" style="background-color: #FF6B35; margin-left: 10px;">Javaバージョン確認</button>
-          <label><input id="oneclickSyncBedrock" type="checkbox" checked />Bedrock Samplesを同期</label>
-          <button id="oneclickSetupButton">ワンクリック初期化</button>
+        <div class="card">
+          <div class="card-header">
+            <h2>🌾 農業</h2>
+          </div>
+          <div class="row">
+            <button id="farmStartButton"   type="button" class="btn btn-green">🌱 農業開始</button>
+            <button id="farmHarvestButton" type="button" class="btn btn-blue">🌾 収穫</button>
+            <button id="farmExpandButton"  type="button" class="btn">📐 農地拡張</button>
+            <button id="farmWaterButton"   type="button" class="btn btn-blue">💧 水撒き</button>
+            <button id="farmStopButton"    type="button" class="btn btn-red">⏹️ 農業停止</button>
+          </div>
+          <div class="row">
+            <select id="breedAnimalSelect" title="繁殖させる動物">
+              <option value="cow">牛</option>
+              <option value="pig">豚</option>
+              <option value="sheep">羊</option>
+              <option value="chicken">鶏</option>
+              <option value="rabbit">ウサギ</option>
+            </select>
+            <button id="farmBreedButton" type="button" class="btn">🐄 繁殖</button>
+          </div>
         </div>
-        <div class="row">
-          <progress id="oneclickProgress" value="0" max="100"></progress>
-        </div>
-        <div class="row">
-          <small id="oneclickProgressText">未実行</small>
-        </div>
-      </section>
 
-      <section class="panel">
-        <h2>❓ 使い方</h2>
-        <ul>
-          <li><strong>推奨プリセット:</strong> プレイスタイル別の初期設定を一発適用</li>
-          <li><strong>一括Bot管理:</strong> 複数Botを同時に追加・管理・制御</li>
-          <li><strong>役割プリセット:</strong> マイナー、農民、戦士など役割ごとの推奨設定</li>
-          <li><strong>一括操作:</strong> すべてのBotに同じ命令を同時実行</li>
-          <li><strong>資材整理:</strong> 手動保管 → 仕分け実行 の順で実行</li>
-          <li><strong>常時運用:</strong> 自動保管ON と 自動仕分けON を併用</li>
-          <li><strong>初回セットアップ:</strong> ワンクリック初期化で自動構成</li>
-        </ul>
-      </section>
+        <div class="card">
+          <div class="card-header">
+            <h2>🗺️ 探索</h2>
+          </div>
+          <div class="row">
+            <button id="exploreStartButton" type="button" class="btn btn-purple">🚀 探索開始</button>
+            <button id="exploreStopButton"  type="button" class="btn btn-red">⏹️ 探索停止</button>
+            <button id="explorePOIButton"   type="button" class="btn btn-blue">📍 POI 検索</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>⚔️ 戦闘</h2>
+          </div>
+          <div class="row">
+            <button id="fightNearestMobButton" type="button" class="btn btn-red">👾 近くの敵を攻撃</button>
+            <input id="fightPlayerName" placeholder="プレイヤー名" />
+            <button id="fightPlayerButton"     type="button" class="btn btn-red">⚔️ プレイヤー攻撃</button>
+            <button id="stopFightButton"       type="button" class="btn btn-orange">✋ 戦闘停止</button>
+          </div>
+          <div class="row">
+            <select id="combatProfile" title="戦闘プロファイル">
+              <option value="balanced">バランス型</option>
+              <option value="berserker">猛攻型</option>
+              <option value="guardian">防御型</option>
+              <option value="sniper">狙撃型</option>
+            </select>
+            <button id="combatProfileButton"  type="button" class="btn">プロファイル適用</button>
+            <label>
+              <input id="evasionEnabled" type="checkbox" checked />
+              回避有効
+            </label>
+            <button id="evasionToggleButton" type="button" class="btn btn-sm">回避設定反映</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🔨 クラフト・装備</h2>
+          </div>
+          <div class="row">
+            <input id="plannerItemName"  placeholder="diamond_sword など" />
+            <input id="plannerItemCount" type="number" min="1" value="1" title="クラフト数量" />
+          </div>
+          <div class="row">
+            <button id="plannerCalcRecipeButton"     type="button" class="btn">📋 必要素材計算</button>
+            <button id="plannerGatherForCraftButton" type="button" class="btn btn-blue">🎒 素材収集</button>
+            <button id="craftItemButton"             type="button" class="btn btn-green">🔨 クラフト実行</button>
+            <button id="equipBestArmorButton"        type="button" class="btn btn-purple">🛡️ 最強防具装備</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>📦 保管・整理</h2>
+          </div>
+          <div class="row">
+            <button id="storeInventoryButton" type="button" class="btn">手動保管</button>
+            <button id="startAutoStoreButton" type="button" class="btn btn-green">自動保管 ON</button>
+            <button id="stopAutoStoreButton"  type="button" class="btn btn-red">自動保管 OFF</button>
+          </div>
+          <div class="row">
+            <button id="sortChestsButton"    type="button" class="btn">仕分け実行</button>
+            <button id="startAutoSortButton" type="button" class="btn btn-green">自動仕分け ON</button>
+            <button id="stopAutoSortButton"  type="button" class="btn btn-red">自動仕分け OFF</button>
+          </div>
+          <div class="row">
+            <input id="fetchItemName" placeholder="補充したいアイテム名" />
+            <input id="fetchAmount"   type="number" min="1" value="64" title="補充数量" />
+            <button id="fetchItemButton" type="button" class="btn btn-blue">資材補充</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🏗️ 建築</h2>
+          </div>
+          <div class="row">
+            <input id="schemPath" placeholder="schematics/house.schem" />
+            <button id="buildButton"           type="button" class="btn btn-purple">🏗️ 建築実行</button>
+            <button id="buildWithRefillButton" type="button" class="btn">建築+自動補充</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🏙️ 都市モード</h2>
+          </div>
+          <div class="row">
+            <input id="cityModeName" placeholder="village / town など" value="village" />
+            <button id="startCityModeButton" type="button" class="btn btn-green">都市モード開始</button>
+            <button id="stopCityModeButton"  type="button" class="btn btn-red">都市モード停止</button>
+          </div>
+        </div>
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>📤 コマンド結果</h2>
+            <button id="clearResultButton" type="button" class="btn btn-sm">クリア</button>
+          </div>
+          <pre id="commandResult" class="view-box result-view">コマンドを実行すると結果が表示されます</pre>
+        </div>
+
+      </div>
+
+      <!-- ═══ インベントリタブ ═══ -->
+      <div class="tab-panel" id="tab-inventory">
+
+        <div class="card">
+          <div class="card-header">
+            <h2>📦 インベントリ</h2>
+          </div>
+          <ul id="inventoryList" class="inventory-grid"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>🔍 チェスト内アイテム検索</h2>
+          </div>
+          <div class="row">
+            <input id="searchText"               placeholder="diamond, iron など" />
+            <button id="searchButton"            type="button" class="btn btn-blue">🔍 検索</button>
+            <button id="quickDiamondSearchButton" type="button" class="btn">💎 ダイヤ</button>
+          </div>
+          <ul id="searchResult" class="search-result"></ul>
+        </div>
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🧠 メモリ (拠点・チェスト)</h2>
+          </div>
+          <pre id="memoryView" class="view-box">読み込み中...</pre>
+        </div>
+
+      </div>
+
+      <!-- ═══ プロセス管理タブ ═══ -->
+      <div class="tab-panel" id="tab-process">
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>⚙️ PM2 プロセス管理</h2>
+          </div>
+          <div class="row">
+            <select id="processSelect" title="管理するプロセス">
+              <option value="minecraft-auto-bedrock">minecraft-auto-bedrock (Bot)</option>
+            </select>
+            <button id="processRefreshButton" type="button" class="btn btn-sm">🔄 更新</button>
+            <button id="processStartButton"   type="button" class="btn btn-green">▶ 起動</button>
+            <button id="processStopButton"    type="button" class="btn btn-red">■ 停止</button>
+            <button id="processRestartButton" type="button" class="btn btn-blue">↺ 再起動</button>
+            <button id="processDeleteButton"  type="button" class="btn btn-orange">🗑️ 削除</button>
+          </div>
+          <pre id="processListView" class="view-box process-view">プロセス情報なし</pre>
+        </div>
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🚀 セットアップ・診断</h2>
+          </div>
+          <div class="row">
+            <button id="systemDoctorButton"   type="button" class="btn">🩺 システム診断</button>
+            <button id="detectJavaButton"     type="button" class="btn btn-orange">☕ Java 確認</button>
+            <label>
+              <input id="oneclickSyncBedrock" type="checkbox" checked />
+              Bedrock データ同期
+            </label>
+            <button id="oneclickSetupButton" type="button" class="btn btn-green">🚀 ワンクリック初期化</button>
+          </div>
+          <div class="row mt-8">
+            <progress id="oneclickProgress" value="0" max="100"></progress>
+          </div>
+          <small id="oneclickProgressText" class="text-muted">未実行</small>
+          <pre id="doctorView" class="view-box mt-8"></pre>
+        </div>
+
+      </div>
+
+      <!-- ═══ ログタブ ═══ -->
+      <div class="tab-panel" id="tab-logs">
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>📋 ログビューア</h2>
+            <div class="row">
+              <select id="logProcessSelect" title="ログ表示プロセス">
+                <option value="minecraft-auto-bedrock">minecraft-auto-bedrock</option>
+              </select>
+              <input id="logLinesInput" type="number" value="100" min="1" max="1000" title="表示行数" />
+              <button id="logLoadButton"         type="button" class="btn btn-sm">読み込む</button>
+              <button id="logStreamToggleButton" type="button" class="btn btn-sm">ストリーミング: OFF</button>
+              <button id="logClearButton"        type="button" class="btn btn-sm btn-red">クリア</button>
+            </div>
+          </div>
+          <pre id="logView" class="log-view">ログを読み込んでください...</pre>
+        </div>
+
+      </div>
+
+      <!-- ═══ 設定タブ ═══ -->
+      <div class="tab-panel" id="tab-config">
+
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🔧 設定エディタ (config.json)</h2>
+            <div class="row">
+              <button id="configLoadButton"  type="button" class="btn btn-sm">読み込む</button>
+              <button id="configSaveButton"  type="button" class="btn btn-sm btn-green">💾 保存</button>
+              <button id="configResetButton" type="button" class="btn btn-sm">リセット</button>
+            </div>
+          </div>
+          <textarea id="configEditor" class="config-editor" placeholder="「読み込む」を押して設定を読み込んでください..."></textarea>
+        </div>
+
+      </div>
+
     </main>
 
     <script src="/socket.io/socket.io.js"></script>

@@ -5,7 +5,8 @@
       "Bash(git commit:*)",
       "Bash(git tag:*)",
       "Bash(git push:*)",
-      "Bash(gh run:*)"
+      "Bash(gh run:*)",
+      "Bash(grep -E \"\\\\.js$\")"
     ]
   }
 }
