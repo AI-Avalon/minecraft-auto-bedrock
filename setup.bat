@@ -5,7 +5,7 @@ cd /d %~dp0
 
 echo.
 echo ============================================
-echo   minecraft-auto-bedrock セットアップ
+echo   minecraft-auto-bedrock setup
 echo ============================================
 echo.
 
@@ -21,24 +21,29 @@ where node >nul 2>nul
 if errorlevel 1 (
   set NEED_PREREQS=1
 ) else (
-  node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
-  if errorlevel 1 set NEED_PREREQS=1
+  for /f "tokens=*" %%v in ('node --version 2^>nul') do set "NODE_CUR_VER=%%v"
+  for /f "tokens=1 delims=." %%m in ("!NODE_CUR_VER:v=!") do set "NODE_CUR_MAJOR=%%m"
+  if not defined NODE_CUR_MAJOR (
+    set NEED_PREREQS=1
+  ) else (
+    if !NODE_CUR_MAJOR! LSS %NODE_MAJOR% set NEED_PREREQS=1
+  )
 )
 
 if "%NEED_PREREQS%"=="1" (
-  echo [setup] Node.js v%NODE_MAJOR%+ が必要です。前提ツール導入を実行します...
+  echo [setup] Node.js v%NODE_MAJOR%+ is required. Installing prerequisites...
   call scripts\install-prereqs.bat --auto --node-major=%NODE_MAJOR%
   echo.
-  echo [setup] 前提導入後は新しいターミナルで setup.bat --resume を実行してください。
+  echo [setup] If a new terminal is needed, run: setup.bat --resume
   echo.
 )
 
 node scripts\full-install.js %*
 if %errorlevel% neq 0 (
   echo.
-  echo [setup] セットアップは途中で停止しました。
-  echo [setup] 再開するには setup.bat --resume を実行してください。
-  echo [setup] 途中開始する場合は setup.bat --from-step=config のように指定できます。
+  echo [setup] Setup stopped before completion.
+  echo [setup] Resume with: setup.bat --resume
+  echo [setup] Start from a step with: setup.bat --from-step=config
   echo.
   pause
   endlocal
@@ -46,7 +51,7 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [setup] セットアップ完了。
+echo [setup] Setup completed.
 echo.
 pause
 endlocal

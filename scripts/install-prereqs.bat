@@ -41,18 +41,13 @@ if not errorlevel 1 (
 )
 
 :: ── Node.js (指定メジャー以上) ─────────────────────────────────────────────
-set NODE_OK=0
-where node >nul 2>nul
-if not errorlevel 1 (
-  node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
-  if not errorlevel 1 (
-    set NODE_OK=1
-    for /f "tokens=*" %%v in ('node --version 2^>nul') do echo [OK] Node.js %%v
-  ) else (
-    echo [WARN] Node.js は v%NODE_MAJOR% 以上が必要です。現在のバージョンは要件未満です。
-  )
+call :check_node
+if "%NODE_OK%"=="1" (
+  echo [OK] Node.js %NODE_CUR_VER%
+) else if "%NODE_FOUND%"=="1" (
+  echo [WARN] Node.js %NODE_CUR_VER% is below required v%NODE_MAJOR%.
 ) else (
-  echo [WARN] Node.js が見つかりません。
+  echo [WARN] Node.js was not found.
 )
 
 if "%NODE_OK%"=="0" (
@@ -62,20 +57,39 @@ if "%NODE_OK%"=="0" (
   )
   if "%WINGET_OK%"=="1" (
     winget install OpenJS.NodeJS.LTS --silent --accept-source-agreements --accept-package-agreements
-    node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
-    if not errorlevel 1 (
-      for /f "tokens=*" %%v in ('node --version 2^>nul') do echo [OK] Node.js %%v
+    call :check_node
+    if "%NODE_OK%"=="1" (
+      echo [OK] Node.js %NODE_CUR_VER%
     ) else (
-      echo [WARN] インストール後も Node.js が v%NODE_MAJOR% 未満の可能性があります。
-      echo        手動で https://nodejs.org から v%NODE_MAJOR% 以上を導入してください。
+      echo [WARN] Node.js is still below v%NODE_MAJOR% after install.
+      echo        Install Node.js v%NODE_MAJOR%+ manually from https://nodejs.org
     )
   ) else (
-    echo [WARN] winget が見つかりません。
-    echo        https://nodejs.org から v%NODE_MAJOR% 以上をインストールしてください。
+    echo [WARN] winget was not found.
+    echo        Install Node.js v%NODE_MAJOR%+ from https://nodejs.org
   )
 ) else (
-  echo [INFO] Node.js 要件を満たしています。
+  echo [INFO] Node.js requirement is satisfied.
 )
+
+goto :after_node_check
+
+:check_node
+set NODE_OK=0
+set NODE_FOUND=0
+set NODE_CUR_VER=
+set NODE_CUR_MAJOR=
+where node >nul 2>nul
+if errorlevel 1 exit /b 0
+set NODE_FOUND=1
+for /f "tokens=*" %%v in ('node --version 2^>nul') do set "NODE_CUR_VER=%%v"
+if not defined NODE_CUR_VER exit /b 0
+for /f "tokens=1 delims=." %%m in ("%NODE_CUR_VER:v=%") do set "NODE_CUR_MAJOR=%%m"
+if not defined NODE_CUR_MAJOR exit /b 0
+if %NODE_CUR_MAJOR% GEQ %NODE_MAJOR% set NODE_OK=1
+exit /b 0
+
+:after_node_check
 
 :: ── Java 21 ───────────────────────────────────────────────────────────────
 where java >nul 2>nul
