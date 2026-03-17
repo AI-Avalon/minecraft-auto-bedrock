@@ -386,6 +386,40 @@ class JavaServerManager {
     throw new Error(`未知の launchType: ${meta.launchType}`);
   }
 
+  _getProcessFile() {
+    return path.resolve(process.cwd(), 'memory.json');
+  }
+
+  _savePid() {
+    if (!this.process || !this.process.pid) {
+      return;
+    }
+    try {
+      const memPath = this._getProcessFile();
+      let mem = {};
+      if (fs.existsSync(memPath)) {
+        mem = readJson(memPath);
+      }
+      mem.javaServerPid = this.process.pid;
+      writeJson(memPath, mem);
+    } catch (e) {
+      logger.warn(`プロセスPID保存に失敗: ${e.message}`);
+    }
+  }
+
+  _clearPid() {
+    try {
+      const memPath = this._getProcessFile();
+      if (fs.existsSync(memPath)) {
+        const mem = readJson(memPath);
+        delete mem.javaServerPid;
+        writeJson(memPath, mem);
+      }
+    } catch (e) {
+      logger.warn(`プロセスPID削除に失敗: ${e.message}`);
+    }
+  }
+
   async start() {
     if (this.process) {
       return;
@@ -401,6 +435,9 @@ class JavaServerManager {
       shell: launch.shell
     });
 
+    // プロセスPIDを memory.json に保存
+    this._savePid();
+
     this.process.stdout.on('data', (chunk) => {
       logger.info(`[LocalServer] ${chunk.toString().trim()}`);
     });
@@ -411,6 +448,7 @@ class JavaServerManager {
 
     this.process.on('exit', (code) => {
       logger.warn(`ローカルJavaサーバーが終了しました (code=${code})`);
+      this._clearPid();
       this.process = null;
     });
 
@@ -426,6 +464,7 @@ class JavaServerManager {
     }
 
     this.process.kill();
+    this._clearPid();
     this.process = null;
   }
 }

@@ -206,6 +206,16 @@ npm start
 pm2 delete minecraft-auto-bedrock-gui
 ```
 
+### Bot 停止
+```bash
+stop-all.bat       # Windows（PM2 全プロセス + ローカルJavaサーバープロセスを停止）
+bash stop-all.sh   # macOS/Linux（同じく）
+# または手動で
+pm2 stop all
+```
+
+**注意**: `stop-all.bat/sh` は起動時に `memory.json` に記録されたプロセスIDのみを終了するため、他の無関係なJavaプロセスは影響を受けません。
+
 ### ワンクリックセットアップ
 ```bash
 npm run oneclick:setup
