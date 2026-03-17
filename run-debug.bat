@@ -92,5 +92,9 @@ echo ============================================
 echo [run] Bot logs : pm2 logs minecraft-auto-bedrock
 echo [run] GUI URL  : http://localhost:3000
 echo.
-pause
+echo [run] DEBUG log monitor starting... (Press Ctrl+C to stop)
+pm2 logs minecraft-auto-bedrock --lines 50
+echo.
+echo [run] Debug monitor ended. Press any key to close this window.
+pause >nul
 endlocal

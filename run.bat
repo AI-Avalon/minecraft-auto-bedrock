@@ -24,10 +24,7 @@ if errorlevel 1 (
   echo [run] WARNING: Java not found in PATH
   echo [run] Please install Java 16+ from https://www.java.com/
 ) else (
-  for /f "tokens=*" %%A in ('java -version 2^>^&1') do (
-    echo [run] !output! %%A
-    set "output=!output! %%A"
-  )
+  for /f "tokens=* delims=" %%A in ('java -version 2^>^&1') do echo [run] %%A
 )
 
 :: ── GUI を起動（ポート自動選択付き） ─────────────────────────────
@@ -40,9 +37,26 @@ if errorlevel 1 (
   exit /b 1
 )
 
+:: ── PM2プロセスの存在確認と起動 ───────────────────────────────
+pm2 describe minecraft-auto-bedrock >nul 2>nul
+if errorlevel 1 (
+  echo [run] minecraft-auto-bedrock process not found in PM2. Starting...
+  pm2 startOrRestart ecosystem.config.cjs
+  if errorlevel 1 (
+    echo [run] ERROR: PM2 startOrRestart failed.
+    pause
+    endlocal
+    exit /b 1
+  )
+)
+
 echo.
 echo [run] GUI is running. Access: http://localhost:3000 or auto-assigned port
 echo [run] Bot/Java server management: GUI control panel
 echo.
-pause
+echo [run] Monitoring bot logs... (Press Ctrl+C to stop log monitor)
+pm2 logs minecraft-auto-bedrock --lines 30
+echo.
+echo [run] Log monitor ended. Press any key to close this window.
+pause >nul
 endlocal
