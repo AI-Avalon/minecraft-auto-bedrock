@@ -50,6 +50,20 @@ function ensureMultiBot(multiBot) {
   }
 }
 
+function ensureChatControl(chatControl) {
+  if (!chatControl) {
+    return;
+  }
+
+  if (chatControl.playerRoles && typeof chatControl.playerRoles !== 'object') {
+    throw new Error('chatControl.playerRoles はオブジェクトで指定してください。');
+  }
+
+  if (chatControl.dangerousCommands && !Array.isArray(chatControl.dangerousCommands)) {
+    throw new Error('chatControl.dangerousCommands は配列で指定してください。');
+  }
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -64,6 +78,7 @@ function loadConfig() {
   ensureBehavior(config.behavior);
   ensureConnectionPolicy(config.connectionPolicy);
   ensureMultiBot(config.multiBot);
+  ensureChatControl(config.chatControl);
 
   return config;
 }

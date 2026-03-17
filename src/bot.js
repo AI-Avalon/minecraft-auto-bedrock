@@ -39,7 +39,9 @@ class AutonomousBot {
       requirePrefix: Boolean(this.config.chatControl?.requirePrefix ?? true),
       commandPrefix: this.config.chatControl?.commandPrefix || '!bot',
       allowAllPlayers: Boolean(this.config.chatControl?.allowAllPlayers ?? true),
-      allowedPlayers: this.config.chatControl?.allowedPlayers || []
+      allowedPlayers: this.config.chatControl?.allowedPlayers || [],
+      playerRoles: this.config.chatControl?.playerRoles || {},
+      dangerousCommands: this.config.chatControl?.dangerousCommands || ['mode', 'stop', 'retreat', 'base']
     };
     this.llmResponder = new JapaneseLLMResponder(this.config.llm || {}, this.config.bot.username);
   }
@@ -319,6 +321,26 @@ class AutonomousBot {
     return this.chatControl.allowedPlayers.map((x) => String(x).toLowerCase()).includes(normalized);
   }
 
+  getPlayerRole(username) {
+    const normalized = String(username || '').toLowerCase();
+    const entries = Object.entries(this.chatControl.playerRoles || {});
+    for (const [name, role] of entries) {
+      if (String(name).toLowerCase() === normalized) {
+        return String(role || 'general').toLowerCase();
+      }
+    }
+    return 'general';
+  }
+
+  canExecuteCommand(username, cmd) {
+    const dangerous = new Set((this.chatControl.dangerousCommands || []).map((x) => String(x).toLowerCase()));
+    if (!dangerous.has(String(cmd || '').toLowerCase())) {
+      return true;
+    }
+
+    return this.getPlayerRole(username) === 'admin';
+  }
+
   parseCommandText(message) {
     const text = String(message || '').trim();
     if (!text) {
@@ -358,6 +380,11 @@ class AutonomousBot {
 
     if (!cmd) {
       return false;
+    }
+
+    if (!this.canExecuteCommand(username, cmd)) {
+      this.sayJapanese(`${username}さん、そのコマンドは管理者のみ実行できます。`);
+      return true;
     }
 
     if (cmd === 'help' || cmd === 'ヘルプ') {
@@ -453,7 +480,28 @@ class AutonomousBot {
     }
 
     const s = this.status();
-    const contextText = `mode=${s.mode}, hp=${s.health}, food=${s.food}, pos=${s.position ? `${s.position.x},${s.position.y},${s.position.z}` : 'n/a'}`;
+    const snapshot = this.memoryStore.snapshot();
+    const inventoryText = (s.inventory || [])
+      .slice(0, 8)
+      .map((item) => `${item.displayName}x${item.count}`)
+      .join(', ');
+    const chestText = (snapshot.chests || [])
+      .slice(0, 3)
+      .map((chest) => {
+        const top = (chest.items || []).slice(0, 3).map((it) => `${it.displayName}x${it.count}`).join(', ');
+        return `${chest.position.x},${chest.position.y},${chest.position.z}[${top}]`;
+      })
+      .join(' | ');
+
+    const contextText = [
+      `mode=${s.mode}`,
+      `hp=${s.health}`,
+      `food=${s.food}`,
+      `pos=${s.position ? `${s.position.x},${s.position.y},${s.position.z}` : 'n/a'}`,
+      `inv=${inventoryText || 'empty'}`,
+      `memoryChests=${snapshot.chests?.length || 0}`,
+      `nearChests=${chestText || 'none'}`
+    ].join(', ');
     const reply = await this.llmResponder.generateReply(username, message, contextText);
     if (reply) {
       this.sayJapanese(reply.slice(0, 120));

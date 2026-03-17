@@ -38,6 +38,13 @@ const collectBlock = document.getElementById('collectBlock');
 const collectButton = document.getElementById('collectButton');
 const schemPath = document.getElementById('schemPath');
 const buildButton = document.getElementById('buildButton');
+const fleetBotId = document.getElementById('fleetBotId');
+const fleetBotUsername = document.getElementById('fleetBotUsername');
+const fleetBotRole = document.getElementById('fleetBotRole');
+const fleetBotMode = document.getElementById('fleetBotMode');
+const fleetAddButton = document.getElementById('fleetAddButton');
+const fleetRemoveButton = document.getElementById('fleetRemoveButton');
+const fleetRoleUpdateButton = document.getElementById('fleetRoleUpdateButton');
 
 function selectedTargetBotId() {
   return targetBotSelect?.value || undefined;
@@ -236,6 +243,43 @@ fetchItemButton.addEventListener('click', () => {
 
 retreatButton.addEventListener('click', () => send('command:retreat-base', { targetBotId: selectedTargetBotId() }));
 setBaseQuickButton.addEventListener('click', () => send('command:set-base', { name: baseName.value || 'quick-base', targetBotId: selectedTargetBotId() }));
+
+fleetAddButton?.addEventListener('click', () => {
+  const id = fleetBotId?.value?.trim();
+  const username = fleetBotUsername?.value?.trim();
+  if (!id || !username) {
+    showResult({ ok: false, reason: 'id-and-username-required' });
+    return;
+  }
+  send('command:fleet-add-bot', {
+    id,
+    username,
+    role: fleetBotRole?.value || 'worker',
+    behavior: { mode: fleetBotMode?.value || 'hybrid' },
+    memoryFile: `memory-${id}.json`
+  });
+});
+
+fleetRemoveButton?.addEventListener('click', () => {
+  const id = fleetBotId?.value?.trim() || selectedTargetBotId();
+  if (!id) {
+    showResult({ ok: false, reason: 'id-required' });
+    return;
+  }
+  send('command:fleet-remove-bot', { id });
+});
+
+fleetRoleUpdateButton?.addEventListener('click', () => {
+  const id = fleetBotId?.value?.trim() || selectedTargetBotId();
+  if (!id) {
+    showResult({ ok: false, reason: 'id-required' });
+    return;
+  }
+  send('command:fleet-update-role', {
+    id,
+    role: fleetBotRole?.value || 'worker'
+  });
+});
 
 toggleRefreshButton.addEventListener('click', () => {
   setAutoRefresh(!autoRefresh);

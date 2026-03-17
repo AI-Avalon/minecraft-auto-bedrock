@@ -106,6 +106,22 @@ npm run server:install -- --software purpur --mc 1.21.4
 
 `mode=silent-mining` では Bot 側の自発チャットと会話応答を抑制し、無言運用できます。
 
+### 権限レベル（管理者/一般）
+
+`chatControl.playerRoles` にプレイヤー名を設定すると権限を分離できます。
+
+```json
+"chatControl": {
+	"playerRoles": {
+		"owner_name": "admin",
+		"friend_name": "general"
+	},
+	"dangerousCommands": ["mode", "stop", "retreat", "base"]
+}
+```
+
+`dangerousCommands` に含まれるコマンドは `admin` のみ実行可能です。
+
 ## LLM会話（無料運用）
 
 ローカル無料構成は Ollama を推奨します。
@@ -121,6 +137,14 @@ ollama pull qwen2.5:3b
 3. Botにメンションを含めたチャットで会話
 
 例: `@bot 今日は何を掘る？`
+
+Bot は LLM へ以下のコンテキストを渡して応答品質を上げます。
+
+- 現在座標
+- 体力 / 空腹
+- インベントリ要約
+- 記憶チェスト数
+- 記憶チェストの中身要約
 
 - Bedrock (avalox.f5.si:19132) 向け:
 
@@ -144,6 +168,7 @@ npm run bootstrap
 - readOnly=true で破壊的操作を無効化できます。
 - 操作監査ログは logs/gui-audit.log に JSON Lines 形式で追記されます。
 - WebUI から 自動取得ON/OFF, 自動採掘ON/OFF, 建築+自動補充 を直接実行できます。
+- WebUI の MultiBot 管理パネルから Bot の追加/削除/役割変更をリアルタイム操作できます。
 
 ## PM2 自動復旧
 ```bash

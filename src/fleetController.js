@@ -1,6 +1,7 @@
 class FleetController {
-  constructor(entries = []) {
+  constructor(entries = [], options = {}) {
     this.entries = entries;
+    this.options = options;
   }
 
   get primaryEntry() {
@@ -99,6 +100,46 @@ class FleetController {
       // eslint-disable-next-line no-await-in-loop
       await entry.controller.stop();
     }
+  }
+
+  async addBot(spec = {}) {
+    if (typeof this.options.createEntryFromSpec !== 'function') {
+      throw new Error('このFleetControllerは動的追加に未対応です。');
+    }
+
+    const id = spec.id || spec.username;
+    if (!id) {
+      throw new Error('id または username が必要です。');
+    }
+
+    if (this.entries.some((x) => x.id === id)) {
+      throw new Error(`同じ id の Bot が既に存在します: ${id}`);
+    }
+
+    const entry = await this.options.createEntryFromSpec(spec);
+    this.entries.push(entry);
+    return { ok: true, id: entry.id, role: entry.role };
+  }
+
+  async removeBot(id) {
+    const index = this.entries.findIndex((x) => x.id === id);
+    if (index < 0) {
+      return { ok: false, reason: 'not-found' };
+    }
+
+    const [entry] = this.entries.splice(index, 1);
+    await entry.controller.stop();
+    return { ok: true, id: entry.id };
+  }
+
+  updateRole(id, role) {
+    const entry = this.entries.find((x) => x.id === id);
+    if (!entry) {
+      return { ok: false, reason: 'not-found' };
+    }
+
+    entry.role = String(role || 'worker');
+    return { ok: true, id: entry.id, role: entry.role };
   }
 }
 

@@ -70,6 +70,8 @@ test('会話・プレイヤー制御設定が存在すること', () => {
   assert.ok(['silent-mining', 'hybrid', 'conversation', 'player-command', 'autonomous'].includes(config.behavior.mode));
   assert.equal(typeof config.chatControl, 'object');
   assert.equal(typeof config.chatControl.commandPrefix, 'string');
+  assert.equal(typeof config.chatControl.playerRoles, 'object');
+  assert.ok(Array.isArray(config.chatControl.dangerousCommands));
   assert.equal(typeof config.llm, 'object');
 });
 
@@ -78,6 +80,9 @@ test('複数Bot設定と新規モジュールが存在すること', () => {
   const config = loadConfig();
   assert.equal(typeof config.multiBot, 'object');
   assert.ok(Array.isArray(config.multiBot.bots));
+  assert.ok(config.gui.security.allowedCommands.includes('fleet-add-bot'));
+  assert.ok(config.gui.security.allowedCommands.includes('fleet-remove-bot'));
+  assert.ok(config.gui.security.allowedCommands.includes('fleet-update-role'));
   assert.ok(fs.existsSync(path.join(root, 'src/llmChat.js')));
   assert.ok(fs.existsSync(path.join(root, 'src/fleetController.js')));
 });

@@ -229,6 +229,24 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:fleet-add-bot', async (payload) => {
+      await runCommand(socket, 'fleet-add-bot', payload || {}, async () => {
+        return botController.addBot(payload || {});
+      });
+    });
+
+    socket.on('command:fleet-remove-bot', async (payload) => {
+      await runCommand(socket, 'fleet-remove-bot', payload || {}, async () => {
+        return botController.removeBot(payload?.id);
+      });
+    });
+
+    socket.on('command:fleet-update-role', async (payload) => {
+      await runCommand(socket, 'fleet-update-role', payload || {}, async () => {
+        return botController.updateRole(payload?.id, payload?.role);
+      });
+    });
+
     socket.on('disconnect', () => {
       limiter.remove(socket.id);
       audit({ type: 'disconnect', socketId: socket.id });

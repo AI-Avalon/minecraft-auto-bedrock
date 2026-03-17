@@ -41,7 +41,16 @@
     "requirePrefix": true,
     "commandPrefix": "!bot",
     "allowAllPlayers": true,
-    "allowedPlayers": []
+    "allowedPlayers": [],
+    "playerRoles": {
+      "owner_name": "admin"
+    },
+    "dangerousCommands": [
+      "mode",
+      "stop",
+      "retreat",
+      "base"
+    ]
   },
   "llm": {
     "enabled": false,
@@ -96,7 +105,10 @@
         "start-auto-collect",
         "stop-auto-collect",
         "start-auto-mine",
-        "stop-auto-mine"
+        "stop-auto-mine",
+        "fleet-add-bot",
+        "fleet-remove-bot",
+        "fleet-update-role"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,

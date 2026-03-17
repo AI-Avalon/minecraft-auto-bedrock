@@ -60,6 +60,31 @@ function buildBotRuntimeConfigs(config) {
   });
 }
 
+function buildRuntimeFromSpec(baseConfig, spec = {}, index = 0) {
+  const id = spec.id || spec.username || `bot-${index + 1}`;
+  const override = {
+    bot: {
+      username: spec.username || `Bot${index + 1}`,
+      password: spec.password,
+      auth: spec.auth
+    },
+    behavior: spec.behavior,
+    chatControl: spec.chatControl,
+    llm: spec.llm,
+    java: spec.java,
+    bedrock: spec.bedrock,
+    memory: {
+      file: spec.memoryFile || `memory-${id}.json`
+    }
+  };
+
+  return {
+    id,
+    role: spec.role || 'worker',
+    config: deepMerge(baseConfig, override)
+  };
+}
+
 async function bootstrap() {
   const config = loadConfig();
   const runtimeBots = buildBotRuntimeConfigs(config);
@@ -77,17 +102,30 @@ async function bootstrap() {
   }
 
   const entries = [];
-  for (const runtime of runtimeBots) {
+
+  async function createEntryFromRuntime(runtime) {
     const memoryStore = new MemoryStore(runtime.config);
     // eslint-disable-next-line no-await-in-loop
     await memoryStore.init();
     const controller = new AutonomousBot(runtime.config, memoryStore);
     // eslint-disable-next-line no-await-in-loop
     await controller.connect();
-    entries.push({ id: runtime.id, role: runtime.role, controller, memoryStore });
+    return { id: runtime.id, role: runtime.role, controller, memoryStore };
   }
 
-  const fleetController = new FleetController(entries);
+  for (const runtime of runtimeBots) {
+    // eslint-disable-next-line no-await-in-loop
+    const entry = await createEntryFromRuntime(runtime);
+    entries.push(entry);
+  }
+
+  const fleetController = new FleetController(entries, {
+    async createEntryFromSpec(spec) {
+      const runtime = buildRuntimeFromSpec(config, spec, entries.length);
+      const entry = await createEntryFromRuntime(runtime);
+      return entry;
+    }
+  });
   const fleetMemoryStore = new FleetMemoryStore(entries);
 
   if (config.gui.enabled) {
