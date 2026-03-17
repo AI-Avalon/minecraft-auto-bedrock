@@ -83,6 +83,13 @@ test('複数Bot設定と新規モジュールが存在すること', () => {
   assert.ok(config.gui.security.allowedCommands.includes('fleet-add-bot'));
   assert.ok(config.gui.security.allowedCommands.includes('fleet-remove-bot'));
   assert.ok(config.gui.security.allowedCommands.includes('fleet-update-role'));
+  assert.ok(config.gui.security.allowedCommands.includes('planner-calc-recipe'));
+  assert.ok(config.gui.security.allowedCommands.includes('planner-gather-for-craft'));
+  assert.ok(config.gui.security.allowedCommands.includes('fight-nearest-mob'));
+  assert.ok(config.gui.security.allowedCommands.includes('fight-player'));
+  assert.ok(config.gui.security.allowedCommands.includes('orchestrator-assign-task'));
   assert.ok(fs.existsSync(path.join(root, 'src/llmChat.js')));
   assert.ok(fs.existsSync(path.join(root, 'src/fleetController.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/bedrockDataService.js')));
+  assert.ok(fs.existsSync(path.join(root, 'scripts/sync-bedrock-samples.js')));
 });

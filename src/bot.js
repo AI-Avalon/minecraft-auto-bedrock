@@ -9,6 +9,7 @@ const { JapaneseLLMResponder } = require('./llmChat');
 
 let movementPlugin;
 let schemPlugin;
+let pvpPlugin;
 
 try {
   movementPlugin = require('mineflayer-movement').plugin;
@@ -22,10 +23,17 @@ try {
   schemPlugin = null;
 }
 
+try {
+  pvpPlugin = require('mineflayer-pvp').plugin;
+} catch {
+  pvpPlugin = null;
+}
+
 class AutonomousBot {
-  constructor(config, memoryStore) {
+  constructor(config, memoryStore, runtimeContext = {}) {
     this.config = config;
     this.memoryStore = memoryStore;
+    this.runtimeContext = runtimeContext;
     this.bot = null;
     this.reconnectTimer = null;
     this.isStopping = false;
@@ -33,7 +41,10 @@ class AutonomousBot {
     this.chatTimer = null;
     this.autoCollectTask = null;
     this.autoMineTask = null;
+    this.combatTask = null;
     this.mode = this.config.behavior?.mode || 'hybrid';
+    this.role = this.runtimeContext.role || 'worker';
+    this.knowledgeService = this.runtimeContext.knowledgeService || null;
     this.chatControl = {
       enabled: Boolean(this.config.chatControl?.enabled ?? true),
       requirePrefix: Boolean(this.config.chatControl?.requirePrefix ?? true),
@@ -104,6 +115,10 @@ class AutonomousBot {
 
     if (schemPlugin) {
       this.bot.loadPlugin(schemPlugin);
+    }
+
+    if (pvpPlugin) {
+      this.bot.loadPlugin(pvpPlugin);
     }
 
     this.bot.autoEat.options = {
@@ -234,6 +249,15 @@ class AutonomousBot {
     if (this.autoMineTask) {
       this.autoMineTask.running = false;
       this.autoMineTask = null;
+    }
+
+    if (this.combatTask) {
+      this.combatTask.running = false;
+      this.combatTask = null;
+    }
+
+    if (this.bot?.pvp?.stop) {
+      this.bot.pvp.stop();
     }
   }
 
@@ -388,7 +412,7 @@ class AutonomousBot {
     }
 
     if (cmd === 'help' || cmd === 'ヘルプ') {
-      this.sayJapanese('コマンド: mode mine collect stop base fetch retreat status help');
+      this.sayJapanese('コマンド: mode mine collect gather recipe fight fightmob stop base fetch retreat status help');
       return true;
     }
 
@@ -451,6 +475,52 @@ class AutonomousBot {
       }
       const result = await this.startAutoCollect(blockName, count);
       this.sayJapanese(`${blockName} 採取: ${result.finalCount}/${result.targetCount}`);
+      return true;
+    }
+
+    if (cmd === 'fightmob' || cmd === 'mob') {
+      const result = this.fightNearestMob();
+      this.sayJapanese(result.ok ? '近くの敵MOBへ戦闘開始。' : '敵MOBが見つかりません。');
+      return true;
+    }
+
+    if (cmd === 'fight' || cmd === 'pvp') {
+      const target = args[0];
+      if (!target) {
+        this.sayJapanese('使い方: fight <playerName>');
+        return true;
+      }
+      const result = this.fightPlayer(target);
+      this.sayJapanese(result.ok ? `${target} へ戦闘開始。` : `${target} が見つかりません。`);
+      return true;
+    }
+
+    if (cmd === 'recipe' || cmd === 'レシピ') {
+      const item = args[0];
+      const count = Number(args[1] || 1);
+      if (!item) {
+        this.sayJapanese('使い方: recipe <itemName> <count>');
+        return true;
+      }
+      const plan = this.getRecipePlan(item, count);
+      if (!plan.ok) {
+        this.sayJapanese('レシピ計算は未有効です。bedrock-samplesを同期してください。');
+        return true;
+      }
+      const top = plan.plan.slice(0, 3).map((x) => `${x.item}x${x.amount}`).join(', ');
+      this.sayJapanese(`${item}x${count} の必要素材: ${top || '計算不可'}`);
+      return true;
+    }
+
+    if (cmd === 'gather' || cmd === '素材') {
+      const item = args[0];
+      const count = Number(args[1] || 1);
+      if (!item) {
+        this.sayJapanese('使い方: gather <itemName> <count>');
+        return true;
+      }
+      const result = await this.gatherForCraft(item, count);
+      this.sayJapanese(result.ok ? `${item} 用の収集計画を実行しました。` : '素材収集計画を作成できませんでした。');
       return true;
     }
 
@@ -796,6 +866,123 @@ class AutonomousBot {
     return true;
   }
 
+  findNearestHostileMob(maxDistance = 24) {
+    if (!this.bot?.nearestEntity) {
+      return null;
+    }
+
+    const hostile = new Set([
+      'zombie', 'husk', 'drowned', 'skeleton', 'creeper', 'spider', 'enderman', 'witch', 'pillager'
+    ]);
+
+    return this.bot.nearestEntity((entity) => {
+      if (!entity || entity.type !== 'mob') {
+        return false;
+      }
+      if (!hostile.has(entity.name)) {
+        return false;
+      }
+
+      const me = this.bot.entity?.position;
+      const target = entity.position;
+      if (!me || !target) {
+        return false;
+      }
+
+      return me.distanceTo(target) <= maxDistance;
+    });
+  }
+
+  attackEntity(entity, durationMs = 12_000) {
+    if (!entity || !this.bot) {
+      return { ok: false, reason: 'no-target' };
+    }
+
+    this.combatTask = { running: true, target: entity.name };
+
+    if (this.bot.pvp?.attack) {
+      this.bot.pvp.attack(entity);
+      setTimeout(() => {
+        if (this.bot?.pvp?.stop) {
+          this.bot.pvp.stop();
+        }
+        this.combatTask = null;
+      }, Math.max(1000, Number(durationMs || 12_000)));
+      return { ok: true, target: entity.name, mode: 'pvp-plugin' };
+    }
+
+    this.bot.attack(entity);
+    setTimeout(() => {
+      this.combatTask = null;
+    }, 1200);
+    return { ok: true, target: entity.name, mode: 'basic-attack' };
+  }
+
+  fightNearestMob() {
+    const mob = this.findNearestHostileMob(28);
+    if (!mob) {
+      return { ok: false, reason: 'mob-not-found' };
+    }
+    return this.attackEntity(mob, 15_000);
+  }
+
+  fightPlayer(playerName) {
+    const player = this.bot?.players?.[playerName]?.entity;
+    if (!player) {
+      return { ok: false, reason: 'player-not-found' };
+    }
+    return this.attackEntity(player, 15_000);
+  }
+
+  stopFight() {
+    if (this.bot?.pvp?.stop) {
+      this.bot.pvp.stop();
+    }
+    this.combatTask = null;
+    return { ok: true };
+  }
+
+  getRecipePlan(itemName, count = 1) {
+    if (!this.knowledgeService) {
+      return { ok: false, reason: 'knowledge-service-disabled' };
+    }
+
+    const plan = this.knowledgeService.buildGatherPlan(itemName, Number(count || 1));
+    return {
+      ok: true,
+      itemName,
+      count: Number(count || 1),
+      plan
+    };
+  }
+
+  async gatherForCraft(itemName, count = 1) {
+    if (!this.knowledgeService) {
+      return { ok: false, reason: 'knowledge-service-disabled' };
+    }
+
+    const gatherPlan = this.knowledgeService.buildGatherPlan(itemName, Number(count || 1));
+    const actions = [];
+
+    for (const step of gatherPlan.slice(0, 8)) {
+      const candidate = step.hints?.blocks?.[0];
+      if (candidate) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.startAutoCollect(candidate, Math.min(64, Number(step.amount || 1)));
+        actions.push({ type: 'collect', item: candidate, result });
+      } else {
+        actions.push({ type: 'manual', item: step.item, reason: 'drop-source-required', sources: step.sources });
+      }
+    }
+
+    return {
+      ok: true,
+      itemName,
+      count: Number(count || 1),
+      actions
+    };
+  }
+
   async buildSchem(schemPath) {
     if (!this.bot?.schem?.build) {
       logger.warn('mineflayer-schem が有効化されていないため建築を実行できません。');
@@ -816,6 +1003,7 @@ class AutonomousBot {
     return {
       connected: Boolean(this.bot?.player),
       username: this.config.bot.username,
+      role: this.role,
       edition: this.config.edition,
       position: pos
         ? { x: Math.floor(pos.x), y: Math.floor(pos.y), z: Math.floor(pos.z) }
@@ -835,9 +1023,14 @@ class AutonomousBot {
         autoMine: this.autoMineTask ? {
           running: this.autoMineTask.running,
           plan: this.autoMineTask.plan
+        } : null,
+        combat: this.combatTask ? {
+          running: this.combatTask.running,
+          target: this.combatTask.target
         } : null
       },
       mode: this.mode,
+      knowledgeEnabled: Boolean(this.knowledgeService),
       inventory: this.bot?.inventory?.items()?.map((item) => ({
         name: item.name,
         count: item.count,

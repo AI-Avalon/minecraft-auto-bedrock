@@ -4,5 +4,6 @@ logs/
 pm2.log
 bin/
 local-server/
+data/bedrock-samples/
 .env
 .DS_Store

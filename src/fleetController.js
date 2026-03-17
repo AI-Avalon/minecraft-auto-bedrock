@@ -141,6 +141,40 @@ class FleetController {
     entry.role = String(role || 'worker');
     return { ok: true, id: entry.id, role: entry.role };
   }
+
+  async assignTask(task = {}) {
+    const role = task.role || 'worker';
+    const target = task.targetBotId
+      ? this.entries.find((x) => x.id === task.targetBotId)
+      : this.entries.find((x) => x.role === role) || this.primaryEntry;
+
+    if (!target) {
+      return { ok: false, reason: 'target-not-found' };
+    }
+
+    const type = String(task.type || '').toLowerCase();
+    if (type === 'mine') {
+      const result = await target.controller.startAutoCollect(task.blockName, Number(task.count || 32));
+      return { ok: true, assignedTo: target.id, result };
+    }
+
+    if (type === 'fight-mob') {
+      const result = target.controller.fightNearestMob();
+      return { ok: true, assignedTo: target.id, result };
+    }
+
+    if (type === 'fight-player') {
+      const result = target.controller.fightPlayer(task.playerName);
+      return { ok: true, assignedTo: target.id, result };
+    }
+
+    if (type === 'gather') {
+      const result = await target.controller.gatherForCraft(task.itemName, Number(task.count || 1));
+      return { ok: true, assignedTo: target.id, result };
+    }
+
+    return { ok: false, reason: 'unknown-task-type' };
+  }
 }
 
 class FleetMemoryStore {

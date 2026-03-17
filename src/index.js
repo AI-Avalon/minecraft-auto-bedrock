@@ -6,6 +6,7 @@ const { AutonomousBot } = require('./bot');
 const { startGuiServer } = require('./guiServer');
 const { JavaServerManager } = require('./javaServer');
 const { FleetController, FleetMemoryStore } = require('./fleetController');
+const { BedrockDataService } = require('./bedrockDataService');
 
 function deepMerge(base, override) {
   if (!override || typeof override !== 'object' || Array.isArray(override)) {
@@ -88,6 +89,14 @@ function buildRuntimeFromSpec(baseConfig, spec = {}, index = 0) {
 async function bootstrap() {
   const config = loadConfig();
   const runtimeBots = buildBotRuntimeConfigs(config);
+  const knowledgeService = new BedrockDataService(config.bedrockKnowledge || {});
+  if (config.bedrockKnowledge?.enabled !== false) {
+    try {
+      knowledgeService.load();
+    } catch (error) {
+      logger.warn('Bedrock知識データのロードに失敗しました。機能を限定して続行します。', error);
+    }
+  }
 
   let javaServerManager = null;
   if (config.edition === 'java' && config.localJavaServer?.enabled && config.localJavaServer?.autoStart) {
@@ -107,7 +116,10 @@ async function bootstrap() {
     const memoryStore = new MemoryStore(runtime.config);
     // eslint-disable-next-line no-await-in-loop
     await memoryStore.init();
-    const controller = new AutonomousBot(runtime.config, memoryStore);
+    const controller = new AutonomousBot(runtime.config, memoryStore, {
+      role: runtime.role,
+      knowledgeService
+    });
     // eslint-disable-next-line no-await-in-loop
     await controller.connect();
     return { id: runtime.id, role: runtime.role, controller, memoryStore };

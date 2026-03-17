@@ -229,6 +229,47 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:fight-nearest-mob', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'fight-nearest-mob', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'fightNearestMob');
+      });
+    });
+
+    socket.on('command:fight-player', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'fight-player', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'fightPlayer', payload?.playerName);
+      });
+    });
+
+    socket.on('command:stop-fight', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'stop-fight', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'stopFight');
+      });
+    });
+
+    socket.on('command:planner-calc-recipe', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'planner-calc-recipe', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'getRecipePlan', payload?.itemName, Number(payload?.count || 1));
+      });
+    });
+
+    socket.on('command:planner-gather-for-craft', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'planner-gather-for-craft', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'gatherForCraft', payload?.itemName, Number(payload?.count || 1));
+      });
+    });
+
+    socket.on('command:orchestrator-assign-task', async (payload) => {
+      await runCommand(socket, 'orchestrator-assign-task', payload || {}, async () => {
+        return botController.assignTask(payload || {});
+      });
+    });
+
     socket.on('command:fleet-add-bot', async (payload) => {
       await runCommand(socket, 'fleet-add-bot', payload || {}, async () => {
         return botController.addBot(payload || {});

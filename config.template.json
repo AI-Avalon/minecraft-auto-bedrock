@@ -46,7 +46,9 @@
       "mode",
       "stop",
       "retreat",
-      "base"
+      "base",
+      "fight",
+      "fightmob"
     ]
   },
   "llm": {
@@ -56,6 +58,10 @@
     "model": "qwen2.5:3b",
     "timeoutMs": 12000,
     "fallbackRuleBased": true
+  },
+  "bedrockKnowledge": {
+    "enabled": true,
+    "samplesPath": "data/bedrock-samples"
   },
   "multiBot": {
     "enabled": false,
@@ -124,7 +130,13 @@
         "stop-auto-mine",
         "fleet-add-bot",
         "fleet-remove-bot",
-        "fleet-update-role"
+        "fleet-update-role",
+        "fight-nearest-mob",
+        "fight-player",
+        "stop-fight",
+        "planner-calc-recipe",
+        "planner-gather-for-craft",
+        "orchestrator-assign-task"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,

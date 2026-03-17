@@ -45,6 +45,21 @@ const fleetBotMode = document.getElementById('fleetBotMode');
 const fleetAddButton = document.getElementById('fleetAddButton');
 const fleetRemoveButton = document.getElementById('fleetRemoveButton');
 const fleetRoleUpdateButton = document.getElementById('fleetRoleUpdateButton');
+const fightNearestMobButton = document.getElementById('fightNearestMobButton');
+const fightPlayerName = document.getElementById('fightPlayerName');
+const fightPlayerButton = document.getElementById('fightPlayerButton');
+const stopFightButton = document.getElementById('stopFightButton');
+const plannerItemName = document.getElementById('plannerItemName');
+const plannerItemCount = document.getElementById('plannerItemCount');
+const plannerCalcRecipeButton = document.getElementById('plannerCalcRecipeButton');
+const plannerGatherForCraftButton = document.getElementById('plannerGatherForCraftButton');
+const orchestratorTaskType = document.getElementById('orchestratorTaskType');
+const orchestratorRole = document.getElementById('orchestratorRole');
+const orchestratorBlockName = document.getElementById('orchestratorBlockName');
+const orchestratorItemName = document.getElementById('orchestratorItemName');
+const orchestratorCount = document.getElementById('orchestratorCount');
+const orchestratorPlayerName = document.getElementById('orchestratorPlayerName');
+const orchestratorAssignButton = document.getElementById('orchestratorAssignButton');
 
 function selectedTargetBotId() {
   return targetBotSelect?.value || undefined;
@@ -278,6 +293,48 @@ fleetRoleUpdateButton?.addEventListener('click', () => {
   send('command:fleet-update-role', {
     id,
     role: fleetBotRole?.value || 'worker'
+  });
+});
+
+fightNearestMobButton?.addEventListener('click', () => {
+  send('command:fight-nearest-mob', { targetBotId: selectedTargetBotId() });
+});
+
+fightPlayerButton?.addEventListener('click', () => {
+  send('command:fight-player', {
+    targetBotId: selectedTargetBotId(),
+    playerName: fightPlayerName?.value?.trim()
+  });
+});
+
+stopFightButton?.addEventListener('click', () => {
+  send('command:stop-fight', { targetBotId: selectedTargetBotId() });
+});
+
+plannerCalcRecipeButton?.addEventListener('click', () => {
+  send('command:planner-calc-recipe', {
+    targetBotId: selectedTargetBotId(),
+    itemName: plannerItemName?.value?.trim(),
+    count: Number(plannerItemCount?.value || 1)
+  });
+});
+
+plannerGatherForCraftButton?.addEventListener('click', () => {
+  send('command:planner-gather-for-craft', {
+    targetBotId: selectedTargetBotId(),
+    itemName: plannerItemName?.value?.trim(),
+    count: Number(plannerItemCount?.value || 1)
+  });
+});
+
+orchestratorAssignButton?.addEventListener('click', () => {
+  send('command:orchestrator-assign-task', {
+    type: orchestratorTaskType?.value,
+    role: orchestratorRole?.value || 'worker',
+    blockName: orchestratorBlockName?.value?.trim(),
+    itemName: orchestratorItemName?.value?.trim(),
+    playerName: orchestratorPlayerName?.value?.trim(),
+    count: Number(orchestratorCount?.value || 1)
   });
 });
 

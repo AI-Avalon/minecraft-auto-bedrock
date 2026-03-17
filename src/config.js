@@ -64,6 +64,16 @@ function ensureChatControl(chatControl) {
   }
 }
 
+function ensureBedrockKnowledge(knowledge) {
+  if (!knowledge) {
+    return;
+  }
+
+  if (knowledge.samplesPath && typeof knowledge.samplesPath !== 'string') {
+    throw new Error('bedrockKnowledge.samplesPath は文字列で指定してください。');
+  }
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -79,6 +89,7 @@ function loadConfig() {
   ensureConnectionPolicy(config.connectionPolicy);
   ensureMultiBot(config.multiBot);
   ensureChatControl(config.chatControl);
+  ensureBedrockKnowledge(config.bedrockKnowledge);
 
   return config;
 }

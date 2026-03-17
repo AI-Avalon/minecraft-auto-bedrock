@@ -113,6 +113,50 @@
           <button id="fleetRoleUpdateButton">役割更新</button>
         </div>
       </section>
+
+      <section class="panel">
+        <h2>戦闘 / PvP</h2>
+        <div class="row">
+          <button id="fightNearestMobButton">近くの敵MOBを攻撃</button>
+          <input id="fightPlayerName" placeholder="player name" />
+          <button id="fightPlayerButton">プレイヤー攻撃</button>
+          <button id="stopFightButton">戦闘停止</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>レシピ計算 / 素材計画</h2>
+        <div class="row">
+          <input id="plannerItemName" placeholder="diamond_sword など" />
+          <input id="plannerItemCount" type="number" min="1" value="1" />
+        </div>
+        <div class="row">
+          <button id="plannerCalcRecipeButton">必要素材を計算</button>
+          <button id="plannerGatherForCraftButton">素材収集を開始</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>指示系統 (Orchestrator)</h2>
+        <div class="row">
+          <select id="orchestratorTaskType">
+            <option value="mine">mine</option>
+            <option value="gather">gather</option>
+            <option value="fight-mob">fight-mob</option>
+            <option value="fight-player">fight-player</option>
+          </select>
+          <input id="orchestratorRole" placeholder="role (worker/assistant)" value="worker" />
+        </div>
+        <div class="row">
+          <input id="orchestratorBlockName" placeholder="mine用 blockName" />
+          <input id="orchestratorItemName" placeholder="gather用 itemName" />
+          <input id="orchestratorCount" type="number" min="1" value="16" />
+          <input id="orchestratorPlayerName" placeholder="fight-player用 name" />
+        </div>
+        <div class="row">
+          <button id="orchestratorAssignButton">タスク割当</button>
+        </div>
+      </section>
     </main>
 
     <script src="/socket.io/socket.io.js"></script>
