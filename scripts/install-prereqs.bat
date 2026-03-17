@@ -99,13 +99,13 @@ if not errorlevel 1 (
     goto :java_done
   )
 ) else (
-  echo [INFO] Java 21 (Temurin) をインストール中...
+  echo [INFO] Installing Java 21 - Temurin...
   if "%WINGET_OK%"=="1" (
     winget install EclipseAdoptium.Temurin.21.JDK --silent --accept-source-agreements --accept-package-agreements
-    echo [OK] Java インストール完了
+    echo [OK] Java installation completed
   ) else (
-    echo [WARN] winget が見つかりません。
-    echo        https://adoptium.net から Java 21 をインストールしてください。
+    echo [WARN] winget was not found.
+    echo        Install Java 21 from https://adoptium.net
   )
 )
 :java_done
@@ -165,8 +165,8 @@ where nvidia-smi >nul 2>nul
 if not errorlevel 1 (
   echo.
   for /f "tokens=1,2 delims=," %%a in ('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits 2^>nul') do (
-    echo [GPU] NVIDIA GPU 検出: %%a (VRAM: %%b MB)
-    echo       Ollama セットアップ時にGPUモードを選択できます。
+    echo [GPU] NVIDIA GPU detected: %%a - VRAM %%b MB
+    echo       You can choose GPU mode in Ollama setup.
   )
 )
 
