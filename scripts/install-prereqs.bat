@@ -164,10 +164,24 @@ if not errorlevel 1 (
 where nvidia-smi >nul 2>nul
 if not errorlevel 1 (
   echo.
-  for /f "tokens=*" %%a in ('nvidia-smi --query-gpu=name --format=csv,noheader 2^>nul') do (
-    echo [GPU] NVIDIA GPU detected: %%a
-    echo       You can choose GPU mode in Ollama setup.
+  set "GPU_TMP=%TEMP%\mab-gpu-%RANDOM%.txt"
+  nvidia-smi -L > "%GPU_TMP%" 2>nul
+  if not errorlevel 1 (
+    set GPU_FOUND=0
+    for /f "usebackq delims=" %%a in (`findstr /b /c:"GPU " "%GPU_TMP%"`) do (
+      set GPU_FOUND=1
+      echo [GPU] %%a
+      echo       You can choose GPU mode in Ollama setup.
+    )
+    if "!GPU_FOUND!"=="0" (
+      echo [GPU] NVIDIA tools detected but GPU list was empty.
+      echo       You can still choose GPU mode in Ollama setup.
+    )
+  ) else (
+    echo [GPU] NVIDIA tools detected, but detailed query is unsupported.
+    echo       You can still choose GPU mode in Ollama setup.
   )
+  if exist "%GPU_TMP%" del /q "%GPU_TMP%" >nul 2>nul
 )
 
 echo.
