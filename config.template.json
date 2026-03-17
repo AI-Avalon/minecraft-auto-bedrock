@@ -181,8 +181,10 @@
         "stop-city-mode",
         "planner-calc-recipe",
         "planner-gather-for-craft",
+        "planner-analyze-blueprint",
         "orchestrator-assign-task",
         "system-doctor",
+        "connection-diagnose",
         "oneclick-setup",
         "oneclick-setup-live",
         "process-delete"

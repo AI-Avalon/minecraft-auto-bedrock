@@ -99,6 +99,50 @@ function ensureCombat(combat) {
   }
 }
 
+function ensureGui(gui) {
+  if (!gui) {
+    return;
+  }
+
+  if (gui.port !== undefined && Number.isNaN(Number(gui.port))) {
+    throw new Error('gui.port は数値で指定してください。');
+  }
+
+  const security = gui.security;
+  if (!security) {
+    return;
+  }
+
+  if (security.allowedCommands && !Array.isArray(security.allowedCommands)) {
+    throw new Error('gui.security.allowedCommands は配列で指定してください。');
+  }
+
+  if (security.commandCooldownMs !== undefined && Number.isNaN(Number(security.commandCooldownMs))) {
+    throw new Error('gui.security.commandCooldownMs は数値で指定してください。');
+  }
+
+  if (security.maxCommandsPerMinute !== undefined && Number.isNaN(Number(security.maxCommandsPerMinute))) {
+    throw new Error('gui.security.maxCommandsPerMinute は数値で指定してください。');
+  }
+}
+
+function validateConfig(config) {
+  if (!config || typeof config !== 'object') {
+    throw new Error('config はオブジェクトで指定してください。');
+  }
+
+  ensureEdition(config.edition);
+  ensureLocalJavaServer(config.localJavaServer);
+  ensureBehavior(config.behavior);
+  ensureConnectionPolicy(config.connectionPolicy);
+  ensureMultiBot(config.multiBot);
+  ensureChatControl(config.chatControl);
+  ensureBedrockKnowledge(config.bedrockKnowledge);
+  ensureCombat(config.combat);
+  ensureGui(config.gui);
+  return true;
+}
+
 function loadConfig() {
   const configPath = path.join(process.cwd(), 'config.json');
 
@@ -108,18 +152,12 @@ function loadConfig() {
 
   const text = fs.readFileSync(configPath, 'utf8');
   const config = JSON.parse(text);
-  ensureEdition(config.edition);
-  ensureLocalJavaServer(config.localJavaServer);
-  ensureBehavior(config.behavior);
-  ensureConnectionPolicy(config.connectionPolicy);
-  ensureMultiBot(config.multiBot);
-  ensureChatControl(config.chatControl);
-  ensureBedrockKnowledge(config.bedrockKnowledge);
-  ensureCombat(config.combat);
+  validateConfig(config);
 
   return config;
 }
 
 module.exports = {
-  loadConfig
+  loadConfig,
+  validateConfig
 };

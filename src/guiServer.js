@@ -6,6 +6,8 @@ const { Server } = require('socket.io');
 const { spawn, spawnSync } = require('child_process');
 const { logger } = require('./logger');
 const { systemDoctor, detectJavaVersion, oneClickBootstrap } = require('./systemManager');
+const { validateConfig } = require('./config');
+const { runConnectionDiagnostics } = require('./connectionDiagnostics');
 
 function createAuditWriter(config) {
   const security = config.gui.security || {};
@@ -558,6 +560,13 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:planner-analyze-blueprint', async (payload) => {
+      const targetBotId = payload?.targetBotId;
+      await runCommand(socket, 'planner-analyze-blueprint', payload || {}, async () => {
+        return botController.runOnTarget(targetBotId, 'analyzeBlueprint', payload?.schemPath);
+      });
+    });
+
     socket.on('command:orchestrator-assign-task', async (payload) => {
       await runCommand(socket, 'orchestrator-assign-task', payload || {}, async () => {
         return botController.assignTask(payload || {});
@@ -642,6 +651,12 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    socket.on('command:connection-diagnose', async (payload) => {
+      await runCommand(socket, 'connection-diagnose', payload || {}, async () => {
+        return runConnectionDiagnostics(config, payload || {});
+      });
+    });
+
     socket.on('command:oneclick-setup', async (payload) => {
       await runCommand(socket, 'oneclick-setup', payload || {}, async () => {
         return oneClickBootstrap({ syncBedrockSamples: Boolean(payload?.syncBedrockSamples ?? true) });
@@ -677,6 +692,7 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
 
     socket.on('command:config-save', async (configData) => {
       await runCommand(socket, 'config-save', { keys: Object.keys(configData || {}) }, async () => {
+        validateConfig(configData || {});
         const configPath = path.resolve(process.cwd(), 'config.json');
         fs.writeFileSync(configPath, JSON.stringify(configData || {}, null, 2), 'utf-8');
         return { ok: true, message: 'Config saved successfully' };
@@ -830,7 +846,12 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       await runCommand(socket, 'bulk-action', payload || {}, async () => {
         const { actionType, param } = payload || {};
         const status = botController.status();
-        const botIds = (status?.fleet || []).map(b => b.id).filter(id => id);
+        const explicitTargetBotIds = Array.isArray(payload?.targetBotIds)
+          ? payload.targetBotIds.map((id) => String(id)).filter(Boolean)
+          : [];
+        const botIds = explicitTargetBotIds.length > 0
+          ? explicitTargetBotIds
+          : (status?.fleet || []).map(b => b.id).filter(id => id);
         
         if (!botIds.length) {
           return { ok: false, message: '利用可能なBotがありません' };
@@ -892,7 +913,14 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
             for (const botId of botIds) {
               try {
                 const taskType = param?.taskType || 'auto';
-                await botController.assignTask({ botId, type: taskType });
+                await botController.assignTask({
+                  targetBotId: botId,
+                  type: taskType,
+                  blockName: param?.blockName,
+                  itemName: param?.itemName,
+                  playerName: param?.playerName,
+                  count: Number(param?.count || 1)
+                });
                 results[botId] = { ok: true, message: `タスク「${taskType}」を割当しました` };
               } catch (e) {
                 results[botId] = { ok: false, message: String(e) };
