@@ -164,18 +164,9 @@ if not errorlevel 1 (
 where nvidia-smi >nul 2>nul
 if not errorlevel 1 (
   echo.
-  nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits >nul 2>nul
-  if not errorlevel 1 (
-    for /f "tokens=1,2 delims=," %%a in ('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits 2^>nul') do (
-      echo [GPU] NVIDIA GPU detected: %%a - VRAM %%b MB
-      echo       You can choose GPU mode in Ollama setup.
-    )
-  ) else (
-    for /f "tokens=*" %%a in ('nvidia-smi --query-gpu=name --format=csv,noheader 2^>nul') do (
-      echo [GPU] NVIDIA GPU detected: %%a
-      echo       VRAM query is not supported on this driver.
-      echo       You can still choose GPU mode in Ollama setup.
-    )
+  for /f "tokens=*" %%a in ('nvidia-smi --query-gpu=name --format=csv,noheader 2^>nul') do (
+    echo [GPU] NVIDIA GPU detected: %%a
+    echo       You can choose GPU mode in Ollama setup.
   )
 )
 
