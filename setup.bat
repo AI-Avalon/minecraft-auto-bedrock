@@ -10,18 +10,24 @@ echo ============================================
 echo.
 
 set NEED_PREREQS=0
+set NODE_MAJOR=20
+
+for %%A in (%*) do (
+  set "ARG=%%~A"
+  if /I "!ARG:~0,13!"=="--node-major=" set "NODE_MAJOR=!ARG:~13!"
+)
 
 where node >nul 2>nul
 if errorlevel 1 (
   set NEED_PREREQS=1
 ) else (
-  node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=20?0:1)" >nul 2>nul
+  node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
   if errorlevel 1 set NEED_PREREQS=1
 )
 
 if "%NEED_PREREQS%"=="1" (
-  echo [setup] Node.js v20+ が必要です。前提ツール導入を実行します...
-  call scripts\install-prereqs.bat --auto
+  echo [setup] Node.js v%NODE_MAJOR%+ が必要です。前提ツール導入を実行します...
+  call scripts\install-prereqs.bat --auto --node-major=%NODE_MAJOR%
   echo.
   echo [setup] 前提導入後は新しいターミナルで setup.bat --resume を実行してください。
   echo.
@@ -32,6 +38,7 @@ if %errorlevel% neq 0 (
   echo.
   echo [setup] セットアップは途中で停止しました。
   echo [setup] 再開するには setup.bat --resume を実行してください。
+  echo [setup] 途中開始する場合は setup.bat --from-step=config のように指定できます。
   echo.
   pause
   endlocal

@@ -146,10 +146,19 @@ Windows では `run.bat` と同じ階層の `setup.bat` で、
 ```bat
 setup.bat
 setup.bat --resume
+setup.bat --from-step=config
+setup.bat --node-major=22
 ```
 
 Node.js が古い/未導入の場合は `setup.bat` が案内し、
 前提ツール導入後に `setup.bat --resume` で再開できます。
+
+Windows 更新用メニューは `update.bat` を使えます。
+
+```bat
+update.bat
+update.bat --node-major=22
+```
 
 ### 2. 接続設定
 ```bash
@@ -201,6 +210,45 @@ npm run install:all:auto
 
 # 途中再開
 node scripts/full-install.js --resume
+
+# 途中ステップから開始（例: config から）
+node scripts/full-install.js --from-step=config
+
+# 必須 Node メジャー指定（例: 22 以上）
+node scripts/full-install.js --node-major=22
+
+# Node 仮想環境 (Volta) も導入
+node scripts/full-install.js --use-volta
+
+# ステップID確認
+node scripts/full-install.js --show-steps
+```
+
+### Node をプロジェクト固定で使う（Python venv 風）
+Volta を使うことで、リポジトリごとに Node バージョンを固定できます。
+
+```bash
+# 対話で導入したい場合
+npm run node:env
+
+# 自動導入（Node 20+ を固定）
+npm run node:env:auto -- --node-major=20
+
+# 例: Node 22 を固定
+npm run node:env:auto -- --node-major=22
+```
+
+Windows では `update.bat` のメニューからも Node 仮想環境設定を実行できます。
+
+### リリース自動化
+```bash
+# patch/minor/major を自動でバージョンアップして tag/push/release
+npm run release:patch
+npm run release:minor
+npm run release:major
+
+# 手動指定バージョン
+npm run release -- --version=2.1.0 --yes
 ```
 
 ---

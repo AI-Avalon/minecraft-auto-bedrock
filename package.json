@@ -42,7 +42,13 @@
     "ollama:setup:auto": "node scripts/install-ollama.js --auto",
     "ollama:check": "node scripts/install-ollama.js --check",
     "install:all": "node scripts/full-install.js",
-    "install:all:auto": "node scripts/full-install.js --auto"
+    "install:all:auto": "node scripts/full-install.js --auto",
+    "node:env": "node scripts/setup-node-env.js",
+    "node:env:auto": "node scripts/setup-node-env.js --auto",
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js --type=patch --yes",
+    "release:minor": "node scripts/release.js --type=minor --yes",
+    "release:major": "node scripts/release.js --type=major --yes"
   },
   "dependencies": {
     "express": "^4.21.2",

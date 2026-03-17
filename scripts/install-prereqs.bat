@@ -4,10 +4,13 @@ setlocal EnableDelayedExpansion
 
 set AUTO_MODE=0
 set WITH_OLLAMA=0
+set NODE_MAJOR=20
 for %%A in (%*) do (
   if /I "%%~A"=="--auto" set AUTO_MODE=1
   if /I "%%~A"=="--with-ollama" set WITH_OLLAMA=1
   if /I "%%~A"=="--skip-ollama" set WITH_OLLAMA=0
+  set "ARG=%%~A"
+  if /I "!ARG:~0,13!"=="--node-major=" set "NODE_MAJOR=!ARG:~13!"
 )
 
 echo.
@@ -37,21 +40,41 @@ if not errorlevel 1 (
   )
 )
 
-:: ── Node.js (v20+) ────────────────────────────────────────────────────────
+:: ── Node.js (指定メジャー以上) ─────────────────────────────────────────────
+set NODE_OK=0
 where node >nul 2>nul
 if not errorlevel 1 (
-  for /f "tokens=*" %%v in ('node --version 2^>nul') do (
-    echo [OK] Node.js %%v
+  node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
+  if not errorlevel 1 (
+    set NODE_OK=1
+    for /f "tokens=*" %%v in ('node --version 2^>nul') do echo [OK] Node.js %%v
+  ) else (
+    echo [WARN] Node.js は v%NODE_MAJOR% 以上が必要です。現在のバージョンは要件未満です。
   )
 ) else (
-  echo [INFO] Node.js v20 をインストール中...
+  echo [WARN] Node.js が見つかりません。
+)
+
+if "%NODE_OK%"=="0" (
+  echo [INFO] Node.js v%NODE_MAJOR% 以上をインストール中...
+  if not "%NODE_MAJOR%"=="20" (
+    echo [WARN] winget は特定メジャー固定指定が難しいため、LTS版を導入します。
+  )
   if "%WINGET_OK%"=="1" (
     winget install OpenJS.NodeJS.LTS --silent --accept-source-agreements --accept-package-agreements
-    echo [OK] Node.js インストール完了
+    node -e "const major=Number(process.versions.node.split('.')[0]);process.exit(major>=%NODE_MAJOR%?0:1)" >nul 2>nul
+    if not errorlevel 1 (
+      for /f "tokens=*" %%v in ('node --version 2^>nul') do echo [OK] Node.js %%v
+    ) else (
+      echo [WARN] インストール後も Node.js が v%NODE_MAJOR% 未満の可能性があります。
+      echo        手動で https://nodejs.org から v%NODE_MAJOR% 以上を導入してください。
+    )
   ) else (
     echo [WARN] winget が見つかりません。
-    echo        https://nodejs.org からインストールしてください。
+    echo        https://nodejs.org から v%NODE_MAJOR% 以上をインストールしてください。
   )
+) else (
+  echo [INFO] Node.js 要件を満たしています。
 )
 
 :: ── Java 21 ───────────────────────────────────────────────────────────────

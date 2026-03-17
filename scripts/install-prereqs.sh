@@ -17,12 +17,14 @@ PLATFORM="$(uname -s)"
 ARCH="$(uname -m)"
 AUTO_MODE=0
 WITH_OLLAMA=0
+NODE_MAJOR=20
 
 for arg in "$@"; do
   case "$arg" in
     --auto) AUTO_MODE=1 ;;
     --with-ollama) WITH_OLLAMA=1 ;;
     --skip-ollama) WITH_OLLAMA=0 ;;
+    --node-major=*) NODE_MAJOR="${arg#*=}" ;;
   esac
 done
 
@@ -68,32 +70,41 @@ install_git() {
   ok "Git インストール完了"
 }
 
-# ── Node.js (v20+) ────────────────────────────────────────────
+# ── Node.js (指定メジャー以上) ────────────────────────────────
 install_node() {
+  if ! [[ "$NODE_MAJOR" =~ ^[0-9]+$ ]]; then
+    warn "--node-major は整数で指定してください。現在値: $NODE_MAJOR"
+    NODE_MAJOR=20
+  fi
+
   if command -v node >/dev/null 2>&1; then
     NODE_VER="$(node -e 'console.log(process.versions.node.split(".")[0])')"
-    if [[ "$NODE_VER" -ge 20 ]]; then
+    if [[ "$NODE_VER" -ge "$NODE_MAJOR" ]]; then
       ok "Node.js: $(node --version)"
       return
     fi
-    warn "Node.js $(node --version) は古いです。v20以上が必要です。"
+    warn "Node.js $(node --version) は古いです。v${NODE_MAJOR}以上が必要です。"
   fi
-  info "Node.js v20 をインストール中..."
+  info "Node.js v${NODE_MAJOR} 以上をインストール中..."
   if command -v brew >/dev/null 2>&1; then
-    brew install node@20
-    brew link --overwrite node@20 2>/dev/null || true
+    brew install "node@${NODE_MAJOR}" 2>/dev/null || brew install node
+    brew link --overwrite "node@${NODE_MAJOR}" 2>/dev/null || true
   elif command -v apt-get >/dev/null 2>&1; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | sudo -E bash -
     sudo apt-get install -y nodejs
   elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf module install -y nodejs:20
+    sudo dnf module install -y "nodejs:${NODE_MAJOR}" || sudo dnf install -y nodejs npm
   elif command -v pacman >/dev/null 2>&1; then
     sudo pacman -S --noconfirm nodejs npm
   else
     warn "Node.js インストール不可。https://nodejs.org からインストールしてください。"
     return
   fi
-  ok "Node.js インストール完了: $(node --version 2>/dev/null || echo '再起動が必要な場合があります')"
+  if command -v node >/dev/null 2>&1 && [[ "$(node -e 'console.log(process.versions.node.split(".")[0])')" -ge "$NODE_MAJOR" ]]; then
+    ok "Node.js インストール完了: $(node --version)"
+  else
+    warn "インストール後も Node.js が v${NODE_MAJOR} 未満の可能性があります。"
+  fi
 }
 
 # ── Java (JRE 21) ─────────────────────────────────────────────

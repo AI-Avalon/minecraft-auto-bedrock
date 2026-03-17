@@ -32,18 +32,59 @@ const WITH_BEDROCK_SAMPLES = ARGS.has('--with-bedrock-samples');
 const WITH_OLLAMA = ARGS.has('--with-ollama');
 const WITH_TESTS = ARGS.has('--with-tests');
 const WITH_PM2 = ARGS.has('--with-pm2');
+const SHOW_STEPS = ARGS.has('--show-steps');
+const USE_VOLTA = ARGS.has('--use-volta');
 const PROGRESS_FILE = path.join(ROOT, '.install-progress.json');
+
+function getArgValue(name) {
+  for (const arg of process.argv.slice(2)) {
+    if (arg.startsWith(`${name}=`)) {
+      return arg.slice(name.length + 1);
+    }
+  }
+  return null;
+}
+
+const REQUIRED_NODE_MAJOR = Number(getArgValue('--node-major') || '20');
+const FROM_STEP = getArgValue('--from-step');
 
 const STEP = {
   PREREQS: 'prereqs',
   ENV: 'env',
   NPM_INSTALL: 'npmInstall',
+  NODE_ENV: 'nodeEnv',
   CONFIG: 'config',
   VIAPROXY: 'viaProxy',
   BEDROCK_SAMPLES: 'bedrockSamples',
   OLLAMA: 'ollama',
   TESTS: 'tests',
   RESIDENT: 'resident',
+};
+
+const STEP_ORDER = [
+  STEP.PREREQS,
+  STEP.ENV,
+  STEP.NPM_INSTALL,
+  STEP.NODE_ENV,
+  STEP.CONFIG,
+  STEP.VIAPROXY,
+  STEP.BEDROCK_SAMPLES,
+  STEP.OLLAMA,
+  STEP.TESTS,
+  STEP.RESIDENT,
+];
+
+const STEP_LABEL = {
+  [STEP.PREREQS]: '前提ツール確認/導入',
+  [STEP.ENV]: '環境確認',
+  [STEP.NPM_INSTALL]: 'npm install (依存関係インストール)',
+  [STEP.NODE_ENV]: 'Node 仮想環境 (Volta) 設定',
+  [STEP.CONFIG]: '初期設定ファイルの生成',
+  [STEP.VIAPROXY]: 'ViaProxy セットアップ (Bedrock対応)',
+  [STEP.BEDROCK_SAMPLES]: 'Bedrock サンプルデータ同期',
+  [STEP.OLLAMA]: 'Ollama セットアップ',
+  [STEP.TESTS]: '単体テスト実行',
+  [STEP.RESIDENT]: '常駐運用 (PM2) 設定',
 };
 
 const c = (code, s) => (process.stdout.isTTY ? `\x1b[${code}m${s}\x1b[0m` : s);
@@ -100,6 +141,7 @@ function defaultSelection() {
     [STEP.PREREQS]: true,
     [STEP.ENV]: true,
     [STEP.NPM_INSTALL]: true,
+    [STEP.NODE_ENV]: AUTO ? USE_VOLTA : false,
     [STEP.CONFIG]: true,
     [STEP.VIAPROXY]: true,
     [STEP.BEDROCK_SAMPLES]: AUTO ? WITH_BEDROCK_SAMPLES : false,
@@ -135,8 +177,36 @@ function createProgressState(selection, previousCompleted = []) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     selection,
+    requiredNodeMajor: REQUIRED_NODE_MAJOR,
     completedSteps: [...previousCompleted],
   };
+}
+
+function normalizeFromStep(fromStep) {
+  if (!fromStep) return null;
+  if (STEP_ORDER.includes(fromStep)) return fromStep;
+
+  const lowered = String(fromStep).toLowerCase().trim();
+  const alias = {
+    prereqs: STEP.PREREQS,
+    env: STEP.ENV,
+    npminstall: STEP.NPM_INSTALL,
+    config: STEP.CONFIG,
+    viaproxy: STEP.VIAPROXY,
+    bedrocksamples: STEP.BEDROCK_SAMPLES,
+    ollama: STEP.OLLAMA,
+    tests: STEP.TESTS,
+    resident: STEP.RESIDENT,
+    pm2: STEP.RESIDENT,
+  };
+  return alias[lowered] || null;
+}
+
+function getCompletedUntilStep(fromStep) {
+  if (!fromStep) return [];
+  const idx = STEP_ORDER.indexOf(fromStep);
+  if (idx <= 0) return [];
+  return STEP_ORDER.slice(0, idx);
 }
 
 function getJavaVersionLine() {
@@ -169,14 +239,14 @@ function checkEnv() {
   }
 
   const major = parseInt(nodeVer.replace('v', '').split('.')[0], 10);
-  if (Number.isNaN(major) || major < 20) {
-    fail(`Node.js ${nodeVer} は古すぎます。v20 以上が必要です。`);
+  if (Number.isNaN(major) || major < REQUIRED_NODE_MAJOR) {
+    fail(`Node.js ${nodeVer} は古すぎます。v${REQUIRED_NODE_MAJOR} 以上が必要です。`);
     if (platform === 'win32') {
-      info('対処1: setup.bat を実行して Node.js LTS を導入');
+      info(`対処1: setup.bat --node-major=${REQUIRED_NODE_MAJOR} を実行して Node.js を導入`);
       info('対処2: scripts\\install-prereqs.bat を実行');
       info('導入後: 新しいターミナルで setup.bat --resume');
     } else {
-      info('対処: scripts/install-prereqs.sh を実行後、node scripts/full-install.js --resume');
+      info(`対処: bash scripts/install-prereqs.sh --node-major=${REQUIRED_NODE_MAJOR} 実行後、node scripts/full-install.js --resume`);
     }
     return false;
   }
@@ -199,6 +269,7 @@ function runPrereqInstaller(selection) {
 
   if (AUTO) args.push('--auto');
   if (selection[STEP.OLLAMA]) args.push('--with-ollama');
+  args.push(`--node-major=${REQUIRED_NODE_MAJOR}`);
 
   const cmd = isWin
     ? `scripts\\install-prereqs.bat ${args.join(' ')}`.trim()
@@ -215,6 +286,20 @@ function npmInstall() {
   if (result.status !== 0) {
     fail('npm install に失敗しました');
     return false;
+  }
+  return true;
+}
+
+function setupProjectNodeEnv() {
+  const args = ['scripts/setup-node-env.js', `--node-major=${REQUIRED_NODE_MAJOR}`];
+  if (AUTO) args.push('--auto');
+  const result = spawnSync('node', args, {
+    stdio: 'inherit',
+    cwd: ROOT,
+    shell: false,
+  });
+  if (result.status !== 0) {
+    warn('Node 仮想環境設定に失敗しました。通常の Node 実行は継続可能です。');
   }
   return true;
 }
@@ -318,6 +403,7 @@ async function chooseSelection(rl, loadedProgress) {
   }
 
   console.log(`\n${bold('設定項目を選択できます（Enterで既定値）')}`);
+  console.log(`  Node.js 必須メジャー: v${REQUIRED_NODE_MAJOR}+`);
 
   selection[STEP.PREREQS] = isYes(
     await ask(rl, '  前提ツール確認/導入を実行しますか? [Y/n]: ', true),
@@ -330,6 +416,10 @@ async function chooseSelection(rl, loadedProgress) {
   selection[STEP.CONFIG] = isYes(
     await ask(rl, '  config.json を準備しますか? [Y/n]: ', true),
     true,
+  );
+  selection[STEP.NODE_ENV] = isYes(
+    await ask(rl, '  Node をプロジェクト固定(Volta)で管理しますか? [y/N]: ', false),
+    false,
   );
   selection[STEP.VIAPROXY] = isYes(
     await ask(rl, '  ViaProxy セットアップを実行しますか? [Y/n]: ', true),
@@ -405,6 +495,8 @@ ${bold('運用モード:')}
 ${bold('途中再開:')}
   チェックポイント: ${cyan('.install-progress.json')}
   再開コマンド:     ${cyan('node scripts/full-install.js --resume')}
+  途中開始指定:     ${cyan('node scripts/full-install.js --from-step=config')}
+  Node固定有効化:   ${cyan('node scripts/full-install.js --use-volta')}
   Windows推奨:      ${cyan('setup.bat --resume')}
 
 ${bold('接続設定 (初回):')}
@@ -420,6 +512,26 @@ ${bold('════════════════════════
 ${bold('  minecraft-auto-bedrock セットアップ')}
 ${bold('════════════════════════════════════════════')}
 `);
+
+  if (SHOW_STEPS) {
+    console.log('利用可能なステップID:');
+    for (const id of STEP_ORDER) {
+      console.log(`  - ${id} : ${STEP_LABEL[id]}`);
+    }
+    return;
+  }
+
+  if (!Number.isInteger(REQUIRED_NODE_MAJOR) || REQUIRED_NODE_MAJOR < 18) {
+    fail('--node-major は 18 以上の整数を指定してください。例: --node-major=20');
+    process.exit(1);
+  }
+
+  const normalizedFromStep = normalizeFromStep(FROM_STEP);
+  if (FROM_STEP && !normalizedFromStep) {
+    fail(`不正な --from-step です: ${FROM_STEP}`);
+    info('利用可能な値を確認するには --show-steps を実行してください。');
+    process.exit(1);
+  }
 
   if (RESET_PROGRESS) {
     resetProgressFile();
@@ -437,20 +549,25 @@ ${bold('════════════════════════
     selection = await chooseSelection(rl, loadedProgress);
   }
 
-  const previousCompleted = RESUME && loadedProgress ? loadedProgress.completedSteps || [] : [];
+  let previousCompleted = RESUME && loadedProgress ? loadedProgress.completedSteps || [] : [];
+  if (normalizedFromStep) {
+    previousCompleted = getCompletedUntilStep(normalizedFromStep);
+    info(`途中開始: ${STEP_LABEL[normalizedFromStep]} から実行します。`);
+  }
   const progress = createProgressState(selection, previousCompleted);
   saveProgress(progress);
 
   try {
-    await runStep(progress, STEP.PREREQS, '前提ツール確認/導入', () => runPrereqInstaller(selection));
-    await runStep(progress, STEP.ENV, '環境確認', () => checkEnv());
-    await runStep(progress, STEP.NPM_INSTALL, 'npm install (依存関係インストール)', () => npmInstall());
-    await runStep(progress, STEP.CONFIG, '初期設定ファイルの生成', () => generateConfig());
-    await runStep(progress, STEP.VIAPROXY, 'ViaProxy セットアップ (Bedrock対応)', () => setupViaProxy(rl));
-    await runStep(progress, STEP.BEDROCK_SAMPLES, 'Bedrock サンプルデータ同期', () => syncBedrockSamples());
-    await runStep(progress, STEP.OLLAMA, 'Ollama セットアップ', () => setupOllama());
-    await runStep(progress, STEP.TESTS, '単体テスト実行', () => runTests());
-    await runStep(progress, STEP.RESIDENT, '常駐運用 (PM2) 設定', () => setupPM2());
+    await runStep(progress, STEP.PREREQS, STEP_LABEL[STEP.PREREQS], () => runPrereqInstaller(selection));
+    await runStep(progress, STEP.ENV, STEP_LABEL[STEP.ENV], () => checkEnv());
+    await runStep(progress, STEP.NPM_INSTALL, STEP_LABEL[STEP.NPM_INSTALL], () => npmInstall());
+    await runStep(progress, STEP.NODE_ENV, STEP_LABEL[STEP.NODE_ENV], () => setupProjectNodeEnv());
+    await runStep(progress, STEP.CONFIG, STEP_LABEL[STEP.CONFIG], () => generateConfig());
+    await runStep(progress, STEP.VIAPROXY, STEP_LABEL[STEP.VIAPROXY], () => setupViaProxy(rl));
+    await runStep(progress, STEP.BEDROCK_SAMPLES, STEP_LABEL[STEP.BEDROCK_SAMPLES], () => syncBedrockSamples());
+    await runStep(progress, STEP.OLLAMA, STEP_LABEL[STEP.OLLAMA], () => setupOllama());
+    await runStep(progress, STEP.TESTS, STEP_LABEL[STEP.TESTS], () => runTests());
+    await runStep(progress, STEP.RESIDENT, STEP_LABEL[STEP.RESIDENT], () => setupPM2());
 
     if (fs.existsSync(PROGRESS_FILE)) {
       fs.unlinkSync(PROGRESS_FILE);
