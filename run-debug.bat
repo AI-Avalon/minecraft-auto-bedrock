@@ -55,19 +55,33 @@ echo [run] Checking PM2 status...
 pm2 describe minecraft-auto-bedrock-gui >nul 2>nul
 if not errorlevel 1 (
   echo [run] Removing legacy duplicate process: minecraft-auto-bedrock-gui
-  pm2 delete minecraft-auto-bedrock-gui >nul 2>nul
+  pm2 delete minecraft-auto-bedrock-gui
+  if errorlevel 1 (
+    echo [run] ERROR: pm2 delete failed (errorlevel=%errorlevel%)
+  )
 )
+
+echo [run] Current PM2 processes:
+pm2 list
+echo.
 
 echo [run] Starting bot with ecosystem.config.cjs...
 pm2 startOrRestart ecosystem.config.cjs
 if errorlevel 1 (
-  echo [run] ERROR: PM2 startOrRestart failed.
+  echo [run] ERROR: PM2 startOrRestart failed (errorlevel=%errorlevel%)
+  echo [run] Checking PM2 logs...
+  pm2 logs minecraft-auto-bedrock --lines 30
   pause
   endlocal
   exit /b 1
 )
 
+echo [run] PM2 save...
 pm2 save
+if errorlevel 1 (
+  echo [run] WARNING: pm2 save failed (errorlevel=%errorlevel%)
+)
+
 echo [run] Opening browser to http://localhost:3000...
 start "" http://localhost:3000
 
