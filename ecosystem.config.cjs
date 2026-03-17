@@ -6,20 +6,9 @@ module.exports = {
       cwd: __dirname,
       autorestart: true,
       watch: false,
-      max_restarts: 999999,
+      max_restarts: 20,
       min_uptime: '5s',
-      env: {
-        NODE_ENV: 'production'
-      }
-    },
-    {
-      name: 'minecraft-auto-bedrock-gui',
-      script: 'gui/server.js',
-      cwd: __dirname,
-      autorestart: true,
-      watch: false,
-      max_restarts: 999999,
-      min_uptime: '5s',
+      restart_delay: 5000,
       env: {
         NODE_ENV: 'production'
       }

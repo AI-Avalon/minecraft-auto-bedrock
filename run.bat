@@ -43,8 +43,14 @@ if not errorlevel 1 (
   )
 )
 
-:: ── PM2 で Bot + GUI 起動 ─────────────────────────────────────
-echo [run] Starting Bot and GUI with PM2...
+:: ── PM2 で Bot 起動 (GUIは同一プロセス内) ─────────────────────
+echo [run] Starting bot with PM2...
+pm2 describe minecraft-auto-bedrock-gui >nul 2>nul
+if not errorlevel 1 (
+  echo [run] Removing legacy duplicate process: minecraft-auto-bedrock-gui
+  pm2 delete minecraft-auto-bedrock-gui >nul 2>nul
+)
+
 pm2 startOrRestart ecosystem.config.cjs
 if errorlevel 1 (
   echo [run] PM2 startOrRestart failed.
@@ -58,7 +64,6 @@ start "" http://localhost:3000
 echo.
 echo [run] Startup complete.
 echo [run] Bot logs : pm2 logs minecraft-auto-bedrock
-echo [run] GUI logs : pm2 logs minecraft-auto-bedrock-gui
 echo [run] GUI URL  : http://localhost:3000
 echo.
 pause

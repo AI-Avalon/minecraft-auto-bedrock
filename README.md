@@ -196,9 +196,14 @@ npm run configure:farming
 ### 3. Bot 起動
 ```bash
 bash run.sh        # macOS/Linux（自動アップデート付き）
-run.bat            # Windows（Bot+GUIを起動しブラウザを開く）
+run.bat            # Windows（Bot起動 + GUI同時提供 + ブラウザ自動オープン）
 # または
 npm start
+```
+
+既存環境で GUI プロセスが重複登録されている場合は一度だけ次を実行:
+```bash
+pm2 delete minecraft-auto-bedrock-gui
 ```
 
 ### ワンクリックセットアップ
