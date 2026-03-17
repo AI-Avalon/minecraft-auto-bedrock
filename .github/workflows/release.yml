@@ -56,6 +56,7 @@ jobs:
           TAG="${{ steps.ver.outputs.tag }}"
           PKG="minecraft-auto-bedrock-windows-${TAG}"
 
+          mkdir -p "dist/${PKG}"
           rsync -a \
             --exclude='.git' \
             --exclude='dist' \
@@ -85,6 +86,7 @@ jobs:
           TAG="${{ steps.ver.outputs.tag }}"
           PKG="minecraft-auto-bedrock-macos-linux-${TAG}"
 
+          mkdir -p "dist/${PKG}"
           rsync -a \
             --exclude='.git' \
             --exclude='dist' \
