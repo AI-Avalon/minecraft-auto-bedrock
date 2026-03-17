@@ -3,5 +3,6 @@ logs/
 *.log
 pm2.log
 bin/
+local-server/
 .env
 .DS_Store
