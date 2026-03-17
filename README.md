@@ -140,6 +140,17 @@ npm install
 npm run setup
 ```
 
+Windows では `run.bat` と同じ階層の `setup.bat` で、
+前提ツール確認・設定項目選択・途中再開付きのセットアップを実行できます。
+
+```bat
+setup.bat
+setup.bat --resume
+```
+
+Node.js が古い/未導入の場合は `setup.bat` が案内し、
+前提ツール導入後に `setup.bat --resume` で再開できます。
+
 ### 2. 接続設定
 ```bash
 # Java ローカルサーバー向け
@@ -178,6 +189,18 @@ npm start
 ### ワンクリックセットアップ
 ```bash
 npm run oneclick:setup
+```
+
+### 全自動/途中再開セットアップ
+```bash
+# 対話式（何を設定するか選択可能）
+npm run install:all
+
+# 非対話（必要に応じてオプション追加）
+npm run install:all:auto
+
+# 途中再開
+node scripts/full-install.js --resume
 ```
 
 ---

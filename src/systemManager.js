@@ -46,6 +46,16 @@ function detectTool(tool, args = ['--version']) {
   };
 }
 
+function hasSupportedNode() {
+  const node = detectTool('node', ['--version']);
+  if (!node.exists || !node.version) {
+    return false;
+  }
+
+  const major = Number(String(node.version).replace(/^v/, '').split('.')[0]);
+  return Number.isFinite(major) && major >= 20;
+}
+
 function systemDoctor() {
   return {
     platform: process.platform,
@@ -57,13 +67,29 @@ function systemDoctor() {
   };
 }
 
-function buildStepRows({ syncBedrockSamples = true } = {}) {
+function buildStepRows({ syncBedrockSamples = true, includePrerequisites = 'auto', includeOllama = false } = {}) {
   const steps = [];
 
-  if (process.platform === 'win32') {
-    steps.push({ label: 'Install prerequisites', cmd: 'cmd', args: ['/c', 'scripts\\install-prereqs.bat'] });
-  } else {
-    steps.push({ label: 'Install prerequisites', cmd: 'bash', args: ['scripts/install-prereqs.sh'] });
+  const shouldRunPrerequisites = includePrerequisites === 'auto'
+    ? (!hasSupportedNode() || !commandExists('npm'))
+    : Boolean(includePrerequisites);
+
+  if (shouldRunPrerequisites) {
+    if (process.platform === 'win32') {
+      const flags = includeOllama ? '--with-ollama' : '--skip-ollama';
+      steps.push({
+        label: 'Install prerequisites',
+        cmd: 'cmd',
+        args: ['/c', 'scripts\\install-prereqs.bat', '--auto', flags]
+      });
+    } else {
+      const flags = includeOllama ? '--with-ollama' : '--skip-ollama';
+      steps.push({
+        label: 'Install prerequisites',
+        cmd: 'bash',
+        args: ['scripts/install-prereqs.sh', '--auto', flags]
+      });
+    }
   }
 
   steps.push({ label: 'Install dependencies', cmd: 'npm', args: ['install'] });
@@ -76,10 +102,15 @@ function buildStepRows({ syncBedrockSamples = true } = {}) {
   return steps;
 }
 
-function oneClickBootstrap({ syncBedrockSamples = true, onStep } = {}) {
+function oneClickBootstrap({
+  syncBedrockSamples = true,
+  includePrerequisites = 'auto',
+  includeOllama = false,
+  onStep
+} = {}) {
   const steps = [];
 
-  const rows = buildStepRows({ syncBedrockSamples });
+  const rows = buildStepRows({ syncBedrockSamples, includePrerequisites, includeOllama });
 
   function pushStep(row, stepIndex, totalSteps) {
     const { label, cmd, args } = row;

@@ -15,7 +15,16 @@ err()  { echo -e "${RED}❌ $*${NC}"; }
 
 PLATFORM="$(uname -s)"
 ARCH="$(uname -m)"
-AUTO_MODE="${1:-}"  # "--auto" を渡すと対話なし
+AUTO_MODE=0
+WITH_OLLAMA=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --auto) AUTO_MODE=1 ;;
+    --with-ollama) WITH_OLLAMA=1 ;;
+    --skip-ollama) WITH_OLLAMA=0 ;;
+  esac
+done
 
 echo ""
 echo "============================================"
@@ -135,7 +144,13 @@ install_ollama_check() {
     ok "Ollama: $(ollama --version 2>/dev/null || echo '既存')"
     return
   fi
-  if [[ "$AUTO_MODE" == "--auto" ]]; then
+
+  if [[ "$WITH_OLLAMA" -ne 1 ]]; then
+    info "Ollama は任意機能のためスキップしました (--with-ollama で有効化)"
+    return
+  fi
+
+  if [[ "$AUTO_MODE" -eq 1 ]]; then
     info "Ollama をインストール中..."
     if command -v brew >/dev/null 2>&1; then
       brew install ollama

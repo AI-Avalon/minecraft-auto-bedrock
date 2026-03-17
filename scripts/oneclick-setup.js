@@ -3,7 +3,7 @@ const { logger } = require('../src/logger');
 
 async function main() {
   try {
-    const result = oneClickBootstrap({ syncBedrockSamples: true });
+    const result = await oneClickBootstrap({ syncBedrockSamples: true });
     logger.info('oneclick setup 完了');
     // CLI向けに詳細を表示
     console.log(JSON.stringify(result, null, 2));

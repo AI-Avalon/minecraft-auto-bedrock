@@ -2,6 +2,14 @@
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
+set AUTO_MODE=0
+set WITH_OLLAMA=0
+for %%A in (%*) do (
+  if /I "%%~A"=="--auto" set AUTO_MODE=1
+  if /I "%%~A"=="--with-ollama" set WITH_OLLAMA=1
+  if /I "%%~A"=="--skip-ollama" set WITH_OLLAMA=0
+)
+
 echo.
 echo ============================================
 echo   minecraft-auto-bedrock セットアップ
@@ -80,10 +88,24 @@ where ollama >nul 2>nul
 if not errorlevel 1 (
   for /f "tokens=*" %%v in ('ollama --version 2^>nul') do echo [OK] Ollama %%v
 ) else (
-  echo.
-  echo [INFO] Ollama が見つかりません。
-  echo        Ollama はLLM日本語会話機能に必要です。
-  set /p INSTALL_OLLAMA="  Ollama をインストールしますか? [Y/n]: "
+  if "%AUTO_MODE%"=="1" (
+    if "%WITH_OLLAMA%"=="1" (
+      set INSTALL_OLLAMA=Y
+    ) else (
+      set INSTALL_OLLAMA=n
+      echo [INFO] Ollama は任意機能のためスキップしました (--with-ollama で有効化)
+    )
+  ) else (
+    echo.
+    echo [INFO] Ollama が見つかりません。
+    echo        Ollama はLLM日本語会話機能に必要です。
+    if "%WITH_OLLAMA%"=="1" (
+      set INSTALL_OLLAMA=Y
+    ) else (
+      set /p INSTALL_OLLAMA="  Ollama をインストールしますか? [Y/n]: "
+    )
+  )
+
   if /i not "!INSTALL_OLLAMA!"=="n" (
     if "%WINGET_OK%"=="1" (
       echo [INFO] winget で Ollama をインストール中...
@@ -124,5 +146,7 @@ echo.
 echo LLM会話を有効化する場合:
 echo   npm run ollama:setup
 echo.
+if "%AUTO_MODE%"=="1" goto :end
 pause
+:end
 endlocal
