@@ -403,6 +403,125 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    // ── 設定管理コマンド ──────────────────────────────────────────────
+    socket.on('command:config-get', async () => {
+      await runCommand(socket, 'config-get', {}, async () => {
+        const configPath = path.resolve(process.cwd(), 'config.json');
+        const configText = fs.readFileSync(configPath, 'utf-8');
+        return JSON.parse(configText);
+      });
+    });
+
+    socket.on('command:config-save', async (configData) => {
+      await runCommand(socket, 'config-save', { keys: Object.keys(configData || {}) }, async () => {
+        const configPath = path.resolve(process.cwd(), 'config.json');
+        fs.writeFileSync(configPath, JSON.stringify(configData || {}, null, 2), 'utf-8');
+        return { ok: true, message: 'Config saved successfully' };
+      });
+    });
+
+    // ── プロセス管理コマンド ──────────────────────────────────────────────
+    socket.on('command:process-start', async (processName) => {
+      await runCommand(socket, 'process-start', { processName }, async () => {
+        const { spawnSync } = require('child_process');
+        const result = spawnSync('pm2', ['start', processName || 'ecosystem.config.cjs'], {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
+        return { ok: result.status === 0, message: result.stdout || result.stderr };
+      });
+    });
+
+    socket.on('command:process-stop', async (processName) => {
+      await runCommand(socket, 'process-stop', { processName }, async () => {
+        const { spawnSync } = require('child_process');
+        const result = spawnSync('pm2', ['stop', processName || 'minecraft-auto-bedrock'], {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
+        return { ok: result.status === 0, message: result.stdout || result.stderr };
+      });
+    });
+
+    socket.on('command:process-restart', async (processName) => {
+      await runCommand(socket, 'process-restart', { processName }, async () => {
+        const { spawnSync } = require('child_process');
+        const result = spawnSync('pm2', ['restart', processName || 'minecraft-auto-bedrock'], {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
+        return { ok: result.status === 0, message: result.stdout || result.stderr };
+      });
+    });
+
+    socket.on('command:process-list', async () => {
+      await runCommand(socket, 'process-list', {}, async () => {
+        const { spawnSync } = require('child_process');
+        const result = spawnSync('pm2', ['list', '--json'], {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
+        if (result.status === 0) {
+          try {
+            return JSON.parse(result.stdout || '[]');
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      });
+    });
+
+    socket.on('command:process-logs', async (payload) => {
+      const processName = payload?.processName || 'minecraft-auto-bedrock';
+      const lines = payload?.lines || 50;
+      await runCommand(socket, 'process-logs', { processName, lines }, async () => {
+        const { spawnSync } = require('child_process');
+        const result = spawnSync('pm2', ['logs', processName, '--lines', String(lines), '--nostream'], {
+          encoding: 'utf-8',
+          stdio: 'pipe',
+          maxBuffer: 10 * 1024 * 1024
+        });
+        if (result.status === 0) {
+          return { ok: true, logs: result.stdout || '' };
+        }
+        return { ok: false, logs: result.stderr || 'ログの取得に失敗しました' };
+      });
+    });
+
+    // ── リアルタイムログストリーミング ──────────────────────────────
+    socket.on('stream:logs-start', async (payload) => {
+      const { spawn } = require('child_process');
+      const processName = payload?.processName || 'minecraft-auto-bedrock';
+      
+      const pm2Proc = spawn('pm2', ['logs', processName, '--lines', '0'], {
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+
+      const cleanupStream = () => {
+        pm2Proc.kill();
+      };
+
+      pm2Proc.stdout.on('data', (chunk) => {
+        socket.emit('log-line', { text: chunk.toString() });
+      });
+
+      pm2Proc.stderr.on('data', (chunk) => {
+        socket.emit('log-line', { text: `[ERR] ${chunk.toString()}` });
+      });
+
+      pm2Proc.on('close', () => {
+        socket.emit('log-stream-closed', { processName });
+      });
+
+      socket.on('disconnect', cleanupStream);
+      socket.on('stream:logs-stop', cleanupStream);
+    });
+
+    socket.on('stream:logs-stop', () => {
+      // ストリーム停止はクライアント側で emit される
+    });
+
     socket.on('disconnect', () => {
       limiter.remove(socket.id);
       audit({ type: 'disconnect', socketId: socket.id });

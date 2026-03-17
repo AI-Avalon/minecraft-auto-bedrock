@@ -37,17 +37,47 @@
       </section>
 
       <section class="panel">
-        <h2>記憶チェスト</h2>
-        <pre id="memoryView"></pre>
+        <h2>プロセス管理</h2>
+        <div class="row">
+          <select id="processSelect">
+            <option value="minecraft-auto-bedrock">minecraft-auto-bedrock</option>
+          </select>
+          <button id="processRefreshButton">リスト更新</button>
+          <button id="processStartButton">起動</button>
+          <button id="processStopButton">停止</button>
+          <button id="processRestartButton">再起動</button>
+        </div>
+        <pre id="processListView"></pre>
       </section>
 
       <section class="panel">
-        <h2>資材検索</h2>
+        <h2>ログ表示</h2>
         <div class="row">
-          <input id="searchText" placeholder="diamond など" />
-          <button id="searchButton">検索</button>
-          <button id="quickDiamondButton">ダイヤ検索</button>
+          <select id="logProcessSelect">
+            <option value="minecraft-auto-bedrock">minecraft-auto-bedrock</option>
+          </select>
+          <input id="logLinesInput" type="number" value="50" min="1" max="500" placeholder="行数" />
+          <button id="logLoadButton">読み込む</button>
+          <button id="logStreamToggleButton">ストリーミング: OFF</button>
         </div>
+        <pre id="logView"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>設定 (config.json)</h2>
+        <div class="row">
+          <button id="configLoadButton">読み込む</button>
+          <button id="configSaveButton">保存</button>
+          <button id="configResetButton">リセット</button>
+        </div>
+        <textarea id="configEditor" style="width: 100%; min-height: 300px; font-family: monospace;"></textarea>
+      </section>
+
+      <section class="panel">
+        <h2>システム診断</h2>
+        <button id="doctorButton">実行</button>
+        <pre id="doctorView"></pre>
+      </section>
         <ul id="searchResult"></ul>
       </section>
 

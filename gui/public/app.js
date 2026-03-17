@@ -244,6 +244,58 @@ function connectSocket() {
   });
 
   socket.on('command-result', (result) => {
+    const { action, ok, result: resultData } = result;
+    
+    // ── 新しいコマンド結果の処理 ──────────────────────────────────────
+    if (action === 'config-get' && ok && resultData) {
+      const configEditor = document.getElementById('configEditor');
+      if (configEditor) {
+        configEditor.value = JSON.stringify(resultData, null, 2);
+      }
+    }
+    
+    if (action === 'config-save' && ok) {
+      alert('設定を保存しました');
+    }
+    
+    if (action === 'process-list' && ok && resultData) {
+      const processListView = document.getElementById('processListView');
+      if (processListView) {
+        processListView.textContent = JSON.stringify(resultData, null, 2);
+        // プロセス選択ボックスも更新
+        const processSelect = document.getElementById('processSelect');
+        if (processSelect && Array.isArray(resultData)) {
+          resultData.forEach(proc => {
+            if (!Array.from(processSelect.options).some(opt => opt.value === proc.name)) {
+              const option = document.createElement('option');
+              option.value = proc.name;
+              option.textContent = proc.name;
+              processSelect.appendChild(option);
+            }
+          });
+        }
+      }
+    }
+    
+    if (action === 'process-logs' && resultData) {
+      const logView = document.getElementById('logView');
+      if (logView) {
+        if (resultData.ok) {
+          logView.textContent = resultData.logs || 'ログが見つかりません';
+        } else {
+          logView.textContent = resultData.logs || 'エラー: ログの取得に失敗しました';
+        }
+      }
+    }
+    
+    if (action === 'system-doctor' && ok && resultData) {
+      const doctorView = document.getElementById('doctorView');
+      if (doctorView) {
+        doctorView.textContent = JSON.stringify(resultData, null, 2);
+      }
+    }
+    
+    // ── 既存のコマンド結果処理 ──────────────────────────────────────
     showResult(result);
     send('refresh');
   });
@@ -467,6 +519,114 @@ bindEnter(fetchItemName, () => {
     targetBotId: selectedTargetBotId()
   });
 });
+
+// ── プロセス管理 ────────────────────────────────────────────────────
+const processSelect = document.getElementById('processSelect');
+const logProcessSelect = document.getElementById('logProcessSelect');
+const configEditor = document.getElementById('configEditor');
+
+if (document.getElementById('processRefreshButton')) {
+  document.getElementById('processRefreshButton').addEventListener('click', () => {
+    send('command:process-list', null);
+  });
+}
+if (document.getElementById('processStartButton')) {
+  document.getElementById('processStartButton').addEventListener('click', () => {
+    send('command:process-start', processSelect.value);
+  });
+}
+if (document.getElementById('processStopButton')) {
+  document.getElementById('processStopButton').addEventListener('click', () => {
+    send('command:process-stop', processSelect.value);
+  });
+}
+if (document.getElementById('processRestartButton')) {
+  document.getElementById('processRestartButton').addEventListener('click', () => {
+    send('command:process-restart', processSelect.value);
+  });
+}
+
+// ── ログ表示 ────────────────────────────────────────────────────────
+let logStreamActive = false;
+
+if (document.getElementById('logLoadButton')) {
+  document.getElementById('logLoadButton').addEventListener('click', () => {
+    const logView = document.getElementById('logView');
+    logView.textContent = 'ログ読み込み中...';
+    send('command:process-logs', {
+      processName: logProcessSelect.value,
+      lines: Number(document.getElementById('logLinesInput').value || 50)
+    });
+  });
+}
+
+if (document.getElementById('logStreamToggleButton')) {
+  document.getElementById('logStreamToggleButton').addEventListener('click', () => {
+    const btn = document.getElementById('logStreamToggleButton');
+    if (!logStreamActive) {
+      logStreamActive = true;
+      btn.textContent = 'ストリーミング: ON';
+      btn.style.backgroundColor = '#4CAF50';
+      const logView = document.getElementById('logView');
+      logView.textContent = 'ストリーミング開始...\n';
+      socket.emit('stream:logs-start', { processName: logProcessSelect.value });
+    } else {
+      logStreamActive = false;
+      btn.textContent = 'ストリーミング: OFF';
+      btn.style.backgroundColor = '';
+      socket.emit('stream:logs-stop');
+    }
+  });
+}
+
+socket.on('log-line', (payload) => {
+  const logView = document.getElementById('logView');
+  logView.textContent += payload.text;
+  logView.scrollTop = logView.scrollHeight;
+});
+
+socket.on('log-stream-closed', (payload) => {
+  logStreamActive = false;
+  const btn = document.getElementById('logStreamToggleButton');
+  if (btn) {
+    btn.textContent = 'ストリーミング: OFF';
+    btn.style.backgroundColor = '';
+  }
+  const logView = document.getElementById('logView');
+  logView.textContent += '\n[ストリーム終了]\n';
+});
+
+// ── 設定管理 ────────────────────────────────────────────────────────
+if (document.getElementById('configLoadButton')) {
+  document.getElementById('configLoadButton').addEventListener('click', () => {
+    send('command:config-get', null);
+  });
+}
+if (document.getElementById('configSaveButton')) {
+  document.getElementById('configSaveButton').addEventListener('click', () => {
+    try {
+      const configData = JSON.parse(configEditor.value);
+      send('command:config-save', configData);
+    } catch (e) {
+      alert('JSON解析エラー: ' + e.message);
+    }
+  });
+}
+if (document.getElementById('configResetButton')) {
+  document.getElementById('configResetButton').addEventListener('click', () => {
+    configEditor.value = '';
+    send('command:config-get', null);
+  });
+}
+
+// ── システム診断 ────────────────────────────────────────────────────
+if (document.getElementById('doctorButton')) {
+  document.getElementById('doctorButton').addEventListener('click', () => {
+    const doctorView = document.getElementById('doctorView');
+    doctorView.textContent = '診断実行中...';
+    send('command:system-doctor', null);
+  });
+}
 
 connectSocket();
 setAutoRefresh(true);
