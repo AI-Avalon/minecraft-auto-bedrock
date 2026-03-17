@@ -89,7 +89,7 @@
           </div>
           <div class="row">
             <select id="targetBotSelect" class="select-wide" title="操作するBotを選択">
-              <option value="">プライマリ Bot</option>
+              <option value="">既定Bot (Primary)</option>
             </select>
           </div>
         </div>
@@ -166,6 +166,15 @@
             </select>
             <input id="bulkActionParam" placeholder="パラメータ（必要な場合）" />
             <button id="bulkActionButton" type="button" class="btn btn-blue">実行</button>
+          </div>
+          <div class="row">
+            <input id="bulkTargetBotIds" placeholder="対象 Bot ID (カンマ区切り。空欄で全員)" />
+          </div>
+          <div class="row">
+            <input id="bulkTaskBlockName" placeholder="タスク: ブロック名 (例 diamond_ore)" />
+            <input id="bulkTaskItemName" placeholder="タスク: アイテム名 (例 torch)" />
+            <input id="bulkTaskPlayerName" placeholder="タスク: プレイヤー名" />
+            <input id="bulkTaskCount" type="number" min="1" value="16" title="タスク数" />
           </div>
         </div>
 
@@ -406,6 +415,7 @@
             <input id="schemPath" placeholder="schematics/house.schem" />
             <button id="buildButton"           type="button" class="btn btn-purple">🏗️ 建築実行</button>
             <button id="buildWithRefillButton" type="button" class="btn">建築+自動補充</button>
+            <button id="plannerAnalyzeBlueprintButton" type="button" class="btn btn-blue">📐 材料解析</button>
           </div>
         </div>
 
@@ -493,6 +503,15 @@
               Bedrock データ同期
             </label>
             <button id="oneclickSetupButton" type="button" class="btn btn-green">🚀 ワンクリック初期化</button>
+          </div>
+          <div class="row mt-8">
+            <select id="diagnoseEdition" title="診断対象エディション">
+              <option value="java">Java</option>
+              <option value="bedrock">Bedrock</option>
+            </select>
+            <input id="diagnoseHost" placeholder="診断ホスト (省略時はconfig)" />
+            <input id="diagnosePort" type="number" placeholder="診断ポート (省略時はconfig)" title="診断ポート" />
+            <button id="connectionDiagnoseButton" type="button" class="btn btn-blue">🔎 接続診断</button>
           </div>
           <div class="row mt-8">
             <progress id="oneclickProgress" value="0" max="100"></progress>

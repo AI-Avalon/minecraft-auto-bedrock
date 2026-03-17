@@ -41,6 +41,34 @@ const els = {
   bulkBotList: byId('bulkBotList')
 };
 
+function parseCsvIds(text) {
+  return String(text || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function formatCurrentAction(status = {}) {
+  const action = status.currentAction || status.automation?.mode || 'idle';
+  const map = {
+    idle: '待機',
+    combat: '戦闘',
+    'city-mode': '都市モード',
+    'auto-mine': '自動採掘',
+    'auto-store': '自動保管',
+    'auto-sort': '自動仕分け',
+    farming: '農業',
+    exploring: '探索',
+    'branch-mining': 'ブランチ採掘'
+  };
+
+  if (typeof action === 'string' && action.startsWith('collect:')) {
+    return `採取(${action.split(':').slice(1).join(':')})`;
+  }
+
+  return map[action] || String(action);
+}
+
 const RECOMMENDED_PRESETS = [
   {
     id: 'solo-player',
@@ -203,7 +231,7 @@ function renderFleetRows(fleet = []) {
 
     const primary = document.createElement('option');
     primary.value = '';
-    primary.textContent = 'プライマリ Bot';
+    primary.textContent = '既定Bot (Primary)';
     els.targetBotSelect.appendChild(primary);
 
     for (const row of fleet) {
@@ -224,9 +252,10 @@ function renderFleetRows(fleet = []) {
       const hp = row.status?.health ?? '-';
       const food = row.status?.food ?? '-';
       const mode = row.status?.mode || row.status?.automation?.mode || '-';
+      const action = formatCurrentAction(row.status || {});
       const pos = row.status?.position ? `${row.status.position.x},${row.status.position.y},${row.status.position.z}` : 'n/a';
       const li = document.createElement('li');
-      li.textContent = `${row.id} role=${row.role} mode=${mode} hp=${hp} food=${food} pos=${pos}`;
+      li.textContent = `${row.id} role=${row.role} mode=${mode} action=${action} hp=${hp} food=${food} pos=${pos}`;
       els.fleetStatusList.appendChild(li);
     }
   }
@@ -245,6 +274,7 @@ function renderFleetRows(fleet = []) {
         `<div class="bot-stat"><span class="bot-stat-label">HP</span><span class="bot-stat-value">${status.health ?? '-'}</span></div>`,
         `<div class="bot-stat"><span class="bot-stat-label">FOOD</span><span class="bot-stat-value">${status.food ?? '-'}</span></div>`,
         `<div class="bot-stat"><span class="bot-stat-label">MODE</span><span class="bot-stat-value">${status.mode || status.automation?.mode || '-'}</span></div>`,
+        `<div class="bot-stat"><span class="bot-stat-label">ACT</span><span class="bot-stat-value">${formatCurrentAction(status)}</span></div>`,
         `<div class="bot-stat"><span class="bot-stat-label">ED</span><span class="bot-stat-value">${status.edition || '-'}</span></div>`,
         '</div>'
       ].join('');
@@ -827,6 +857,7 @@ function setupHandlers() {
   byId('bulkActionButton')?.addEventListener('click', () => {
     const actionType = byId('bulkActionType')?.value;
     const paramRaw = byId('bulkActionParam')?.value?.trim();
+    const targetBotIds = parseCsvIds(byId('bulkTargetBotIds')?.value);
     if (!actionType) {
       showToast('一括操作を選択してください', 'error');
       return;
@@ -834,10 +865,16 @@ function setupHandlers() {
 
     let param = paramRaw;
     if (actionType === 'start-task') {
-      param = { taskType: paramRaw || 'mine' };
+      param = {
+        taskType: paramRaw || 'mine',
+        blockName: byId('bulkTaskBlockName')?.value?.trim(),
+        itemName: byId('bulkTaskItemName')?.value?.trim(),
+        playerName: byId('bulkTaskPlayerName')?.value?.trim(),
+        count: Number(byId('bulkTaskCount')?.value || 1)
+      };
     }
 
-    send('command:bulk-action', { actionType, param });
+    send('command:bulk-action', { actionType, param, targetBotIds });
   });
 
   byId('orchestratorAssignButton')?.addEventListener('click', () => send('command:orchestrator-assign-task', {
@@ -935,6 +972,13 @@ function setupHandlers() {
     send('command:system-doctor', null);
   });
   byId('detectJavaButton')?.addEventListener('click', () => send('command:detect-java', null));
+  byId('connectionDiagnoseButton')?.addEventListener('click', () => send('command:connection-diagnose', {
+    edition: byId('diagnoseEdition')?.value || undefined,
+    javaHost: byId('diagnoseHost')?.value?.trim() || undefined,
+    javaPort: Number(byId('diagnosePort')?.value || 0) || undefined,
+    bedrockHost: byId('diagnoseHost')?.value?.trim() || undefined,
+    bedrockPort: Number(byId('diagnosePort')?.value || 0) || undefined
+  }));
 
   byId('oneclickSetupButton')?.addEventListener('click', () => {
     if (els.oneclickProgress) {
@@ -948,6 +992,11 @@ function setupHandlers() {
       syncBedrockSamples: Boolean(byId('oneclickSyncBedrock')?.checked)
     });
   });
+
+  byId('plannerAnalyzeBlueprintButton')?.addEventListener('click', () => send('command:planner-analyze-blueprint', {
+    targetBotId: selectedTargetBotId(),
+    schemPath: byId('schemPath')?.value
+  }));
 
   els.toggleRefreshButton?.addEventListener('click', () => {
     setAutoRefresh(!autoRefresh);

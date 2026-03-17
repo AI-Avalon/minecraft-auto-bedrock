@@ -61,6 +61,9 @@ function createFakeBotController() {
       if (fnName === 'setEvasionEnabled') {
         return { ok: true, evasionEnabled: Boolean(args[0]) };
       }
+      if (fnName === 'analyzeBlueprint') {
+        return { ok: true, filePath: args[0] || 'sample.schem', summary: { uniqueBlocks: 3, totalRequired: 100, totalMissing: 75 } };
+      }
       return { ok: true, fnName, args };
     }
   };
@@ -93,6 +96,8 @@ async function setupServer({ requireToken = false, token = '', readOnly = false,
     'start-city-mode',
     'stop-city-mode',
     'set-evasion',
+    'planner-analyze-blueprint',
+    'connection-diagnose',
     'system-doctor'
   ];
 
@@ -255,6 +260,14 @@ test('GUI Socket: 新規コマンド(craft/profile/city/system)が実行でき�
     const system = await emitAndWait('command:system-doctor', {});
     assert.equal(system.action, 'system-doctor');
     assert.equal(system.ok, true);
+
+    const diagnostics = await emitAndWait('command:connection-diagnose', { edition: 'java', javaHost: '127.0.0.1', javaPort: 65535, timeoutMs: 500 });
+    assert.equal(diagnostics.action, 'connection-diagnose');
+    assert.equal(diagnostics.ok, true);
+
+    const blueprint = await emitAndWait('command:planner-analyze-blueprint', { schemPath: 'test.schem' });
+    assert.equal(blueprint.action, 'planner-analyze-blueprint');
+    assert.equal(blueprint.ok, true);
 
     client.close();
   } finally {

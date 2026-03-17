@@ -13,6 +13,7 @@ const { BranchMiningModule }      = require('./branchMiningModule');
 const { ResourceGatheringModule } = require('./resourceGatheringModule');
 const { ArmorAnalyzer }           = require('./armorAnalyzer');
 const { RecipeAnalyzer }          = require('./recipeAnalyzer');
+const { analyzeBlueprintMaterials } = require('./buildingPlanner');
 
 let autoEat = null;
 let movementPlugin;
@@ -65,6 +66,8 @@ class AutonomousBot {
     this.cityModeTask = null;
     this.evasionEnabled = Boolean(this.config.combat?.evasionEnabled ?? true);
     this.combatProfile = this.config.combat?.profile || 'balanced';
+    this.lastConnectionIssue = null;
+    this.recentEvents = [];
     this.mode = this.config.behavior?.mode || 'hybrid';
     this.role = this.runtimeContext.role || 'worker';
     this.knowledgeService = this.runtimeContext.knowledgeService || null;
@@ -305,16 +308,31 @@ class AutonomousBot {
     });
 
     this.bot.on('kicked', (reason) => {
+      this.lastConnectionIssue = {
+        type: 'kicked',
+        reason: String(reason || 'unknown-kick'),
+        at: new Date().toISOString()
+      };
       logger.warn(`サーバーからキックされました: ${reason}`);
     });
 
     this.bot.on('end', () => {
+      this.lastConnectionIssue = {
+        type: 'end',
+        reason: 'connection-ended',
+        at: new Date().toISOString()
+      };
       logger.warn('接続が終了しました。再接続を試みます。');
       this.stopRuntimeLoops();
       this.scheduleReconnect();
     });
 
     this.bot.on('error', (error) => {
+      this.lastConnectionIssue = {
+        type: 'error',
+        reason: error?.message || String(error),
+        at: new Date().toISOString()
+      };
       logger.error('Bot でエラーが発生しました。', error);
     });
 
@@ -329,6 +347,7 @@ class AutonomousBot {
 
   async connect() {
     this.isStopping = false;
+    this.lastConnectionIssue = null;
     const options = this.buildBotOptions();
     logger.info(`接続を開始します: ${options.host}:${options.port} (${this.config.edition})`);
 
@@ -337,6 +356,37 @@ class AutonomousBot {
     this.attachEvents();
 
     return this.bot;
+  }
+
+  currentAction() {
+    if (this.combatTask?.running) {
+      return 'combat';
+    }
+    if (this.cityModeTask?.running) {
+      return 'city-mode';
+    }
+    if (this.autoCollectTask?.running) {
+      return `collect:${this.autoCollectTask.blockName || 'unknown'}`;
+    }
+    if (this.autoMineTask?.running) {
+      return 'auto-mine';
+    }
+    if (this.autoStoreTask?.running) {
+      return 'auto-store';
+    }
+    if (this.autoSortTask?.running) {
+      return 'auto-sort';
+    }
+    if (this.farmingModule?._running) {
+      return 'farming';
+    }
+    if (this.branchMiningModule?._running) {
+      return 'branch-mining';
+    }
+    if (this.explorerModule?._running) {
+      return 'exploring';
+    }
+    return 'idle';
   }
 
   scheduleReconnect() {
@@ -1779,6 +1829,18 @@ class AutonomousBot {
     }
   }
 
+  async analyzeBlueprint(schemPath) {
+    const inventory = this.bot?.inventory?.items?.().map((item) => ({
+      name: item.name,
+      count: item.count
+    })) || [];
+
+    return analyzeBlueprintMaterials(schemPath, {
+      minecraftVersion: this.config.java?.version || '1.21.4',
+      inventory
+    });
+  }
+
   // ── ブランチマイニング ────────────────────────────────────────────────────
   /**
    * ブランチマイニングセッションを開始する
@@ -1873,6 +1935,8 @@ class AutonomousBot {
       },
       mode: this.mode,
       knowledgeEnabled: Boolean(this.knowledgeService),
+      currentAction: this.currentAction(),
+      lastConnectionIssue: this.lastConnectionIssue,
       inventory: this.bot?.inventory?.items()?.map((item) => ({
         name: item.name,
         count: item.count,
