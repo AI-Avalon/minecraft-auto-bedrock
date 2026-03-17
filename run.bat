@@ -16,12 +16,24 @@ git pull --rebase 2>nul || echo [run] git pull skipped
 :: ── 依存関係更新 ──────────────────────────────────────────────
 echo [run] 依存関係を確認中...
 call npm install --silent
+if errorlevel 1 (
+  echo [run] npm install failed.
+  pause
+  endlocal
+  exit /b 1
+)
 
 :: ── ViaProxy / 設定ファイル確認 ──────────────────────────────
 call npm run setup --silent
+if errorlevel 1 (
+  echo [run] setup step failed.
+  pause
+  endlocal
+  exit /b 1
+)
 
 :: ── Ollama サービス確認（設定済みの場合のみ） ─────────────────
-node -e "try{const c=require('./config.json');process.exit(c.llm&&c.llm.enabled?0:1)}catch{process.exit(1)}" >nul 2>nul
+node scripts\is-llm-enabled.js >nul 2>nul
 if not errorlevel 1 (
   curl -s http://127.0.0.1:11434/api/version >nul 2>nul
   if errorlevel 1 (
@@ -31,19 +43,23 @@ if not errorlevel 1 (
   )
 )
 
-:: ── PM2 で Bot 起動 ────────────────────────────────────────────
-pm2 describe minecraft-auto-bedrock >nul 2>nul
-if %errorlevel%==0 (
-  echo [run] Bot を再起動中...
-  pm2 restart minecraft-auto-bedrock
-) else (
-  echo [run] Bot を起動中...
-  pm2 start ecosystem.config.cjs
+:: ── PM2 で Bot + GUI 起動 ─────────────────────────────────────
+echo [run] Starting Bot and GUI with PM2...
+pm2 startOrRestart ecosystem.config.cjs
+if errorlevel 1 (
+  echo [run] PM2 startOrRestart failed.
+  pause
+  endlocal
+  exit /b 1
 )
 
 pm2 save
+start "" http://127.0.0.1:3000
 echo.
-echo [run] Startup complete. Logs: pm2 logs minecraft-auto-bedrock
+echo [run] Startup complete.
+echo [run] Bot logs : pm2 logs minecraft-auto-bedrock
+echo [run] GUI logs : pm2 logs minecraft-auto-bedrock-gui
+echo [run] GUI URL  : http://127.0.0.1:3000
 echo.
 pause
 endlocal

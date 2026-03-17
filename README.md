@@ -196,7 +196,7 @@ npm run configure:farming
 ### 3. Bot 起動
 ```bash
 bash run.sh        # macOS/Linux（自動アップデート付き）
-run.bat            # Windows
+run.bat            # Windows（Bot+GUIを起動しブラウザを開く）
 # または
 npm start
 ```
