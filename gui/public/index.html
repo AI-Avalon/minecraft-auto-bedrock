@@ -48,6 +48,27 @@
       <!-- ═══ 概要タブ ═══ -->
       <div class="tab-panel active" id="tab-overview">
 
+        <!-- クイックスタートパネル（Botが0のとき表示） -->
+        <div class="card span-full" id="quickStartPanel">
+          <div class="card-header">
+            <h2>🚀 クイックスタート</h2>
+            <span id="overviewJavaStatusBadge" class="badge badge-disconnected">Javaサーバー: 停止中</span>
+          </div>
+          <ol class="quickstart-steps">
+            <li>
+              <strong>① サーバー起動</strong> —
+              <button id="overviewJavaStartButton" type="button" class="btn btn-green btn-sm">▶ 起動</button>
+              <button id="overviewJavaStopButton"  type="button" class="btn btn-red btn-sm">■ 停止</button>
+              <span id="overviewJavaProgressText" class="text-muted"></span>
+            </li>
+            <li>
+              <strong>② Bot を接続</strong> —
+              <button id="overviewConnectBotButton" type="button" class="btn btn-blue btn-sm">🤖 デフォルトBotで接続</button>
+              <span class="text-muted">（サーバータブで詳細設定も可能）</span>
+            </li>
+          </ol>
+        </div>
+
         <div class="card span-full">
           <div class="card-header">
             <h2>🤖 Bot ステータス</h2>

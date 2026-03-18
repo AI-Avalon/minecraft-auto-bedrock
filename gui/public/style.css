@@ -718,3 +718,22 @@ progress::-moz-progress-bar {
   margin-top: 4px;
   color: #f0c040;
 }
+
+.quickstart-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.quickstart-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg-elev-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--edge);
+}

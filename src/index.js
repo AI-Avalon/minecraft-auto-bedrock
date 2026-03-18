@@ -102,7 +102,6 @@ async function bootstrap() {
     logger.warn('起動時アップデート確認に失敗しました。', error);
   }
 
-  const runtimeBots = buildBotRuntimeConfigs(config);
   const knowledgeService = new BedrockDataService(config.bedrockKnowledge || {});
   if (config.bedrockKnowledge?.enabled !== false) {
     try {

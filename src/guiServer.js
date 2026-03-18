@@ -947,8 +947,22 @@ function registerSocketHandlers(io, botController, memoryStore, config, { javaSe
         if (!javaServerManager) {
           throw new Error('localJavaServer が無効です。config.json で localJavaServer.enabled を true に設定してください。');
         }
-        socket.emit('java-server-progress', { message: 'サーバーを起動中... (最大60秒かかります)' });
+
+        // 起動開始通知
+        socket.emit('java-server-progress', { message: 'Javaサーバーを起動しています... (初回は Paperダウンロードのため数分かかる場合があります)' });
+
+        // javaServerManager のログを進捗イベントで中継
+        const progressLogger = (chunk) => {
+          socket.emit('java-server-progress', { message: String(chunk).trim() });
+        };
+
+        if (javaServerManager.process) {
+          javaServerManager.process.stdout?.on('data', progressLogger);
+        }
+
         await javaServerManager.start();
+
+        socket.emit('java-server-progress', { message: '' }); // クリア
         return { ok: true, message: 'Javaサーバーを起動しました' };
       });
     });

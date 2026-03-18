@@ -352,6 +352,14 @@ class AutonomousBot {
     logger.info(`接続を開始します: ${options.host}:${options.port} (${this.config.edition})`);
 
     this.bot = mineflayer.createBot(options);
+
+    // physicTick (deprecated) → physicsTick へ自動リダイレクト
+    // mineflayer-pvp などの古いプラグインが使う非推奨イベントの警告を抑制する
+    const _origOn = this.bot.on.bind(this.bot);
+    const _origOnce = this.bot.once.bind(this.bot);
+    this.bot.on = (event, ...args) => _origOn(event === 'physicTick' ? 'physicsTick' : event, ...args);
+    this.bot.once = (event, ...args) => _origOnce(event === 'physicTick' ? 'physicsTick' : event, ...args);
+
     this.attachPlugins();
     this.attachEvents();
 

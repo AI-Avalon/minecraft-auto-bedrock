@@ -89,6 +89,7 @@ if "%LLM_ENABLED%"=="1" (
 :: ── 既存プロセスのクリーンアップ ────────────────────────────────
 echo [run] Cleaning up existing processes...
 call pm2 stop minecraft-auto-bedrock >nul 2>nul
+call pm2 delete minecraft-auto-bedrock >nul 2>nul
 timeout /t 2 /nobreak >nul
 
 :: ポート25565を使用中のプロセスを終了（孤立したJavaサーバー）
@@ -109,18 +110,14 @@ for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":3000 " ^| findstr "L
 
 timeout /t 1 /nobreak >nul
 
-:: ── PM2起動/再起動 ──────────────────────────────────────────────
+:: ── PM2起動 ─────────────────────────────────────────────────────
 echo [run] Starting bot process via PM2...
 call pm2 start ecosystem.config.cjs
 if errorlevel 1 (
-  :: 既に登録済みの場合は restart を試みる
-  call pm2 restart minecraft-auto-bedrock
-  if errorlevel 1 (
-    echo [run] ERROR: PM2 start failed.
-    if "%NO_PAUSE%"=="0" pause
-    endlocal
-    exit /b 1
-  )
+  echo [run] ERROR: PM2 start failed.
+  if "%NO_PAUSE%"=="0" pause
+  endlocal
+  exit /b 1
 )
 
 call pm2 save >nul 2>nul

@@ -41,7 +41,10 @@ const els = {
   bulkBotList: byId('bulkBotList'),
   javaServerStatusBadge: byId('javaServerStatusBadge'),
   javaServerStatusText: byId('javaServerStatusText'),
-  javaServerProgressText: byId('javaServerProgressText')
+  javaServerProgressText: byId('javaServerProgressText'),
+  overviewJavaStatusBadge: byId('overviewJavaStatusBadge'),
+  overviewJavaProgressText: byId('overviewJavaProgressText'),
+  quickStartPanel: byId('quickStartPanel')
 };
 
 function parseCsvIds(text) {
@@ -538,6 +541,11 @@ function connectSocket() {
   socket.on('fleet-bots-list', (botsList) => {
     const rows = Array.isArray(botsList) ? botsList : [];
     renderBulkBotList(rows);
+
+    // Botが0のときクイックスタートパネルを表示、それ以外は非表示
+    if (els.quickStartPanel) {
+      els.quickStartPanel.style.display = rows.length === 0 ? '' : 'none';
+    }
   });
 
   socket.on('bulk-action-result', (result) => {
@@ -560,23 +568,36 @@ function connectSocket() {
 
   socket.on('java-server-status', (payload) => {
     const running = Boolean(payload?.running);
+    const pidText = payload?.pid ? ` (PID: ${payload.pid})` : '';
+
+    // サーバータブのバッジ
     if (els.javaServerStatusBadge) {
       els.javaServerStatusBadge.classList.remove('badge-connected', 'badge-disconnected');
       els.javaServerStatusBadge.classList.add(running ? 'badge-connected' : 'badge-disconnected');
-      els.javaServerStatusBadge.textContent = running ? `稼働中 (PID: ${payload?.pid || '?'})` : '停止中';
+      els.javaServerStatusBadge.textContent = running ? `稼働中${pidText}` : '停止中';
     }
-
     if (els.javaServerStatusText) {
       els.javaServerStatusText.textContent = running
-        ? `Javaサーバー稼働中 (PID: ${payload?.pid || '不明'})`
+        ? `Javaサーバー稼働中${pidText}`
         : 'Javaサーバーは停止しています。「サーバー起動」を押してから Bot を接続してください。';
+    }
+
+    // 概要タブのバッジ
+    if (els.overviewJavaStatusBadge) {
+      els.overviewJavaStatusBadge.classList.remove('badge-connected', 'badge-disconnected');
+      els.overviewJavaStatusBadge.classList.add(running ? 'badge-connected' : 'badge-disconnected');
+      els.overviewJavaStatusBadge.textContent = running ? `Javaサーバー: 稼働中${pidText}` : 'Javaサーバー: 停止中';
     }
   });
 
   socket.on('java-server-progress', (payload) => {
+    const msg = payload?.message || '';
     if (els.javaServerProgressText) {
-      els.javaServerProgressText.textContent = payload?.message || '';
-      els.javaServerProgressText.style.display = payload?.message ? '' : 'none';
+      els.javaServerProgressText.textContent = msg;
+      els.javaServerProgressText.style.display = msg ? '' : 'none';
+    }
+    if (els.overviewJavaProgressText) {
+      els.overviewJavaProgressText.textContent = msg;
     }
   });
 
@@ -928,13 +949,28 @@ function setupHandlers() {
     count: Number(byId('orchestratorCount')?.value || 1)
   }));
 
-  byId('javaServerStartButton')?.addEventListener('click', () => {
+  // 概要タブのクイックスタートボタン（サーバータブと共通処理）
+  function startJavaServer() {
     if (els.javaServerProgressText) {
       els.javaServerProgressText.textContent = 'サーバーを起動中...';
       els.javaServerProgressText.style.display = '';
     }
+    if (els.overviewJavaProgressText) {
+      els.overviewJavaProgressText.textContent = 'サーバーを起動中...';
+    }
     send('command:java-server-start', null);
-  });
+  }
+
+  function connectDefaultBot() {
+    const role = byId('localBotRole')?.value || 'primary';
+    send('command:bot-connect-local', { role });
+  }
+
+  byId('overviewJavaStartButton')?.addEventListener('click', startJavaServer);
+  byId('overviewJavaStopButton')?.addEventListener('click', () => send('command:java-server-stop', null));
+  byId('overviewConnectBotButton')?.addEventListener('click', connectDefaultBot);
+
+  byId('javaServerStartButton')?.addEventListener('click', startJavaServer);
 
   byId('javaServerStopButton')?.addEventListener('click', () => {
     send('command:java-server-stop', null);
@@ -954,6 +990,13 @@ function setupHandlers() {
     }
     send('command:bot-connect-local', payload);
   });
+
+  // 定期的にJavaサーバー状態を確認（30秒ごと）
+  setInterval(() => {
+    if (socket?.connected) {
+      send('command:java-server-status');
+    }
+  }, 30_000);
 
   byId('extConnectButton')?.addEventListener('click', () => {
     const host = byId('extServerHost')?.value?.trim();
