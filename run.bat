@@ -13,6 +13,8 @@ set NO_PAUSE=0
 if /I "%MAB_NO_PAUSE%"=="1" set NO_PAUSE=1
 set NO_LOG_TAIL=0
 if /I "%MAB_NO_LOG_TAIL%"=="1" set NO_LOG_TAIL=1
+set NO_BROWSER=0
+if /I "%MAB_NO_BROWSER%"=="1" set NO_BROWSER=1
 set REQUIRED_NODE_MAJOR=20
 if not "%MAB_NODE_MAJOR%"=="" set REQUIRED_NODE_MAJOR=%MAB_NODE_MAJOR%
 
@@ -119,7 +121,11 @@ if "!GUI_READY!"=="1" (
   echo [run] WARNING: GUI health check timed out. Check logs with pm2 logs minecraft-auto-bedrock
 )
 
-start "" "http://localhost:!GUI_PORT!" >nul 2>nul
+if "%NO_BROWSER%"=="1" (
+  echo [run] Browser auto-open disabled by MAB_NO_BROWSER=1
+) else (
+  call :open_browser "http://localhost:!GUI_PORT!"
+)
 
 echo.
 echo [run] GUI URL: http://localhost:!GUI_PORT!
@@ -140,6 +146,30 @@ if "%NO_PAUSE%"=="0" pause >nul
 endlocal
 
 goto :eof
+
+:open_browser
+set "OPEN_URL=%~1"
+
+start "" "%OPEN_URL%" >nul 2>nul
+if not errorlevel 1 (
+  echo [run] Opened browser: %OPEN_URL%
+  exit /b 0
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process '%OPEN_URL%'" >nul 2>nul
+if not errorlevel 1 (
+  echo [run] Opened browser via PowerShell: %OPEN_URL%
+  exit /b 0
+)
+
+rundll32 url.dll,FileProtocolHandler "%OPEN_URL%" >nul 2>nul
+if not errorlevel 1 (
+  echo [run] Opened browser via Shell handler: %OPEN_URL%
+  exit /b 0
+)
+
+echo [run] WARNING: Could not auto-open browser. Open manually: %OPEN_URL%
+exit /b 1
 
 :check_node
 set NODE_OK=0
