@@ -112,18 +112,21 @@ async function bootstrap() {
     }
   }
 
+  // Java サーバーマネージャーを準備（自動起動しない – GUIから制御）
   let javaServerManager = null;
-  if (config.edition === 'java' && config.localJavaServer?.enabled && config.localJavaServer?.autoStart) {
+  if (config.edition === 'java' && config.localJavaServer?.enabled) {
     javaServerManager = new JavaServerManager(config.localJavaServer, config.java, config.bot);
-    await javaServerManager.start();
+    logger.info('ローカルJavaサーバーマネージャーを初期化しました。GUIから起動できます。');
   }
 
+  // ViaProxy も自動起動しない – GUIから制御
   let proxyManager = null;
-  if (config.edition === 'bedrock' && config.bedrock.proxy.enabled && config.bedrock.proxy.enableAutoStart) {
+  if (config.edition === 'bedrock' && config.bedrock?.proxy?.enabled) {
     proxyManager = new ViaProxyManager(config);
-    await proxyManager.start();
+    logger.info('ViaProxyマネージャーを初期化しました。GUIから起動できます。');
   }
 
+  // Bot は空の状態で開始 – GUIから追加・接続する
   const entries = [];
 
   async function createEntryFromRuntime(runtime) {
@@ -139,12 +142,6 @@ async function bootstrap() {
     return { id: runtime.id, role: runtime.role, controller, memoryStore };
   }
 
-  for (const runtime of runtimeBots) {
-    // eslint-disable-next-line no-await-in-loop
-    const entry = await createEntryFromRuntime(runtime);
-    entries.push(entry);
-  }
-
   const fleetController = new FleetController(entries, {
     async createEntryFromSpec(spec) {
       const runtime = buildRuntimeFromSpec(config, spec, entries.length);
@@ -155,7 +152,7 @@ async function bootstrap() {
   const fleetMemoryStore = new FleetMemoryStore(entries);
 
   if (config.gui.enabled) {
-    startGuiServer(fleetController, fleetMemoryStore, config);
+    startGuiServer(fleetController, fleetMemoryStore, config, { javaServerManager, proxyManager });
   }
 
   const shutdown = async (signal) => {

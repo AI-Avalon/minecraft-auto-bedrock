@@ -71,7 +71,7 @@ function buildSecurityPayload(config) {
   };
 }
 
-function registerSocketHandlers(io, botController, memoryStore, config) {
+function registerSocketHandlers(io, botController, memoryStore, config, { javaServerManager = null, proxyManager = null } = {}) {
   const security = config.gui.security || {};
   const audit = createAuditWriter(config);
   const limiter = createCommandLimiter(config);
@@ -941,6 +941,54 @@ function registerSocketHandlers(io, botController, memoryStore, config) {
       });
     });
 
+    // ── ローカルJavaサーバー管理 ──────────────────────────────────────
+    socket.on('command:java-server-start', async () => {
+      await runCommand(socket, 'java-server-start', {}, async () => {
+        if (!javaServerManager) {
+          throw new Error('localJavaServer が無効です。config.json で localJavaServer.enabled を true に設定してください。');
+        }
+        socket.emit('java-server-progress', { message: 'サーバーを起動中... (最大60秒かかります)' });
+        await javaServerManager.start();
+        return { ok: true, message: 'Javaサーバーを起動しました' };
+      });
+    });
+
+    socket.on('command:java-server-stop', async () => {
+      await runCommand(socket, 'java-server-stop', {}, async () => {
+        if (!javaServerManager) {
+          throw new Error('localJavaServer が無効です。');
+        }
+        await javaServerManager.stop();
+        return { ok: true, message: 'Javaサーバーを停止しました' };
+      });
+    });
+
+    socket.on('command:java-server-status', () => {
+      const running = Boolean(javaServerManager?.process);
+      const pid = javaServerManager?.process?.pid || null;
+      socket.emit('java-server-status', { running, pid });
+    });
+
+    // ── デフォルトBotをローカルサーバーに接続 ─────────────────────────
+    socket.on('command:bot-connect-local', async (payload) => {
+      await runCommand(socket, 'bot-connect-local', payload || {}, async () => {
+        const username = payload?.username || config.bot?.username || 'AutoBot';
+        const id = payload?.id || username;
+        const role = payload?.role || 'primary';
+
+        const spec = {
+          id,
+          username,
+          role,
+          auth: config.bot?.auth || 'offline',
+          behavior: { mode: payload?.mode || config.behavior?.mode || 'hybrid' },
+          memoryFile: `memory-${id}.json`
+        };
+
+        return botController.addBot(spec);
+      });
+    });
+
     socket.on('disconnect', () => {
       stopLogStream(socket.id);
       limiter.remove(socket.id);
@@ -971,7 +1019,7 @@ function attachViewer(botController, port) {
   });
 }
 
-function startGuiServer(botController, memoryStore, config) {
+function startGuiServer(botController, memoryStore, config, { javaServerManager = null, proxyManager = null } = {}) {
   const app = express();
   const server = http.createServer(app);
   const io = new Server(server);
@@ -1009,7 +1057,7 @@ function startGuiServer(botController, memoryStore, config) {
     });
   });
 
-  registerSocketHandlers(io, botController, memoryStore, config);
+  registerSocketHandlers(io, botController, memoryStore, config, { javaServerManager, proxyManager });
 
   // ポート衝突時の自動フォールバック
   const originalPort = config.gui.port;

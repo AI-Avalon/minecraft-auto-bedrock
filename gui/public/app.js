@@ -38,7 +38,10 @@ const els = {
   doctorView: byId('doctorView'),
   oneclickProgress: byId('oneclickProgress'),
   oneclickProgressText: byId('oneclickProgressText'),
-  bulkBotList: byId('bulkBotList')
+  bulkBotList: byId('bulkBotList'),
+  javaServerStatusBadge: byId('javaServerStatusBadge'),
+  javaServerStatusText: byId('javaServerStatusText'),
+  javaServerProgressText: byId('javaServerProgressText')
 };
 
 function parseCsvIds(text) {
@@ -447,6 +450,22 @@ function onCommandResult(result) {
     els.doctorView.textContent = JSON.stringify(data, null, 2);
   }
 
+  if (action === 'java-server-start' || action === 'java-server-stop') {
+    if (els.javaServerProgressText) {
+      els.javaServerProgressText.classList.remove('java-server-progress');
+      els.javaServerProgressText.style.display = 'none';
+    }
+    send('command:java-server-status');
+    if (ok) {
+      send('command:fleet-list-bots');
+    }
+  }
+
+  if (action === 'bot-connect-local' && ok) {
+    send('command:fleet-list-bots');
+    send('refresh');
+  }
+
   showResult(result || { ok: false, reason: 'empty-result' });
 
   if (ok) {
@@ -483,6 +502,7 @@ function connectSocket() {
     setSocketState('connected', socket.id);
     showToast('GUIサーバーに接続しました', 'success');
     send('command:fleet-list-bots');
+    send('command:java-server-status');
     if (autoRefresh) {
       send('refresh');
     }
@@ -535,6 +555,28 @@ function connectSocket() {
       const idx = Number(progress?.stepIndex || 0);
       const total = Number(progress?.totalSteps || 0);
       els.oneclickProgressText.textContent = `${progress?.label || '処理中'} (${idx}/${total}) ${progress?.percent || 0}%`;
+    }
+  });
+
+  socket.on('java-server-status', (payload) => {
+    const running = Boolean(payload?.running);
+    if (els.javaServerStatusBadge) {
+      els.javaServerStatusBadge.classList.remove('badge-connected', 'badge-disconnected');
+      els.javaServerStatusBadge.classList.add(running ? 'badge-connected' : 'badge-disconnected');
+      els.javaServerStatusBadge.textContent = running ? `稼働中 (PID: ${payload?.pid || '?'})` : '停止中';
+    }
+
+    if (els.javaServerStatusText) {
+      els.javaServerStatusText.textContent = running
+        ? `Javaサーバー稼働中 (PID: ${payload?.pid || '不明'})`
+        : 'Javaサーバーは停止しています。「サーバー起動」を押してから Bot を接続してください。';
+    }
+  });
+
+  socket.on('java-server-progress', (payload) => {
+    if (els.javaServerProgressText) {
+      els.javaServerProgressText.textContent = payload?.message || '';
+      els.javaServerProgressText.style.display = payload?.message ? '' : 'none';
     }
   });
 
@@ -885,6 +927,33 @@ function setupHandlers() {
     playerName: byId('orchestratorPlayerName')?.value,
     count: Number(byId('orchestratorCount')?.value || 1)
   }));
+
+  byId('javaServerStartButton')?.addEventListener('click', () => {
+    if (els.javaServerProgressText) {
+      els.javaServerProgressText.textContent = 'サーバーを起動中...';
+      els.javaServerProgressText.style.display = '';
+    }
+    send('command:java-server-start', null);
+  });
+
+  byId('javaServerStopButton')?.addEventListener('click', () => {
+    send('command:java-server-stop', null);
+  });
+
+  byId('javaServerStatusButton')?.addEventListener('click', () => {
+    send('command:java-server-status');
+  });
+
+  byId('connectLocalBotButton')?.addEventListener('click', () => {
+    const username = byId('localBotUsername')?.value?.trim() || '';
+    const role = byId('localBotRole')?.value || 'primary';
+    const payload = { role };
+    if (username) {
+      payload.username = username;
+      payload.id = username;
+    }
+    send('command:bot-connect-local', payload);
+  });
 
   byId('extConnectButton')?.addEventListener('click', () => {
     const host = byId('extServerHost')?.value?.trim();

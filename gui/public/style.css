@@ -706,3 +706,15 @@ progress::-moz-progress-bar {
     align-items: flex-start;
   }
 }
+
+
+.server-section-note {
+  font-size: 0.85em;
+  margin-bottom: 8px;
+}
+
+.java-server-progress {
+  display: none;
+  margin-top: 4px;
+  color: #f0c040;
+}

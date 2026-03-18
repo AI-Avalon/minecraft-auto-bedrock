@@ -230,6 +230,41 @@
       <!-- ═══ サーバー接続タブ ═══ -->
       <div class="tab-panel" id="tab-servers">
 
+        <!-- ローカルJavaサーバー管理 -->
+        <div class="card span-full">
+          <div class="card-header">
+            <h2>🖥️ ローカル Java サーバー</h2>
+            <span id="javaServerStatusBadge" class="badge badge-disconnected">停止中</span>
+          </div>
+          <div class="row">
+            <button id="javaServerStartButton" type="button" class="btn btn-green">▶ サーバー起動</button>
+            <button id="javaServerStopButton"  type="button" class="btn btn-red">■ サーバー停止</button>
+            <button id="javaServerStatusButton" type="button" class="btn btn-sm">🔄 状態確認</button>
+          </div>
+          <small id="javaServerStatusText" class="text-muted">「状態確認」を押してください</small>
+          <div id="javaServerProgressText" class="java-server-progress"></div>
+        </div>
+
+        <!-- デフォルトBotをローカルサーバーに接続 -->
+        <div class="card">
+          <div class="card-header">
+            <h2>🚀 デフォルト Bot 接続</h2>
+          </div>
+          <p class="text-muted server-section-note">config.json の設定でローカルサーバーに Bot を接続します</p>
+          <div class="row">
+            <input id="localBotUsername" placeholder="ユーザー名 (省略=config値)" />
+            <select id="localBotRole" title="Botの役割">
+              <option value="primary">主Bot (primary)</option>
+              <option value="worker">ワーカー (worker)</option>
+              <option value="miner">採掘 (miner)</option>
+              <option value="farmer">農業 (farmer)</option>
+            </select>
+          </div>
+          <div class="row mt-8">
+            <button id="connectLocalBotButton" type="button" class="btn btn-green">🤖 ローカルに接続</button>
+          </div>
+        </div>
+
         <div class="card span-full">
           <div class="card-header">
             <h2>🌐 外部サーバーに Bot を追加</h2>

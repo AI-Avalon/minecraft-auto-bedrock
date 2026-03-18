@@ -14,7 +14,7 @@
   },
   "localJavaServer": {
     "enabled": true,
-    "autoStart": true,
+    "autoStart": false,
     "software": "paper",
     "minecraftVersion": "1.21.4",
     "forgeVersion": "",
@@ -181,7 +181,10 @@
         "config-save",
         "bulk-action",
         "fleet-list-bots",
-        "detect-java"
+        "detect-java",
+        "java-server-start",
+        "java-server-stop",
+        "bot-connect-local"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,
