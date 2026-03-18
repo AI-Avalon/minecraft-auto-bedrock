@@ -1,0 +1,32 @@
+{
+  "description": "Craft stone tools",
+  "recipes": [
+    {
+      "item": "minecraft:stone_pickaxe",
+      "ingredients": [
+        "minecraft:stone",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:stone_axe",
+      "ingredients": [
+        "minecraft:stone",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:stone_sword",
+      "ingredients": [
+        "minecraft:stone",
+        "minecraft:stick"
+      ]
+    }
+  ],
+  "targetCounts": [
+    1,
+    1,
+    1
+  ],
+  "difficulty": "easy"
+}

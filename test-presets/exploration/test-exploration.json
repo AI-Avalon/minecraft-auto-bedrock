@@ -1,0 +1,9 @@
+{
+  "searchPattern": "expanding-square",
+  "searchRadius": 1000,
+  "targetBlocks": [
+    "minecraft:diamond_ore",
+    "minecraft:emerald_ore"
+  ],
+  "duration": 120
+}

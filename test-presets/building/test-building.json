@@ -1,0 +1,8 @@
+{
+  "description": "Test building",
+  "schemPath": "./test.schem",
+  "materials": {
+    "minecraft:stone": 100
+  },
+  "difficulty": "easy"
+}

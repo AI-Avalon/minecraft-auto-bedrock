@@ -22,6 +22,11 @@ function deepMerge(base, override) {
 
   const merged = { ...(base || {}) };
   for (const [key, value] of Object.entries(override)) {
+    // undefined は「上書きなし」とみなし、既存設定を保持する
+    if (value === undefined) {
+      continue;
+    }
+
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       merged[key] = deepMerge(merged[key], value);
     } else {

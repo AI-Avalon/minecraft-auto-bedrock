@@ -1,0 +1,9 @@
+{
+  "crops": [
+    "minecraft:wheat",
+    "minecraft:carrot"
+  ],
+  "layout": "16x16",
+  "irrigationType": "channels",
+  "harvestMode": "auto"
+}

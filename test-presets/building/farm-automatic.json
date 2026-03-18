@@ -1,0 +1,11 @@
+{
+  "description": "Automatic farm with hoppers",
+  "schemPath": "./presets/schematics/auto-farm.litematic",
+  "materials": {
+    "minecraft:oak_wood": 32,
+    "minecraft:oak_leaves": 64,
+    "minecraft:hopper": 16,
+    "minecraft:redstone_wire": 8
+  },
+  "difficulty": "hard"
+}

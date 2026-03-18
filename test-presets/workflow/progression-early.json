@@ -1,0 +1,27 @@
+{
+  "description": "Early game progression",
+  "tasks": [
+    {
+      "type": "mining",
+      "preset": "stone-gathering"
+    },
+    {
+      "type": "crafting",
+      "preset": "stone-tools"
+    },
+    {
+      "type": "mining",
+      "preset": "branch-mining",
+      "duration": 60
+    },
+    {
+      "type": "crafting",
+      "preset": "iron-tools-full"
+    },
+    {
+      "type": "farming",
+      "preset": "wheat-farm-simple"
+    }
+  ],
+  "estimatedDuration": 480
+}

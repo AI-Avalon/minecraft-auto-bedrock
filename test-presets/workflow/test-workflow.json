@@ -1,0 +1,14 @@
+{
+  "description": "Test workflow",
+  "tasks": [
+    {
+      "type": "mining",
+      "preset": "stone-gathering"
+    },
+    {
+      "type": "crafting",
+      "preset": "stone-tools"
+    }
+  ],
+  "estimatedDuration": 120
+}

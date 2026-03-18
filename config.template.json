@@ -115,7 +115,7 @@
       "enableAutoStart": true,
       "listenHost": "127.0.0.1",
       "listenPort": 25566,
-      "targetVersion": "bedrocklatest",
+      "targetVersion": "Bedrock 1.26.0",
       "authMethod": "none",
       "jarPath": "bin/ViaProxy.jar",
       "githubRepo": "ViaVersion/ViaProxy",
@@ -187,7 +187,13 @@
         "connection-diagnose",
         "oneclick-setup",
         "oneclick-setup-live",
-        "process-delete"
+        "process-delete",
+        "litematica-load",
+        "litematica-extract-materials",
+        "execute-building-workflow",
+        "list-presets",
+        "execute-preset",
+        "start-orchestrated-workflow"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,

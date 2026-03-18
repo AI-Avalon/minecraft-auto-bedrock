@@ -1,0 +1,12 @@
+{
+  "description": "Multi-crop farm with different layouts",
+  "crops": [
+    "minecraft:wheat",
+    "minecraft:carrot",
+    "minecraft:potato",
+    "minecraft:beetroot"
+  ],
+  "layout": "32x16",
+  "irrigationType": "channels",
+  "harvestMode": "auto"
+}

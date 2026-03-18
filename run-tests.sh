@@ -90,6 +90,16 @@ check_system() {
 
 # ユニットテスト実行
 run_unit_tests() {
+  echo -e "\n${BLUE}========== 包括的テスト実行 ==========${NC}\n"
+  
+  if npm run test:comprehensive 2>&1 | tee /tmp/comprehensive-test.log; then
+    TEST_COUNT=$(grep "# pass" /tmp/comprehensive-test.log | awk '{print $3}' || echo "複数")
+    print_test_result "包括的テスト" "pass" "$TEST_COUNT テスト成功"
+  else
+    print_test_result "包括的テスト" "fail"
+    return 1
+  fi
+
   echo -e "\n${BLUE}========== ユニットテスト実行 ==========${NC}\n"
   
   if npm test 2>&1 | tee /tmp/unit-test.log; then

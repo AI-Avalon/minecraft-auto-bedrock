@@ -27,7 +27,10 @@ async function fetchRelease(repo, fixedVersion) {
 
 function chooseJarAsset(releaseJson) {
   const assets = releaseJson.assets || [];
-  const jarAsset = assets.find((asset) => /\.jar$/i.test(asset.name));
+  // 優先順: 通常 jar > java8 互換 jar
+  const jarAsset =
+    assets.find((asset) => /\.jar$/i.test(asset.name) && !/\+java8\.jar$/i.test(asset.name))
+    || assets.find((asset) => /\.jar$/i.test(asset.name));
 
   if (!jarAsset) {
     throw new Error('ViaProxy の jar アセットが見つかりません。');
@@ -72,6 +75,11 @@ class ViaProxyManager {
     this.stopping = false;
   }
 
+  resolveJavaCommand() {
+    const proxy = this.config?.bedrock?.proxy || {};
+    return proxy.javaPath || process.env.VIAPROXY_JAVA_PATH || 'java';
+  }
+
   buildArgs(jarPath) {
     const proxy = this.config.bedrock.proxy;
     const userArgs = proxy.args || [];
@@ -86,16 +94,22 @@ class ViaProxyManager {
     // mineflayer → TCP:listenPort → ViaProxy → UDP:targetHost:targetPort
     const listenAddr = `${proxy.listenHost || '127.0.0.1'}:${proxy.listenPort || 25566}`;
     const targetAddr = `${this.config.bedrock.host}:${this.config.bedrock.port}`;
-    const targetVersion = proxy.targetVersion || 'bedrocklatest';
-    const authMethod = proxy.authMethod || 'none';
+    const rawTargetVersion = proxy.targetVersion || 'Bedrock 1.26.0';
+    const targetVersion = /^bedrocklatest$/i.test(rawTargetVersion)
+      ? (proxy.latestBedrockVersionLabel || 'Bedrock 1.26.0')
+      : rawTargetVersion;
+    const authMethod = String(proxy.authMethod || 'NONE').toUpperCase();
 
-    return [
+    const args = [
       '-jar', jarPath,
+      'cli',
       '--bind-address', listenAddr,
       '--target-address', targetAddr,
-      '--version', targetVersion,
+      '--target-version', targetVersion,
       '--auth-method', authMethod
     ];
+
+    return args;
   }
 
   async start() {
@@ -106,9 +120,10 @@ class ViaProxyManager {
     const proxyConfig = this.config.bedrock.proxy;
     const jarPath = await ensureViaProxy(this.config);
     const args = this.buildArgs(jarPath);
+    const javaCmd = this.resolveJavaCommand();
 
-    logger.info(`ViaProxy を起動します: java ${args.join(' ')}`);
-    this.process = spawn('java', args, {
+    logger.info(`ViaProxy を起動します: ${javaCmd} ${args.join(' ')}`);
+    this.process = spawn(javaCmd, args, {
       stdio: ['ignore', 'pipe', 'pipe']
     });
 

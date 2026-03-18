@@ -1,0 +1,15 @@
+{
+  "recipes": [
+    {
+      "item": "minecraft:stone_pickaxe",
+      "ingredients": [
+        "minecraft:stone",
+        "minecraft:stick"
+      ]
+    }
+  ],
+  "targetCounts": [
+    1
+  ],
+  "difficulty": "easy"
+}

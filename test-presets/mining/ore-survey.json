@@ -1,0 +1,29 @@
+{
+  "description": "Survey mining for all ores",
+  "blockTypes": [
+    "minecraft:coal_ore",
+    "minecraft:iron_ore",
+    "minecraft:gold_ore",
+    "minecraft:diamond_ore",
+    "minecraft:emerald_ore",
+    "minecraft:lapis_ore"
+  ],
+  "targetCounts": [
+    32,
+    32,
+    16,
+    8,
+    4,
+    8
+  ],
+  "patterns": [
+    "cave",
+    "cave",
+    "cave",
+    "cave",
+    "cave",
+    "cave"
+  ],
+  "duration": 120,
+  "difficulty": "hard"
+}

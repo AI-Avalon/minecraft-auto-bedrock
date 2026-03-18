@@ -1,0 +1,10 @@
+{
+  "description": "Test mining",
+  "blockTypes": [
+    "minecraft:diamond_ore"
+  ],
+  "targetCounts": [
+    10
+  ],
+  "difficulty": "hard"
+}

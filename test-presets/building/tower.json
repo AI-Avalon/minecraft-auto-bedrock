@@ -1,0 +1,9 @@
+{
+  "description": "Stone tower structure",
+  "schemPath": "./presets/schematics/tower.schem",
+  "materials": {
+    "minecraft:stone": 256,
+    "minecraft:stone_stairs": 64
+  },
+  "difficulty": "medium"
+}

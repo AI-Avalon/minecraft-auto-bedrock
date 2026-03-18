@@ -1,0 +1,20 @@
+{
+  "description": "Efficient branch mining pattern",
+  "blockTypes": [
+    "minecraft:diamond_ore",
+    "minecraft:gold_ore",
+    "minecraft:emerald_ore"
+  ],
+  "targetCounts": [
+    64,
+    32,
+    16
+  ],
+  "patterns": [
+    "branch",
+    "branch",
+    "branch"
+  ],
+  "duration": 60,
+  "difficulty": "medium"
+}

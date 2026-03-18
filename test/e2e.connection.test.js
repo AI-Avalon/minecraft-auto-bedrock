@@ -121,6 +121,66 @@ async function connectOnce(options, timeoutMs = 25_000) {
   });
 }
 
+async function connectViaProxyOnce(options, timeoutMs = 25_000, stableMs = 1200) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let connected = false;
+
+    const timer = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      reject(new Error(`timeout: ${options.host}:${options.port}`));
+    }, timeoutMs);
+
+    const bot = mineflayer.createBot(options);
+
+    bot.once('connect', () => {
+      connected = true;
+      setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        const username = bot.username;
+        bot.quit('e2e-ok');
+        resolve({ ok: true, username });
+      }, stableMs);
+    });
+
+    bot.once('error', (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    bot.once('kicked', (reason) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      reject(new Error(`kicked: ${reason}`));
+    });
+
+    bot.once('end', (reason) => {
+      if (settled) {
+        return;
+      }
+      if (!connected) {
+        settled = true;
+        clearTimeout(timer);
+        reject(new Error(`disconnected-before-connect: ${reason || 'unknown'}`));
+      }
+    });
+  });
+}
+
 test('E2E Java: 実サーバーに接続できること', { timeout: 40_000 }, async (t) => {
   if (!shouldRunE2E()) {
     t.skip('RUN_E2E=1 で有効化');
@@ -192,7 +252,7 @@ test('E2E Bedrock: ViaProxy経由エンドポイントへ接続できること (
   }
 
   // ViaProxy の TCP リスナーに Java プロトコルで接続 → ViaProxy が UDP 変換して Bedrock へ転送
-  const result = await connectOnce({
+  const result = await connectViaProxyOnce({
     host,
     port,
     username: process.env.E2E_BEDROCK_USERNAME || process.env.E2E_USERNAME || 'AutoE2EBedrock',

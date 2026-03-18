@@ -1,0 +1,32 @@
+{
+  "description": "Craft basic wooden tools",
+  "recipes": [
+    {
+      "item": "minecraft:wooden_pickaxe",
+      "ingredients": [
+        "minecraft:oak_planks",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:wooden_axe",
+      "ingredients": [
+        "minecraft:oak_planks",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:wooden_sword",
+      "ingredients": [
+        "minecraft:oak_planks",
+        "minecraft:stick"
+      ]
+    }
+  ],
+  "targetCounts": [
+    1,
+    1,
+    1
+  ],
+  "difficulty": "easy"
+}

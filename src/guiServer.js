@@ -983,6 +983,100 @@ function registerSocketHandlers(io, botController, memoryStore, config, { javaSe
       socket.emit('java-server-status', { running, pid });
     });
 
+    // ── Litematica・建築統合コマンド ─────────────────────────────────────
+    socket.on('command:litematica-load', async (filePath) => {
+      await runCommand(socket, 'litematica-load', { filePath }, async () => {
+        const { LitematicaLoader } = require('./litematicaLoader');
+        const loader = new LitematicaLoader();
+        const schematic = await loader.loadLitematicaFile(String(filePath));
+        return { ok: true, schematic, blocks: schematic.blocks?.length || 0 };
+      });
+    });
+
+    socket.on('command:litematica-extract-materials', async (filePath) => {
+      await runCommand(socket, 'litematica-extract-materials', { filePath }, async () => {
+        const { LitematicaLoader } = require('./litematicaLoader');
+        const loader = new LitematicaLoader();
+        const materials = await loader.extractMaterials(String(filePath));
+        return { ok: true, materials };
+      });
+    });
+
+    socket.on('command:execute-building-workflow', async (payload) => {
+      await runCommand(socket, 'execute-building-workflow', payload || {}, async () => {
+        const { IntegratedBuildingManager } = require('./integratedBuildingManager');
+        const buildingPlanner = require('./buildingPlanner'); // 既存モジュール
+        const recipeAnalyzer = require('./recipeAnalyzer');    // 既存モジュール
+        
+        const manager = new IntegratedBuildingManager(
+          botController,
+          buildingPlanner,
+          recipeAnalyzer,
+          { logger }
+        );
+
+        const workflow = await manager.executeCompleteWorkflow(
+          payload?.filePath,
+          {
+            botAssignments: payload?.botAssignments,
+            gatherMode: payload?.gatherMode || 'auto-mine',
+            buildMode: payload?.buildMode || 'efficient'
+          }
+        );
+
+        return {
+          ok: true,
+          workflow,
+          estimatedTime: workflow.estimatedTime
+        };
+      });
+    });
+
+    socket.on('command:list-presets', async (category) => {
+      await runCommand(socket, 'list-presets', { category }, async () => {
+        const { PresetManager } = require('./presetManager');
+        const manager = new PresetManager();
+        manager.loadPresetsFromDisk();
+        
+        if (category) {
+          return { ok: true, presets: manager.listPresets(String(category)) };
+        }
+        return { ok: true, presets: manager.listAllPresets() };
+      });
+    });
+
+    socket.on('command:execute-preset', async (payload) => {
+      await runCommand(socket, 'execute-preset', payload || {}, async () => {
+        const { PresetManager } = require('./presetManager');
+        const manager = new PresetManager();
+        manager.loadPresetsFromDisk();
+        
+        const preset = manager.getPreset(payload?.category, payload?.presetName);
+        if (!preset) {
+          throw new Error(`Preset ${payload?.category}/${payload?.presetName} not found`);
+        }
+
+        return { ok: true, preset, ready: true };
+      });
+    });
+
+    socket.on('command:start-orchestrated-workflow', async (payload) => {
+      await runCommand(socket, 'start-orchestrated-workflow', payload || {}, async () => {
+        const { TaskOrchestrator } = require('./taskOrchestrator');
+        const orchestrator = new TaskOrchestrator(botController, { logger });
+
+        const workflowId = payload?.workflowId || `workflow-${Date.now()}`;
+        const tasks = payload?.tasks || [];
+
+        const results = await orchestrator.executeWorkflow(workflowId, tasks, {
+          serial: payload?.serial !== true,
+          maxConcurrent: payload?.maxConcurrent || 5
+        });
+
+        return { ok: true, workflowId, taskCount: tasks.length, results };
+      });
+    });
+
     // ── デフォルトBotをローカルサーバーに接続 ─────────────────────────
     socket.on('command:bot-connect-local', async (payload) => {
       await runCommand(socket, 'bot-connect-local', payload || {}, async () => {

@@ -1,0 +1,17 @@
+{
+  "description": "Quick stone gathering",
+  "blockTypes": [
+    "minecraft:stone",
+    "minecraft:deepslate"
+  ],
+  "targetCounts": [
+    512,
+    256
+  ],
+  "patterns": [
+    "strip",
+    "strip"
+  ],
+  "duration": 30,
+  "difficulty": "easy"
+}

@@ -50,6 +50,13 @@ echo [test] gui mode finished
 exit /b 0
 
 :full
+echo [test] Running comprehensive tests...
+call npm run test:comprehensive
+if errorlevel 1 (
+  echo [test] ERROR: comprehensive tests failed
+  exit /b 1
+)
+
 echo [test] Running unit/integration tests...
 call npm test
 if errorlevel 1 (

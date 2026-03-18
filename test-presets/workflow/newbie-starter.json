@@ -1,0 +1,23 @@
+{
+  "description": "Complete starter workflow",
+  "tasks": [
+    {
+      "type": "crafting",
+      "preset": "wooden-tools"
+    },
+    {
+      "type": "mining",
+      "preset": "stone-gathering",
+      "duration": 30
+    },
+    {
+      "type": "crafting",
+      "preset": "stone-tools"
+    },
+    {
+      "type": "building",
+      "preset": "simple-house"
+    }
+  ],
+  "estimatedDuration": 180
+}

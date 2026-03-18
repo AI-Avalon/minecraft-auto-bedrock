@@ -1,0 +1,9 @@
+{
+  "description": "Simple wooden house",
+  "schemPath": "./presets/schematics/simple-house.schem",
+  "materials": {
+    "minecraft:oak_planks": 128,
+    "minecraft:oak_log": 32
+  },
+  "difficulty": "easy"
+}

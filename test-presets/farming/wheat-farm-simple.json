@@ -1,0 +1,9 @@
+{
+  "description": "Simple wheat farm",
+  "crops": [
+    "minecraft:wheat"
+  ],
+  "layout": "16x8",
+  "irrigationType": "channels",
+  "harvestMode": "auto"
+}

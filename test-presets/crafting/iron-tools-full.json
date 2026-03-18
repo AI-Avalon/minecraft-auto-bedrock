@@ -1,0 +1,60 @@
+{
+  "description": "Craft full iron tool set",
+  "recipes": [
+    {
+      "item": "minecraft:iron_pickaxe",
+      "ingredients": [
+        "minecraft:iron_ingot",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:iron_axe",
+      "ingredients": [
+        "minecraft:iron_ingot",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:iron_sword",
+      "ingredients": [
+        "minecraft:iron_ingot",
+        "minecraft:stick"
+      ]
+    },
+    {
+      "item": "minecraft:iron_helmet",
+      "ingredients": [
+        "minecraft:iron_ingot"
+      ]
+    },
+    {
+      "item": "minecraft:iron_chestplate",
+      "ingredients": [
+        "minecraft:iron_ingot"
+      ]
+    },
+    {
+      "item": "minecraft:iron_leggings",
+      "ingredients": [
+        "minecraft:iron_ingot"
+      ]
+    },
+    {
+      "item": "minecraft:iron_boots",
+      "ingredients": [
+        "minecraft:iron_ingot"
+      ]
+    }
+  ],
+  "targetCounts": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "difficulty": "hard"
+}
