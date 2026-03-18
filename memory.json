@@ -1,6 +1,2783 @@
 {
   "bases": [],
   "chests": [],
-  "deaths": [],
-  "history": []
+  "deaths": [
+    {
+      "position": {
+        "x": -44,
+        "y": 70,
+        "z": 169
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:40:49.816Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 70,
+        "z": 173
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:41:03.912Z"
+    },
+    {
+      "position": {
+        "x": -39,
+        "y": 70,
+        "z": 174
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:41:19.260Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:44:29.762Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:44:46.711Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:45:02.914Z"
+    },
+    {
+      "position": {
+        "x": -35,
+        "y": 70,
+        "z": 161
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:45:20.310Z"
+    },
+    {
+      "position": {
+        "x": -30,
+        "y": 70,
+        "z": 161
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:45:36.010Z"
+    },
+    {
+      "position": {
+        "x": -28,
+        "y": 70,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:45:51.611Z"
+    },
+    {
+      "position": {
+        "x": -28,
+        "y": 70,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:46:06.811Z"
+    },
+    {
+      "position": {
+        "x": -25,
+        "y": 70,
+        "z": 165
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T02:46:21.310Z"
+    },
+    {
+      "position": {
+        "x": -19,
+        "y": 70,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:06:17.443Z"
+    },
+    {
+      "position": {
+        "x": -13,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:07:43.640Z"
+    },
+    {
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:08:34.040Z"
+    },
+    {
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 165
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:08:58.690Z"
+    },
+    {
+      "position": {
+        "x": -14,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:09:37.640Z"
+    },
+    {
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 165
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:10:06.640Z"
+    },
+    {
+      "position": {
+        "x": -15,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:18:24.939Z"
+    },
+    {
+      "position": {
+        "x": -15,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:19:02.039Z"
+    },
+    {
+      "position": {
+        "x": -33,
+        "y": 70,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:23:17.590Z"
+    },
+    {
+      "position": {
+        "x": -33,
+        "y": 70,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:23:37.941Z"
+    },
+    {
+      "position": {
+        "x": -39,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:23:59.589Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 66,
+        "z": 151
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:24:12.589Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:24:24.888Z"
+    },
+    {
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:24:39.189Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:24:52.989Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:25:06.990Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:25:18.689Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:25:31.388Z"
+    },
+    {
+      "position": {
+        "x": -39,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:25:41.090Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:25:53.039Z"
+    },
+    {
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:26:03.089Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:26:17.088Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:26:32.589Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:26:45.789Z"
+    },
+    {
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:26:59.789Z"
+    },
+    {
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:27:13.889Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:27:25.389Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:27:35.789Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:27:48.189Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:27:58.039Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:28:06.391Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:28:17.688Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:28:28.090Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:28:37.389Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:28:55.390Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:29:24.288Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:29:34.989Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:29:45.888Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:29:54.539Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:05.790Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:15.788Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:25.588Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:35.540Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:46.789Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:30:56.988Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:31:23.539Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:31:44.589Z"
+    },
+    {
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:32:02.588Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:32:26.589Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:32:50.689Z"
+    },
+    {
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:33:12.689Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:33:36.789Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:33:57.689Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:34:15.688Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:34:36.638Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:34:57.638Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:35:18.689Z"
+    },
+    {
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:35:39.688Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:35:57.789Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:36:15.738Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:36:33.740Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:36:54.789Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:37:12.789Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:37:30.889Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:37:48.739Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:38:09.739Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:38:30.888Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:38:53.039Z"
+    },
+    {
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:39:14.088Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:39:31.988Z"
+    },
+    {
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:39:50.040Z"
+    },
+    {
+      "position": {
+        "x": -42,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:40:07.988Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:40:28.888Z"
+    },
+    {
+      "position": {
+        "x": -42,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:40:46.887Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:41:07.939Z"
+    },
+    {
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 159
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:41:25.787Z"
+    },
+    {
+      "position": {
+        "x": -50,
+        "y": 69,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:41:50.288Z"
+    },
+    {
+      "position": {
+        "x": -52,
+        "y": 69,
+        "z": 150
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:42:14.287Z"
+    },
+    {
+      "position": {
+        "x": -53,
+        "y": 68,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:42:38.089Z"
+    },
+    {
+      "position": {
+        "x": -50,
+        "y": 68,
+        "z": 148
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:42:56.139Z"
+    },
+    {
+      "position": {
+        "x": -51,
+        "y": 67,
+        "z": 145
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:43:18.139Z"
+    },
+    {
+      "position": {
+        "x": -51,
+        "y": 67,
+        "z": 140
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:43:33.039Z"
+    },
+    {
+      "position": {
+        "x": -55,
+        "y": 63,
+        "z": 136
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:43:51.038Z"
+    },
+    {
+      "position": {
+        "x": -55,
+        "y": 57,
+        "z": 132
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:44:11.939Z"
+    },
+    {
+      "position": {
+        "x": -109,
+        "y": 52,
+        "z": 131
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:44:55.889Z"
+    },
+    {
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:45:28.988Z"
+    },
+    {
+      "position": {
+        "x": -86,
+        "y": 61,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:45:50.239Z"
+    },
+    {
+      "position": {
+        "x": -89,
+        "y": 54,
+        "z": 160
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:46:22.638Z"
+    },
+    {
+      "position": {
+        "x": -86,
+        "y": 62,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:46:44.322Z"
+    },
+    {
+      "position": {
+        "x": -88,
+        "y": 49,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:47:23.588Z"
+    },
+    {
+      "position": {
+        "x": -88,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:47:45.077Z"
+    },
+    {
+      "position": {
+        "x": -84,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:48:07.438Z"
+    },
+    {
+      "position": {
+        "x": -82,
+        "y": 63,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:48:27.839Z"
+    },
+    {
+      "position": {
+        "x": -86,
+        "y": 60,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:48:47.839Z"
+    },
+    {
+      "position": {
+        "x": -88,
+        "y": 62,
+        "z": 149
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:49:03.188Z"
+    },
+    {
+      "position": {
+        "x": -86,
+        "y": 56,
+        "z": 147
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:49:37.289Z"
+    },
+    {
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:50:01.088Z"
+    },
+    {
+      "position": {
+        "x": -81,
+        "y": 61,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:50:29.388Z"
+    },
+    {
+      "position": {
+        "x": -81,
+        "y": 62,
+        "z": 147
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:51:01.688Z"
+    },
+    {
+      "position": {
+        "x": -80,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:51:22.691Z"
+    },
+    {
+      "position": {
+        "x": -78,
+        "y": 62,
+        "z": 145
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T03:51:51.989Z"
+    },
+    {
+      "position": {
+        "x": -79,
+        "y": 60,
+        "z": 144
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:03:07.488Z"
+    },
+    {
+      "position": {
+        "x": -89,
+        "y": 52,
+        "z": 147
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:03:37.888Z"
+    },
+    {
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:04:05.522Z"
+    },
+    {
+      "position": {
+        "x": -87,
+        "y": 53,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:04:43.988Z"
+    },
+    {
+      "position": {
+        "x": -83,
+        "y": 62,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:05:06.638Z"
+    },
+    {
+      "position": {
+        "x": -82,
+        "y": 62,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:05:26.888Z"
+    },
+    {
+      "position": {
+        "x": -81,
+        "y": 62,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:05:43.588Z"
+    },
+    {
+      "position": {
+        "x": -81,
+        "y": 63,
+        "z": 158
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:05:59.389Z"
+    },
+    {
+      "position": {
+        "x": -80,
+        "y": 63,
+        "z": 157
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:06:15.538Z"
+    },
+    {
+      "position": {
+        "x": -80,
+        "y": 64,
+        "z": 156
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:06:29.538Z"
+    },
+    {
+      "position": {
+        "x": -79,
+        "y": 67,
+        "z": 154
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:06:40.238Z"
+    },
+    {
+      "position": {
+        "x": -80,
+        "y": 64,
+        "z": 151
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:07:02.040Z"
+    },
+    {
+      "position": {
+        "x": -82,
+        "y": 63,
+        "z": 147
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:07:19.489Z"
+    },
+    {
+      "position": {
+        "x": -87,
+        "y": 51,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:07:53.388Z"
+    },
+    {
+      "position": {
+        "x": -78,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:08:34.123Z"
+    },
+    {
+      "position": {
+        "x": -80,
+        "y": 57,
+        "z": 144
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:09:07.988Z"
+    },
+    {
+      "position": {
+        "x": -76,
+        "y": 61,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:09:31.080Z"
+    },
+    {
+      "position": {
+        "x": -74,
+        "y": 61,
+        "z": 147
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:09:49.388Z"
+    },
+    {
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:10:07.188Z"
+    },
+    {
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:10:24.238Z"
+    },
+    {
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T04:10:43.538Z"
+    },
+    {
+      "position": {
+        "x": -76,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:02:11.038Z"
+    },
+    {
+      "position": {
+        "x": -76,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:02:47.589Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:03:27.438Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:04:05.238Z"
+    },
+    {
+      "position": {
+        "x": -78,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:04:54.638Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:05:56.088Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:07:07.189Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:07:57.338Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:08:37.938Z"
+    },
+    {
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:09:13.337Z"
+    },
+    {
+      "position": {
+        "x": -79,
+        "y": 60,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:10:01.037Z"
+    },
+    {
+      "position": {
+        "x": -81,
+        "y": 56,
+        "z": 143
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:10:43.088Z"
+    },
+    {
+      "position": {
+        "x": -78,
+        "y": 62,
+        "z": 145
+      },
+      "reason": "bot-death-event",
+      "at": "2026-03-18T05:11:20.029Z"
+    }
+  ],
+  "history": [
+    {
+      "type": "death",
+      "at": "2026-03-18T02:40:49.816Z",
+      "position": {
+        "x": -44,
+        "y": 70,
+        "z": 169
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:41:03.912Z",
+      "position": {
+        "x": -38,
+        "y": 70,
+        "z": 173
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:41:19.260Z",
+      "position": {
+        "x": -39,
+        "y": 70,
+        "z": 174
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:44:29.762Z",
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:44:46.711Z",
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:45:02.914Z",
+      "position": {
+        "x": -38,
+        "y": 69,
+        "z": 169
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:45:20.310Z",
+      "position": {
+        "x": -35,
+        "y": 70,
+        "z": 161
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:45:36.010Z",
+      "position": {
+        "x": -30,
+        "y": 70,
+        "z": 161
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:45:51.611Z",
+      "position": {
+        "x": -28,
+        "y": 70,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:46:06.811Z",
+      "position": {
+        "x": -28,
+        "y": 70,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T02:46:21.310Z",
+      "position": {
+        "x": -25,
+        "y": 70,
+        "z": 165
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:06:17.443Z",
+      "position": {
+        "x": -19,
+        "y": 70,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:07:43.640Z",
+      "position": {
+        "x": -13,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:08:34.040Z",
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:08:58.690Z",
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 165
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:09:37.640Z",
+      "position": {
+        "x": -14,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:10:06.640Z",
+      "position": {
+        "x": -15,
+        "y": 62,
+        "z": 165
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:18:24.939Z",
+      "position": {
+        "x": -15,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:19:02.039Z",
+      "position": {
+        "x": -15,
+        "y": 61,
+        "z": 164
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:23:17.590Z",
+      "position": {
+        "x": -33,
+        "y": 70,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:23:37.941Z",
+      "position": {
+        "x": -33,
+        "y": 70,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:23:59.589Z",
+      "position": {
+        "x": -39,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:24:12.589Z",
+      "position": {
+        "x": -40,
+        "y": 66,
+        "z": 151
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:24:24.888Z",
+      "position": {
+        "x": -38,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:24:39.189Z",
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:24:52.989Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:25:06.990Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:25:18.689Z",
+      "position": {
+        "x": -38,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:25:31.388Z",
+      "position": {
+        "x": -40,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:25:41.090Z",
+      "position": {
+        "x": -39,
+        "y": 66,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:25:53.039Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:26:03.089Z",
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 151
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:26:17.088Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:26:32.589Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:26:45.789Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 152
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:26:59.789Z",
+      "position": {
+        "x": -37,
+        "y": 67,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:27:13.889Z",
+      "position": {
+        "x": -38,
+        "y": 67,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:27:25.389Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:27:35.789Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:27:48.189Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:27:58.039Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:28:06.391Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:28:17.688Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:28:28.090Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:28:37.389Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:28:55.390Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:29:24.288Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:29:34.989Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:29:45.888Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:29:54.539Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:05.790Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:15.788Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:25.588Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:35.540Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:46.789Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:30:56.988Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:31:23.539Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:31:44.589Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:32:02.588Z",
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:32:26.589Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:32:50.689Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:33:12.689Z",
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:33:36.789Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:33:57.689Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:34:15.688Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:34:36.638Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:34:57.638Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:35:18.689Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:35:39.688Z",
+      "position": {
+        "x": -42,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:35:57.789Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:36:15.738Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:36:33.740Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:36:54.789Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:37:12.789Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:37:30.889Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:37:48.739Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:38:09.739Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:38:30.888Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:38:53.039Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:39:14.088Z",
+      "position": {
+        "x": -40,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:39:31.988Z",
+      "position": {
+        "x": -41,
+        "y": 66,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:39:50.040Z",
+      "position": {
+        "x": -41,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:40:07.988Z",
+      "position": {
+        "x": -42,
+        "y": 67,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:40:28.888Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:40:46.887Z",
+      "position": {
+        "x": -42,
+        "y": 67,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:41:07.939Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:41:25.787Z",
+      "position": {
+        "x": -43,
+        "y": 67,
+        "z": 159
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:41:50.288Z",
+      "position": {
+        "x": -50,
+        "y": 69,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:42:14.287Z",
+      "position": {
+        "x": -52,
+        "y": 69,
+        "z": 150
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:42:38.089Z",
+      "position": {
+        "x": -53,
+        "y": 68,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:42:56.139Z",
+      "position": {
+        "x": -50,
+        "y": 68,
+        "z": 148
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:43:18.139Z",
+      "position": {
+        "x": -51,
+        "y": 67,
+        "z": 145
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:43:33.039Z",
+      "position": {
+        "x": -51,
+        "y": 67,
+        "z": 140
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:43:51.038Z",
+      "position": {
+        "x": -55,
+        "y": 63,
+        "z": 136
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:44:11.939Z",
+      "position": {
+        "x": -55,
+        "y": 57,
+        "z": 132
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:44:55.889Z",
+      "position": {
+        "x": -109,
+        "y": 52,
+        "z": 131
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:45:28.988Z",
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:45:50.239Z",
+      "position": {
+        "x": -86,
+        "y": 61,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:46:22.638Z",
+      "position": {
+        "x": -89,
+        "y": 54,
+        "z": 160
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:46:44.322Z",
+      "position": {
+        "x": -86,
+        "y": 62,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:47:23.588Z",
+      "position": {
+        "x": -88,
+        "y": 49,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:47:45.077Z",
+      "position": {
+        "x": -88,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:48:07.438Z",
+      "position": {
+        "x": -84,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:48:27.839Z",
+      "position": {
+        "x": -82,
+        "y": 63,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:48:47.839Z",
+      "position": {
+        "x": -86,
+        "y": 60,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:49:03.188Z",
+      "position": {
+        "x": -88,
+        "y": 62,
+        "z": 149
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:49:37.289Z",
+      "position": {
+        "x": -86,
+        "y": 56,
+        "z": 147
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:50:01.088Z",
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 155
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:50:29.388Z",
+      "position": {
+        "x": -81,
+        "y": 61,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:51:01.688Z",
+      "position": {
+        "x": -81,
+        "y": 62,
+        "z": 147
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:51:22.691Z",
+      "position": {
+        "x": -80,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T03:51:51.989Z",
+      "position": {
+        "x": -78,
+        "y": 62,
+        "z": 145
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:03:07.488Z",
+      "position": {
+        "x": -79,
+        "y": 60,
+        "z": 144
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:03:37.888Z",
+      "position": {
+        "x": -89,
+        "y": 52,
+        "z": 147
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:04:05.522Z",
+      "position": {
+        "x": -85,
+        "y": 62,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:04:43.988Z",
+      "position": {
+        "x": -87,
+        "y": 53,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:05:06.638Z",
+      "position": {
+        "x": -83,
+        "y": 62,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:05:26.888Z",
+      "position": {
+        "x": -82,
+        "y": 62,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:05:43.588Z",
+      "position": {
+        "x": -81,
+        "y": 62,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:05:59.389Z",
+      "position": {
+        "x": -81,
+        "y": 63,
+        "z": 158
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:06:15.538Z",
+      "position": {
+        "x": -80,
+        "y": 63,
+        "z": 157
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:06:29.538Z",
+      "position": {
+        "x": -80,
+        "y": 64,
+        "z": 156
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:06:40.238Z",
+      "position": {
+        "x": -79,
+        "y": 67,
+        "z": 154
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:07:02.040Z",
+      "position": {
+        "x": -80,
+        "y": 64,
+        "z": 151
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:07:19.489Z",
+      "position": {
+        "x": -82,
+        "y": 63,
+        "z": 147
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:07:53.388Z",
+      "position": {
+        "x": -87,
+        "y": 51,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:08:34.123Z",
+      "position": {
+        "x": -78,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:09:07.988Z",
+      "position": {
+        "x": -80,
+        "y": 57,
+        "z": 144
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:09:31.080Z",
+      "position": {
+        "x": -76,
+        "y": 61,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:09:49.388Z",
+      "position": {
+        "x": -74,
+        "y": 61,
+        "z": 147
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:10:07.188Z",
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:10:24.238Z",
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T04:10:43.538Z",
+      "position": {
+        "x": -73,
+        "y": 62,
+        "z": 146
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:02:11.038Z",
+      "position": {
+        "x": -76,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:02:47.589Z",
+      "position": {
+        "x": -76,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:03:27.438Z",
+      "position": {
+        "x": -77,
+        "y": 60,
+        "z": 142
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:04:05.238Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:04:54.638Z",
+      "position": {
+        "x": -78,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:05:56.088Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:07:07.189Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:07:57.338Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:08:37.938Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:09:13.337Z",
+      "position": {
+        "x": -77,
+        "y": 61,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:10:01.037Z",
+      "position": {
+        "x": -79,
+        "y": 60,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:10:43.088Z",
+      "position": {
+        "x": -81,
+        "y": 56,
+        "z": 143
+      },
+      "reason": "bot-death-event"
+    },
+    {
+      "type": "death",
+      "at": "2026-03-18T05:11:20.029Z",
+      "position": {
+        "x": -78,
+        "y": 62,
+        "z": 145
+      },
+      "reason": "bot-death-event"
+    }
+  ],
+  "javaServerPid": 35356
 }
