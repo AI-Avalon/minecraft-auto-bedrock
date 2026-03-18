@@ -977,7 +977,23 @@ function startGuiServer(botController, memoryStore, config) {
   const io = new Server(server);
 
   const staticDir = path.resolve(process.cwd(), 'gui/public');
+
+  // staticDirが存在しない場合に警告
+  if (!fs.existsSync(staticDir)) {
+    logger.warn(`GUI 静的ファイルディレクトリが見つかりません: ${staticDir}`);
+  }
+
   app.use(express.static(staticDir));
+
+  // ルートルートのフォールバック（static が見つからない場合でも index.html を返す）
+  app.get('/', (_req, res) => {
+    const indexFile = path.join(staticDir, 'index.html');
+    if (fs.existsSync(indexFile)) {
+      res.sendFile(indexFile);
+    } else {
+      res.status(503).send('<h1>GUI ファイルが見つかりません</h1><p>gui/public/index.html が存在することを確認してください。</p>');
+    }
+  });
 
   app.get('/health', (_req, res) => {
     res.json({ ok: true, mode: config.edition, connected: botController.status().connected });

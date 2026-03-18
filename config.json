@@ -171,7 +171,17 @@
         "connection-diagnose",
         "oneclick-setup",
         "oneclick-setup-live",
-        "process-delete"
+        "process-start",
+        "process-stop",
+        "process-restart",
+        "process-list",
+        "process-logs",
+        "process-delete",
+        "config-get",
+        "config-save",
+        "bulk-action",
+        "fleet-list-bots",
+        "detect-java"
       ],
       "commandCooldownMs": 800,
       "maxCommandsPerMinute": 20,

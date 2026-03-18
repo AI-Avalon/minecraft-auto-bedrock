@@ -490,6 +490,25 @@ class JavaServerManager {
       return;
     }
 
+    const host = this.javaConfig.host || '127.0.0.1';
+    const port = Number(this.javaConfig.port || 25565);
+
+    // ポートが既に使用されている場合は既存サーバーに接続する
+    const portInUse = await isPortOpen(host, port);
+    if (portInUse) {
+      logger.info(`ポート ${port} は既に使用されています。既存のサーバーに接続します。`);
+      // 設定は同期しておく（既存サーバーの再起動は呼び出し元の責務）
+      try {
+        const { serverDir } = this;
+        if (fs.existsSync(serverDir)) {
+          syncServerProperties(serverDir, this.botConfig);
+        }
+      } catch (e) {
+        logger.warn(`既存サーバーへの設定同期に失敗: ${e.message}`);
+      }
+      return;
+    }
+
     const { meta } = await this.ensureInstalled();
     syncServerProperties(this.serverDir, this.botConfig);
     const launch = this.buildLaunchCommand(meta);

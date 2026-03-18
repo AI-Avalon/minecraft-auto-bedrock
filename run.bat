@@ -86,14 +86,41 @@ if "%LLM_ENABLED%"=="1" (
   )
 )
 
+:: ── 既存プロセスのクリーンアップ ────────────────────────────────
+echo [run] Cleaning up existing processes...
+call pm2 stop minecraft-auto-bedrock >nul 2>nul
+timeout /t 2 /nobreak >nul
+
+:: ポート25565を使用中のプロセスを終了（孤立したJavaサーバー）
+for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":25565 " ^| findstr "LISTENING"') do (
+  if not "%%P"=="" (
+    echo [run] Terminating orphaned process on port 25565 (PID: %%P)
+    taskkill /F /PID %%P >nul 2>nul
+  )
+)
+
+:: ポート3000を使用中のプロセスを終了（孤立したGUIサーバー）
+for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":3000 " ^| findstr "LISTENING"') do (
+  if not "%%P"=="" (
+    echo [run] Terminating orphaned process on port 3000 (PID: %%P)
+    taskkill /F /PID %%P >nul 2>nul
+  )
+)
+
+timeout /t 1 /nobreak >nul
+
 :: ── PM2起動/再起動 ──────────────────────────────────────────────
 echo [run] Starting bot process via PM2...
-call pm2 startOrRestart ecosystem.config.cjs
+call pm2 start ecosystem.config.cjs
 if errorlevel 1 (
-  echo [run] ERROR: PM2 startOrRestart failed.
-  if "%NO_PAUSE%"=="0" pause
-  endlocal
-  exit /b 1
+  :: 既に登録済みの場合は restart を試みる
+  call pm2 restart minecraft-auto-bedrock
+  if errorlevel 1 (
+    echo [run] ERROR: PM2 start failed.
+    if "%NO_PAUSE%"=="0" pause
+    endlocal
+    exit /b 1
+  )
 )
 
 call pm2 save >nul 2>nul
@@ -103,9 +130,9 @@ for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "try { $cfg = 
   set GUI_PORT=%%P
 )
 
-echo [run] Waiting for GUI health endpoint...
+echo [run] Waiting for GUI health endpoint (up to 60s)...
 set GUI_READY=0
-for /L %%I in (1,1,20) do (
+for /L %%I in (1,1,60) do (
   curl.exe -fsS "http://127.0.0.1:!GUI_PORT!/health" >nul 2>nul
   if not errorlevel 1 (
     set GUI_READY=1
